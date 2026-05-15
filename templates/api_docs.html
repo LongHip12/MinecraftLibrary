@@ -2,7 +2,6 @@
 {% block title %}API Docs — Lonely Hub{% endblock %}
 {% block extra_css %}
 <style>
-/* ── Reset inline code everywhere on this page ─────── */
 .api-page code {
   font-family: 'Fira Mono', 'Cascadia Code', 'Consolas', monospace;
   font-size: 12.5px;
@@ -14,7 +13,6 @@
   white-space: nowrap;
 }
 
-/* ── Hero ───────────────────────────────────────────── */
 .api-hero {
   padding: 48px 0 32px;
   text-align: center;
@@ -30,7 +28,6 @@
 }
 .api-hero-sub { font-size: 14px; color: var(--text3); max-width: 480px; margin: 0 auto; line-height: 1.65; }
 
-/* ── Base URL bar ──────────────────────────────────── */
 .api-base-bar {
   display: flex;
   align-items: center;
@@ -56,7 +53,6 @@
 }
 .api-base-note { margin-left: auto; font-size: 11px; color: var(--text3); }
 
-/* ── Page layout ───────────────────────────────────── */
 .api-page { padding-bottom: 80px; }
 .api-layout {
   display: grid;
@@ -66,7 +62,6 @@
 }
 @media(max-width: 900px) { .api-layout { grid-template-columns: 1fr; } .api-toc-col { display: none; } }
 
-/* ── TOC ───────────────────────────────────────────── */
 .api-toc-col { position: sticky; top: 84px; }
 .api-toc-inner {
   background: rgba(255,255,255,0.025);
@@ -93,7 +88,6 @@
 .api-toc-link.toc-active { color: #fff; border-left-color: var(--primary); font-weight: 600; background: rgba(250,80,80,0.06); }
 .api-toc-sub { padding-left: 28px; font-size: 11.5px; }
 
-/* ── Sections ──────────────────────────────────────── */
 .api-section { margin-bottom: 52px; }
 .api-section-head {
   display: flex; align-items: center; gap: 10px;
@@ -111,7 +105,6 @@
 .badge-auth { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
 .badge-admin { background: rgba(250,80,80,0.15); color: #ff6060; border: 1px solid rgba(250,80,80,0.25); }
 
-/* ── Auth note ─────────────────────────────────────── */
 .api-auth-note {
   background: rgba(96,165,250,0.06);
   border: 1px solid rgba(96,165,250,0.18);
@@ -126,7 +119,6 @@
 .api-auth-note a { color: var(--primary); text-decoration: none; }
 .api-auth-note a:hover { text-decoration: underline; }
 
-/* ── Endpoint cards ────────────────────────────────── */
 .ep-card {
   background: rgba(255,255,255,0.025);
   border: 1px solid rgba(255,255,255,0.07);
@@ -173,7 +165,6 @@
 }
 .ep-card.is-open .ep-chevron { transform: rotate(180deg); }
 
-/* ── Card body ─────────────────────────────────────── */
 .ep-body-wrap {
   max-height: 0; overflow: hidden;
   transition: max-height .35s cubic-bezier(.4,0,.2,1);
@@ -185,8 +176,7 @@
   margin-top: 0;
 }
 
-/* ── Parameter table ───────────────────────────────── */
-.param-table-wrap { overflow-x: auto; margin: 16px 0 10px; }
+.param-table-wrap { overflow-x: auto; margin: 16px 0 10px; -webkit-overflow-scrolling: touch; }
 .param-table {
   width: 100%; border-collapse: collapse; font-size: 12.5px;
   min-width: 460px;
@@ -206,8 +196,7 @@
 .p-req  { color: #fb923c; font-size: 10px; font-weight: 700; }
 .p-opt  { color: var(--text3); font-size: 10px; }
 
-/* ── Code block ────────────────────────────────────── */
-.api-code-block { position: relative; margin: 10px 0 14px; }
+.api-code-block { margin: 10px 0 14px; }
 .api-code-label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .api-code-tag {
   display: inline-flex; align-items: center; gap: 5px;
@@ -218,40 +207,40 @@
 .tag-error   { background: rgba(250,80,80,0.12);  color: #ff6b6b; border: 1px solid rgba(250,80,80,0.22); }
 .tag-request { background: rgba(96,165,250,0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.22); }
 
+.api-pre-wrap { position: relative; }
 pre.api-pre {
   background: #0d1117;
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 10px;
   padding: 16px 18px;
-  padding-right: 70px;
   font-family: 'Fira Mono', 'Cascadia Code', 'Consolas', monospace;
   font-size: 12px;
   line-height: 1.75;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   white-space: pre;
   color: #c9d1d9;
   margin: 0;
 }
 pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: inherit; background: none; border: none; padding: 0; }
 .api-copy-btn {
-  position: absolute; top: 10px; right: 10px;
+  position: absolute; top: 8px; right: 8px;
   padding: 4px 11px; font-size: 11px; font-weight: 700;
   border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.05); color: var(--text2);
   cursor: pointer; font-family: inherit;
   transition: all .15s; white-space: nowrap;
+  z-index: 1;
 }
 .api-copy-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
 .api-copy-btn.copied { color: #34d399; border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.07); }
 
-/* ── JSON syntax colours ───────────────────────────── */
-.jk { color: #79b8ff; }  /* key */
-.js { color: #9ecbff; }  /* string value */
-.jn { color: #f8c555; }  /* number */
-.jb { color: #f47067; }  /* boolean/null */
-.jc { color: #6b7280; font-style: italic; }  /* comment */
+.jk { color: #79b8ff; }
+.js { color: #9ecbff; }
+.jn { color: #f8c555; }
+.jb { color: #f47067; }
+.jc { color: #6b7280; font-style: italic; }
 
-/* ── Note box ──────────────────────────────────────── */
 .api-note-box {
   background: rgba(96,165,250,0.06);
   border: 1px solid rgba(96,165,250,0.18);
@@ -262,11 +251,12 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
   line-height: 1.65; margin: 12px 0;
 }
 
-/* ── Mobile ────────────────────────────────────────── */
 @media(max-width: 540px) {
   .ep-header { flex-wrap: wrap; gap: 8px; }
   .ep-desc { order: 3; width: 100%; white-space: normal; }
   .ep-path { font-size: 12px; }
+  .ep-body { padding: 0 12px 16px; }
+  pre.api-pre { font-size: 11px; padding: 12px 14px; }
 }
 </style>
 {% endblock %}
@@ -289,7 +279,6 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
 
 <div class="api-layout">
 
-  <!-- TOC -->
   <nav class="api-toc-col" aria-label="Contents">
     <div class="api-toc-inner">
       <div class="api-toc-title">Contents</div>
@@ -297,7 +286,6 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
       <a class="api-toc-link" href="#public">Public API</a>
       <a class="api-toc-link api-toc-sub" href="#v2-mods">Browse Mods</a>
       <a class="api-toc-link api-toc-sub" href="#v2-clients">Browse Clients</a>
-      <a class="api-toc-link api-toc-sub" href="#forum-msgs">Forum Messages</a>
       <a class="api-toc-link" href="#user-api">User API</a>
       <a class="api-toc-link api-toc-sub" href="#v2-upload">Upload</a>
       <a class="api-toc-link api-toc-sub" href="#v2-edit">Edit</a>
@@ -314,10 +302,8 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
     </div>
   </nav>
 
-  <!-- Main content -->
   <main>
 
-    <!-- Authentication -->
     <section class="api-section" id="auth">
       <div class="api-section-head">
         <div class="api-section-title">Authentication</div>
@@ -330,13 +316,11 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
       </div>
     </section>
 
-    <!-- Public API -->
     <section class="api-section" id="public">
       <div class="api-section-head">
         <div class="api-section-title">Public API</div>
       </div>
 
-      <!-- GET /api/v2/mods -->
       <div class="ep-card" id="v2-mods">
         <div class="ep-header" onclick="_toggleEp(this)">
           <span class="ep-method m-get">GET</span>
@@ -363,13 +347,16 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
               <div class="api-code-label-row">
                 <span class="api-code-tag tag-request">Request</span>
               </div>
-              <pre class="api-pre"><code>GET /api/v2/mods?tag=pvp&amp;loaders=Fabric&amp;max=5</code></pre>
+              <div class="api-pre-wrap">
+                <pre class="api-pre"><code>GET /api/v2/mods?tag=pvp&amp;loaders=Fabric&amp;max=5</code></pre>
+              </div>
             </div>
             <div class="api-code-block">
               <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Response 200</span>
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
-              <pre class="api-pre"><code>{
+              <div class="api-pre-wrap">
+                <pre class="api-pre"><code>{
   <span class="jk">"success"</span>: <span class="jb">true</span>,
   <span class="jk">"count"</span>: <span class="jn">1</span>,
   <span class="jk">"mods"</span>: [
@@ -387,13 +374,13 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
     }
   ]
 }</code></pre>
-              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- GET /api/v2/clients -->
       <div class="ep-card" id="v2-clients">
         <div class="ep-header" onclick="_toggleEp(this)">
           <span class="ep-method m-get">GET</span>
@@ -417,65 +404,24 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
             </div>
             <div class="api-code-block">
               <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Response 200</span>
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
-              <pre class="api-pre"><code>{
+              <div class="api-pre-wrap">
+                <pre class="api-pre"><code>{
   <span class="jk">"success"</span>: <span class="jb">true</span>,
   <span class="jk">"count"</span>: <span class="jn">2</span>,
   <span class="jk">"clients"</span>: [
     { <span class="jk">"id"</span>: <span class="jn">1</span>, <span class="jk">"name"</span>: <span class="js">"Wurst Client"</span>, <span class="jk">"description"</span>: <span class="js">"..."</span> }
   ]
 }</code></pre>
-              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- GET /api/forum/post/<id>/messages -->
-      <div class="ep-card" id="forum-msgs">
-        <div class="ep-header" onclick="_toggleEp(this)">
-          <span class="ep-method m-get">GET</span>
-          <span class="ep-path">/api/forum/post/&lt;post_id&gt;/messages</span>
-          <span class="ep-desc">Get messages for a forum thread</span>
-          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </div>
-        <div class="ep-body-wrap">
-          <div class="ep-body">
-            <div class="param-table-wrap">
-              <table class="param-table">
-                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-                <tbody>
-                  <tr><td class="p-name">since</td><td class="p-type">string</td><td class="p-opt">optional</td><td>ISO datetime — return only messages newer than this timestamp</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="api-code-block">
-              <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Response 200</span>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
               </div>
-              <pre class="api-pre"><code>{
-  <span class="jk">"success"</span>: <span class="jb">true</span>,
-  <span class="jk">"total"</span>: <span class="jn">12</span>,
-  <span class="jk">"messages"</span>: [
-    {
-      <span class="jk">"id"</span>: <span class="js">"uuid-here"</span>,
-      <span class="jk">"author_name"</span>: <span class="js">"CoolPlayer"</span>,
-      <span class="jk">"author_tag"</span>: <span class="js">"user"</span>,
-      <span class="jk">"content"</span>: <span class="js">"Great mod!"</span>,
-      <span class="jk">"created_at"</span>: <span class="js">"2026-05-15T10:00:00"</span>,
-      <span class="jk">"reply_count"</span>: <span class="jn">2</span>
-    }
-  ]
-}</code></pre>
-              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- User API -->
     <section class="api-section" id="user-api">
       <div class="api-section-head">
         <div class="api-section-title">User API</div>
@@ -485,7 +431,6 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
         All User API endpoints require the header <code>X-Token: your_api_token</code>.
       </div>
 
-      <!-- POST /api/v2/upload -->
       <div class="ep-card" id="v2-upload">
         <div class="ep-header" onclick="_toggleEp(this)">
           <span class="ep-method m-post">POST</span>
@@ -514,29 +459,32 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
             </div>
             <div class="api-code-block">
               <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Success 200</span>
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
-              <pre class="api-pre"><code>{
+              <div class="api-pre-wrap">
+                <pre class="api-pre"><code>{
   <span class="jk">"success"</span>: <span class="jb">true</span>,
   <span class="jk">"id"</span>: <span class="jn">42</span>,
   <span class="jk">"url"</span>: <span class="js">"/mods/42/info"</span>,
   <span class="jk">"name"</span>: <span class="js">"My Mod"</span>,
   <span class="jk">"type"</span>: <span class="js">"mod"</span>
 }</code></pre>
-              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
             </div>
             <div class="api-code-block">
               <div class="api-code-label-row">
                 <span class="api-code-tag tag-error">&#10005; Error</span>
               </div>
-              <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">false</span>, <span class="jk">"error"</span>: <span class="js">"X-Name is required"</span> }</code></pre>
-              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              <div class="api-pre-wrap">
+                <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">false</span>, <span class="jk">"error"</span>: <span class="js">"X-Name is required"</span> }</code></pre>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- POST /api/v2/edit -->
       <div class="ep-card" id="v2-edit">
         <div class="ep-header" onclick="_toggleEp(this)">
           <span class="ep-method m-post">POST</span>
@@ -566,16 +514,17 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
             </div>
             <div class="api-code-block">
               <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Success 200</span>
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
-              <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"id"</span>: <span class="jn">42</span>, <span class="jk">"name"</span>: <span class="js">"Updated Mod Name"</span> }</code></pre>
-              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              <div class="api-pre-wrap">
+                <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"id"</span>: <span class="jn">42</span>, <span class="jk">"name"</span>: <span class="js">"Updated Mod Name"</span> }</code></pre>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- POST /api/v2/delete -->
       <div class="ep-card" id="v2-delete">
         <div class="ep-header" onclick="_toggleEp(this)">
           <span class="ep-method m-post">POST</span>
@@ -597,16 +546,17 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
             </div>
             <div class="api-code-block">
               <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Success 200</span>
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
-              <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"deleted"</span>: <span class="jn">42</span> }</code></pre>
-              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              <div class="api-pre-wrap">
+                <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"deleted"</span>: <span class="jn">42</span> }</code></pre>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- GET /api/v2/dashboard-data -->
       <div class="ep-card" id="v2-dashboard">
         <div class="ep-header" onclick="_toggleEp(this)">
           <span class="ep-method m-get">GET</span>
@@ -621,15 +571,15 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                 <tbody>
                   <tr><td class="p-name">token</td><td class="p-type">string</td><td class="p-req">required</td><td>Your API token (query param)</td></tr>
-                  <tr><td class="p-name">showfollow</td><td class="p-type">boolean</td><td class="p-opt">optional</td><td>Include follower/following lists (<code>true</code> / <code>false</code>)</td></tr>
                 </tbody>
               </table>
             </div>
             <div class="api-code-block">
               <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Response 200</span>
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
-              <pre class="api-pre"><code>{
+              <div class="api-pre-wrap">
+                <pre class="api-pre"><code>{
   <span class="jk">"success"</span>: <span class="jb">true</span>,
   <span class="jk">"username"</span>: <span class="js">"CoolPlayer"</span>,
   <span class="jk">"display_name"</span>: <span class="js">"Cool Player"</span>,
@@ -644,13 +594,13 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
     { <span class="jk">"id"</span>: <span class="jn">5</span>, <span class="jk">"name"</span>: <span class="js">"My Mod"</span>, <span class="jk">"views"</span>: <span class="jn">3200</span>, <span class="jk">"downloads"</span>: <span class="jn">240</span> }
   ]
 }</code></pre>
-              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- POST /api/v2/profile-edit -->
       <div class="ep-card" id="v2-profile">
         <div class="ep-header" onclick="_toggleEp(this)">
           <span class="ep-method m-post">POST</span>
@@ -672,26 +622,28 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                   <tr><td class="p-name">X-Password</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New password (min 6 chars)</td></tr>
                   <tr><td class="p-name">X-HideFollowers</td><td class="p-type">boolean</td><td class="p-opt">optional</td><td><code>true</code> to hide followers count</td></tr>
                   <tr><td class="p-name">X-HideFollowing</td><td class="p-type">boolean</td><td class="p-opt">optional</td><td><code>true</code> to hide following count</td></tr>
+                  <tr><td class="p-name">showfollow</td><td class="p-type">boolean</td><td class="p-opt">optional</td><td>Include follower/following lists (<code>true</code> / <code>false</code>)</td></tr>
                 </tbody>
               </table>
             </div>
             <div class="api-code-block">
               <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Success 200</span>
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
-              <pre class="api-pre"><code>{
+              <div class="api-pre-wrap">
+                <pre class="api-pre"><code>{
   <span class="jk">"success"</span>: <span class="jb">true</span>,
   <span class="jk">"username"</span>: <span class="js">"NewName"</span>,
   <span class="jk">"display_name"</span>: <span class="js">"New Display Name"</span>
 }</code></pre>
-              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Admin API -->
     <section class="api-section" id="admin-api">
       <div class="api-section-head">
         <div class="api-section-title">Admin API</div>
@@ -702,7 +654,6 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
         Non-admin tokens will receive a <code>403</code> error.
       </div>
 
-      <!-- POST /api/v3/edit -->
       <div class="ep-card" id="v3-edit">
         <div class="ep-header" onclick="_toggleEp(this)">
           <span class="ep-method m-post">POST</span>
@@ -726,16 +677,17 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
             </div>
             <div class="api-code-block">
               <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Success 200</span>
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
-              <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"id"</span>: <span class="jn">42</span>, <span class="jk">"name"</span>: <span class="js">"Updated Name"</span> }</code></pre>
-              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              <div class="api-pre-wrap">
+                <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"id"</span>: <span class="jn">42</span>, <span class="jk">"name"</span>: <span class="js">"Updated Name"</span> }</code></pre>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- POST /api/v3/user -->
       <div class="ep-card" id="v3-user">
         <div class="ep-header" onclick="_toggleEp(this)">
           <span class="ep-method m-post">POST</span>
@@ -757,16 +709,17 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
             </div>
             <div class="api-code-block">
               <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Success 200</span>
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
-              <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"action"</span>: <span class="js">"ban"</span>, <span class="jk">"user_id"</span>: <span class="js">"uuid"</span> }</code></pre>
-              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              <div class="api-pre-wrap">
+                <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"action"</span>: <span class="js">"ban"</span>, <span class="jk">"user_id"</span>: <span class="js">"uuid"</span> }</code></pre>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- GET /api/v3/data -->
       <div class="ep-card" id="v3-data">
         <div class="ep-header" onclick="_toggleEp(this)">
           <span class="ep-method m-get">GET</span>
@@ -786,9 +739,10 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
             </div>
             <div class="api-code-block">
               <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Response 200</span>
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
-              <pre class="api-pre"><code>{
+              <div class="api-pre-wrap">
+                <pre class="api-pre"><code>{
   <span class="jk">"success"</span>: <span class="jb">true</span>,
   <span class="jk">"total_users"</span>: <span class="jn">1284</span>,
   <span class="jk">"total_mods"</span>: <span class="jn">342</span>,
@@ -796,7 +750,8 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
   <span class="jk">"total_views"</span>: <span class="jn">98421</span>,
   <span class="jk">"total_downloads"</span>: <span class="jn">24890</span>
 }</code></pre>
-              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
             </div>
           </div>
         </div>
@@ -804,10 +759,10 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
     </section>
 
   </main>
-</div><!-- /api-layout -->
+</div>
 
-</div><!-- /container -->
-</div><!-- /page-content -->
+</div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -818,7 +773,7 @@ function _toggleEp(header) {
 }
 
 function _copyPre(btn) {
-  var pre = btn.closest('.api-code-block').querySelector('pre');
+  var pre = btn.closest('.api-pre-wrap').querySelector('pre');
   var text = pre ? pre.innerText : '';
   navigator.clipboard.writeText(text).then(function() {
     btn.textContent = 'Copied!';
@@ -830,7 +785,6 @@ function _copyPre(btn) {
   });
 }
 
-// TOC active on scroll
 (function() {
   var links = document.querySelectorAll('.api-toc-link[href^="#"]');
   var sections = Array.from(links).map(function(l) {
