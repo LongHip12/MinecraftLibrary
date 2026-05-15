@@ -1,0 +1,1203 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} — Forum — Lonely Hub{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/forum.css">
+<style>
+.chat-input-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: rgba(10,10,15,0.97);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 0;
+  overflow: visible;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  max-width: 100vw;
+}
+.chat-reply-banner {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(250,80,80,0.07);
+  border-bottom: 1px solid rgba(250,80,80,0.18);
+  font-size: 13px;
+  color: var(--text2);
+}
+.chat-reply-banner.visible { display: flex; }
+.chat-reply-banner svg { color: var(--primary); flex-shrink:0; }
+.chat-reply-banner strong { color: var(--primary); }
+.chat-reply-preview {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text3);
+}
+.chat-reply-x {
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 17px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.chat-reply-x:hover { color: var(--primary); background: rgba(250,80,80,0.1); }
+.chat-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 12px 14px;
+}
+.chat-input-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+.chat-form-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.chat-textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 14px;
+  resize: none;
+  min-height: 42px;
+  max-height: 160px;
+  font-family: inherit;
+  transition: border-color 0.2s, min-height 0.15s;
+  line-height: 1.5;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+.chat-textarea:focus { outline: none; border-color: var(--primary); }
+.chat-file-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 0 4px;
+}
+.chat-file-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text2);
+}
+.chat-file-preview-item img { width:28px;height:28px;object-fit:cover;border-radius:4px; }
+@keyframes _fadeInMsg { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── New messages pill ─────────────── */
+.new-msgs-pill {
+  position: sticky;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 20px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  z-index: 400;
+  box-shadow: 0 4px 24px rgba(250,80,80,0.5), 0 1px 0 rgba(255,255,255,0.1) inset;
+  white-space: nowrap;
+  animation: _pillIn 0.28s cubic-bezier(.34,1.56,.64,1);
+  margin: 12px auto;
+  width: fit-content;
+}
+.new-msgs-pill:hover {
+  background: #ff5555;
+  transform: translateX(-50%) scale(1.04);
+  box-shadow: 0 6px 32px rgba(250,80,80,0.6);
+}
+@keyframes _pillIn {
+  from { opacity:0; transform:translateX(-50%) translateY(14px) scale(.9); }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
+}
+.chat-btns {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding-bottom: 2px;
+  flex-shrink: 0;
+}
+.chat-attach-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--text3);
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.chat-attach-btn:hover { color: var(--primary); border-color: rgba(250,80,80,0.4); background: rgba(250,80,80,0.07); }
+.chat-attach-btn input { display: none; }
+.chat-send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+.chat-send-btn:hover { opacity: 0.85; transform: scale(1.05); }
+.chat-attach-count {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 4px;
+  padding-left: 4px;
+}
+@media (max-width: 768px) {
+  .chat-textarea { font-size: 16px; line-height: 1.45; }
+  .chat-input-row { padding: 8px 10px; gap: 6px; }
+  .chat-input-avatar { width: 28px; height: 28px; margin-bottom: 1px; }
+  .chat-btns { gap: 3px; }
+  .chat-attach-btn { width: 34px; height: 34px; }
+  .chat-send-btn { width: 34px; height: 34px; }
+  .reply-form-box textarea { font-size: 16px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+<div class="container" style="padding-bottom:160px;">
+
+  <div class="forum-breadcrumb" style="padding-top:20px;">
+    <a href="/forum">Forum</a>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    <a href="/forum?category={{ post.category | replace(' ','%20') }}">{{ post.category }}</a>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    <span>{{ post.title[:48] }}{% if post.title|length > 48 %}…{% endif %}</span>
+  </div>
+
+  <div class="forum-post-header">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+          <span class="post-category-badge">{{ post.category }}</span>
+          {% if post.pinned %}<span class="badge-pinned"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg> Pinned</span>{% endif %}
+          {% if post.locked %}<span class="badge-locked"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Locked</span>{% endif %}
+        </div>
+        <h1 class="forum-post-big-title">{{ post.title }}</h1>
+        <div class="post-author-row">
+          {% if post.author and post.author.id %}
+          <a href="/users/{{ post.author.username }}">
+            <img class="post-author-avatar" src="{{ post.author.avatar if post.author.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="">
+          </a>
+          {% else %}
+          <img class="post-author-avatar" src="https://i.imgur.com/BCzwCla.png" alt="">
+          {% endif %}
+          <div>
+            {% if post.author and post.author.id %}
+            <a class="post-author-name" href="/users/{{ post.author.username }}">{{ post.author.display_name }}</a>
+            {% else %}
+            <span class="post-author-name" style="color:var(--text2);">Anonymous</span>
+            {% endif %}
+            {% if post.author and post.author.tag == 'admin' %}<span class="tag tag-admin" style="margin-left:5px;">Admin</span>{% endif %}
+            <div class="post-date">{{ post.created_at[:16].replace('T',' ') }} UTC</div>
+          </div>
+          {% if user and (user.tag == 'admin' or (post.author and post.author.id and user.id == post.author.id)) %}
+          <div class="post-admin-actions">
+            <button class="btn btn-ghost btn-sm" onclick="togglePin('{{ post.id }}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+              {{ 'Unpin' if post.pinned else 'Pin' }}
+            </button>
+            {% if user.tag == 'admin' %}
+            <button class="btn btn-ghost btn-sm" onclick="toggleLock('{{ post.id }}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              {{ 'Unlock' if post.locked else 'Lock' }}
+            </button>
+            {% endif %}
+            <button class="btn btn-danger btn-sm" onclick="deletePost('{{ post.id }}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+              <span>Delete</span>
+            </button>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+        <span class="forum-stat-chip" style="font-size:13px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          {{ post.views }} <span>views</span>
+        </span>
+        <span class="forum-stat-chip" style="font-size:13px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          {{ post.reply_count }} <span>replies</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="post-body-card">
+      <div class="post-body-text">{{ post.content }}</div>
+      {% if post.attachments %}
+      <div class="attachments-section">
+        <div class="attachments-title">Attachments ({{ post.attachments|length }})</div>
+        <div class="attachments-grid" id="gallery-post">
+          {% for att in post.attachments %}
+            {% if att.is_image %}
+            <div class="attach-image-wrap" data-url="{{ att.url }}" data-name="{{ att.original_name }}" onclick="openLightbox(event,this)">
+              <img src="{{ att.url }}" alt="{{ att.original_name }}" loading="lazy">
+              <div class="img-3dot-btn" onclick="toggleImgMenu(event,this)" title="Options">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+              </div>
+              <div class="img-menu-drop">
+                <button class="img-menu-item" onclick="downloadForumImg(event,'{{ att.url }}','{{ att.original_name }}')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Download
+                </button>
+              </div>
+            </div>
+            {% else %}
+            <a class="attach-file-btn" href="/forum/download/{{ att.id }}">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+              {{ att.original_name }}
+              <span class="attach-file-size">{{ (att.size / 1024)|round(1) }} KB</span>
+            </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="messages-section" id="messages">
+    <div class="messages-header">
+      <h2 style="font-size:17px;font-weight:800;color:var(--text);">Replies</h2>
+      <span class="messages-count-badge">{{ post.reply_count }}</span>
+    </div>
+
+    {% if post.messages %}
+    {% for msg in post.messages %}
+    <div class="message-card" id="msg-{{ msg.id }}">
+      <div class="message-author-row">
+        {% if msg.author and msg.author.id %}
+        <a href="/users/{{ msg.author.username }}">
+          <img class="msg-avatar" src="{{ msg.author.avatar if msg.author.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="">
+        </a>
+        {% else %}
+        <img class="msg-avatar" src="https://i.imgur.com/BCzwCla.png" alt="">
+        {% endif %}
+        <div>
+          {% if msg.author and msg.author.id %}
+          <a class="msg-author-name" href="/users/{{ msg.author.username }}">{{ msg.author.display_name }}</a>
+          {% else %}
+          <span class="msg-author-name" style="color:var(--text2);">Anonymous</span>
+          {% endif %}
+          {% if msg.author and msg.author.tag == 'admin' %}<span class="tag tag-admin" style="margin-left:5px;font-size:9px;">Admin</span>{% endif %}
+          <span class="msg-date">{{ msg.created_at[:16].replace('T',' ') }} UTC</span>
+        </div>
+      </div>
+
+      {% if msg.content %}
+      <div class="msg-body">{{ msg.content }}</div>
+      {% endif %}
+
+      {% if msg.attachments %}
+      <div class="attachments-section" style="margin-top:12px;">
+        <div class="attachments-grid">
+          {% for att in msg.attachments %}
+            {% if att.is_image %}
+            <div class="attach-image-wrap" data-url="{{ att.url }}" data-name="{{ att.original_name }}" onclick="openLightbox(event,this)">
+              <img src="{{ att.url }}" alt="{{ att.original_name }}" loading="lazy">
+              <div class="img-3dot-btn" onclick="toggleImgMenu(event,this)" title="Options">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+              </div>
+              <div class="img-menu-drop">
+                <button class="img-menu-item" onclick="downloadForumImg(event,'{{ att.url }}','{{ att.original_name }}')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Download
+                </button>
+              </div>
+            </div>
+            {% else %}
+            <a class="attach-file-btn" href="/forum/download/{{ att.id }}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+              {{ att.original_name }}
+              <span class="attach-file-size">{{ (att.size / 1024)|round(1) }} KB</span>
+            </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="msg-actions">
+        {% if not post.locked or (user and user.tag == 'admin') %}
+        <button class="reply-btn"
+          data-msg="{{ msg.id }}"
+          data-author="{{ msg.author.display_name if msg.author and msg.author.id else 'Anonymous' }}"
+          data-preview="{{ (msg.content or '')[:60] }}"
+          onclick="triggerReply(this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+          <span>Reply</span>
+        </button>
+        {% endif %}
+        {% if user and (user.tag == 'admin' or user.id == msg.author_id or (post.author and post.author.id and user.id == post.author.id)) %}
+        <button class="delete-msg-btn" onclick="deleteMsg('{{ post.id }}','{{ msg.id }}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+          <span>Delete</span>
+        </button>
+        {% endif %}
+        <div class="msg-reactions" id="msg-reactions-{{ msg.id }}" style="display:flex;flex-wrap:wrap;gap:5px;margin-left:4px;">
+        {% set mreacts = msg.reactions | default({}) %}
+        {% for emoji, urlist in mreacts.items() %}
+        {% if urlist|length > 0 %}
+        <button class="react-chip {% if user and user.id in urlist %}active{% endif %}"
+          style="font-size:12px;padding:2px 8px;"
+          data-emoji="{{ emoji }}" data-msg="{{ msg.id }}"
+          onclick="toggleMsgReact('{{ post.id }}','{{ msg.id }}',this.dataset.emoji)">
+          {{ emoji }}<span>{{ urlist|length }}</span>
+        </button>
+        {% endif %}
+        {% endfor %}
+        {% if user %}
+        <button class="react-add-btn" style="font-size:11px;padding:2px 6px;" type="button"
+          onclick="toggleMsgEmojiPicker(event,'{{ post.id }}','{{ msg.id }}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+        {% endif %}
+      </div>
+      {% if msg.replies %}
+        <button class="toggle-replies-btn" data-target="replies-{{ msg.id }}" style="margin-left:auto;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          <span>Show {{ msg.replies|length }} {{ 'reply' if msg.replies|length == 1 else 'replies' }}</span>
+        </button>
+        {% endif %}
+      </div>
+
+      {% if msg.replies %}
+      <div class="replies-list" id="replies-{{ msg.id }}" style="display:none;">
+        {% for rep in msg.replies %}
+        <div class="reply-card" id="rep-{{ rep.id }}">
+          {% if rep.author and rep.author.id %}
+          <a href="/users/{{ rep.author.username }}">
+            <img class="reply-avatar" src="{{ rep.author.avatar if rep.author.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="">
+          </a>
+          {% else %}
+          <img class="reply-avatar" src="https://i.imgur.com/BCzwCla.png" alt="">
+          {% endif %}
+          <div class="reply-content-wrap">
+            <div class="reply-author-row">
+              {% if rep.author and rep.author.id %}
+              <a class="reply-author-name" href="/users/{{ rep.author.username }}">{{ rep.author.display_name }}</a>
+              {% else %}
+              <span class="reply-author-name" style="color:var(--text2);">Anonymous</span>
+              {% endif %}
+              {% if rep.author and rep.author.tag == 'admin' %}<span class="tag tag-admin" style="font-size:9px;">Admin</span>{% endif %}
+              <span class="reply-date">{{ rep.created_at[:16].replace('T',' ') }} UTC</span>
+            </div>
+            {% if rep.content %}<div class="reply-body">{{ rep.content }}</div>{% endif %}
+            {% if rep.attachments %}
+            <div class="attachments-grid" style="margin-top:8px;">
+              {% for att in rep.attachments %}
+                {% if att.is_image %}
+                <div class="attach-image-wrap" style="max-width:200px;" data-url="{{ att.url }}" data-name="{{ att.original_name }}" onclick="openLightbox(event,this)">
+                  <img src="{{ att.url }}" alt="{{ att.original_name }}" loading="lazy">
+                  <div class="img-3dot-btn" onclick="toggleImgMenu(event,this)" title="Options">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                  </div>
+                  <div class="img-menu-drop">
+                    <button class="img-menu-item" onclick="downloadForumImg(event,'{{ att.url }}','{{ att.original_name }}')">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                      Download
+                    </button>
+                  </div>
+                </div>
+                {% else %}
+                <a class="attach-file-btn" href="/forum/download/{{ att.id }}" style="font-size:12px;padding:6px 10px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                  {{ att.original_name }}
+                  <span class="attach-file-size">{{ (att.size / 1024)|round(1) }} KB</span>
+                </a>
+                {% endif %}
+              {% endfor %}
+            </div>
+            {% endif %}
+            <div class="msg-reactions" id="rep-reactions-{{ rep.id }}" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;align-items:center;">
+              {% set rreacts = rep.reactions | default({}) %}
+              {% for emoji, urlist in rreacts.items() %}
+              {% if urlist|length > 0 %}
+              <button class="react-chip {% if user and user.id in urlist %}active{% endif %}"
+                style="font-size:12px;padding:2px 8px;"
+                data-emoji="{{ emoji }}" data-rep="{{ rep.id }}"
+                onclick="toggleReplyReact('{{ post.id }}','{{ msg.id }}','{{ rep.id }}',this.dataset.emoji)">
+                {{ emoji }}<span>{{ urlist|length }}</span>
+              </button>
+              {% endif %}
+              {% endfor %}
+              {% if user %}
+              <button class="react-add-btn" style="font-size:11px;padding:2px 6px;" type="button"
+                onclick="toggleReplyEmojiPicker(event,'{{ post.id }}','{{ msg.id }}','{{ rep.id }}')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
+              {% endif %}
+            </div>
+            {% if user and (user.tag == 'admin' or user.id == rep.author_id or (post.author and user.id == post.author.id)) %}
+            <button class="delete-msg-btn" onclick="deleteReply('{{ post.id }}','{{ msg.id }}','{{ rep.id }}')" style="margin-top:6px;" title="Delete reply">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
+            </button>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="text-align:center;padding:40px;color:var(--text3);font-size:14px;">
+      No replies yet — be the first to respond!
+    </div>
+    {% endif %}
+
+    {% if post.locked and not (user and user.tag == 'admin') %}
+    <div class="locked-notice">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+      <span>This thread is locked. New replies are not allowed.</span>
+    </div>
+    {% else %}
+    <button class="new-msgs-pill" id="new-msgs-pill" onclick="_jumpToLatest()" style="display:none;" type="button">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      <span id="new-msgs-pill-text">New messages</span>
+    </button>
+    <div class="chat-input-bar" id="chat-input-bar">
+      <div class="chat-reply-banner" id="chat-reply-banner">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+        <span>Replying to <strong id="chat-reply-author-name"></strong></span>
+        <span class="chat-reply-preview" id="chat-reply-preview-text"></span>
+        <button class="chat-reply-x" onclick="cancelReply()" title="Cancel reply">×</button>
+      </div>
+      <div class="chat-input-row">
+        <img src="{{ user.avatar if user and user.avatar else 'https://i.imgur.com/BCzwCla.png' }}"
+             alt="" class="chat-input-avatar">
+        <div class="chat-form-wrap">
+          <form method="POST" action="/forum/post/{{ post.id }}/message" enctype="multipart/form-data" id="chat-form">
+            <input type="hidden" id="chat-reply-to" name="reply_to_msg_id" value="">
+            <textarea name="content" id="chat-textarea" class="chat-textarea"
+              placeholder="{% if user %}Reply as {{ user.display_name }}…{% else %}Reply as Anonymous…{% endif %}"
+              rows="1"
+              oninput="autoGrow(this)"></textarea>
+            <div class="chat-file-previews" id="chat-file-previews"></div>
+            <input type="file" id="chat-files-input" name="files" multiple accept="image/*,*/*" style="display:none" onchange="previewChatFiles(this)">
+          </form>
+        </div>
+        <div class="chat-btns">
+          <button class="chat-attach-btn" type="button" title="Insert emoji" onclick="toggleForumEmoji(event)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+          </button>
+          <label class="chat-attach-btn" id="chat-attach-label" title="Attach files" style="position:relative;" onclick="document.getElementById('chat-files-input').click()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+          </label>
+          <button class="chat-attach-btn" id="chat-attach-more-btn" type="button" title="Add more files" style="display:none;font-size:18px;font-weight:700;line-height:1;" onclick="document.getElementById('chat-files-input').click()">+</button>
+          <button class="chat-send-btn" title="Send" type="button" onclick="sendChatMessage()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+</div>
+
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+  </button>
+  <button class="lightbox-nav lightbox-prev" onclick="lightboxPrev(event)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </button>
+  <button class="lightbox-nav lightbox-next" onclick="lightboxNext(event)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+  </button>
+  <div class="lightbox-content" onclick="event.stopPropagation()">
+    <img id="lightbox-img" src="" alt="" draggable="false">
+    <div class="lightbox-footer">
+      <span id="lightbox-name" class="lightbox-filename"></span>
+      <div class="lightbox-actions">
+        <span id="lightbox-counter" class="lightbox-counter"></span>
+        <button class="lightbox-dl-btn" onclick="downloadForumImg(event, document.getElementById('lightbox-img').src, document.getElementById('lightbox-name').textContent)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/forum.js"></script>
+<script>
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+
+function triggerReply(btn) {
+  var msgId = btn.dataset.msg;
+  var author = btn.dataset.author;
+  var preview = btn.dataset.preview || '';
+  document.getElementById('chat-reply-to').value = msgId;
+  document.getElementById('chat-reply-author-name').textContent = '@' + author;
+  document.getElementById('chat-reply-preview-text').textContent = preview ? '— ' + preview : '';
+  document.getElementById('chat-reply-banner').classList.add('visible');
+  document.getElementById('chat-form').action = '/forum/message/{{ post.id }}/' + msgId + '/reply';
+  var ta = document.getElementById('chat-textarea');
+  ta.focus();
+  document.getElementById('chat-input-bar').scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+function cancelReply() {
+  document.getElementById('chat-reply-to').value = '';
+  document.getElementById('chat-reply-banner').classList.remove('visible');
+  document.getElementById('chat-form').action = '/forum/post/{{ post.id }}/message';
+}
+
+var _EMOJI_CATS = {
+  'Smileys': ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🥸','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🫣','🤗','🫡','🤔','🫠','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥹','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖'],
+  'People': ['👋','🤚','🖐️','✋','🖖','🫱','🫲','🫳','🫴','👌','🤌','🤏','✌️','🤞','🫰','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','🫵','👍','👎','✊','👊','🤛','🤜','👏','🙌','🫶','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🫀','🫁','🧠','🦷','🦴','👁️','👀','👅','👄','🫦','💋'],
+  'Animals': ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🪱','🐛','🦋','🐌','🐞','🐜','🪲','🦟','🦗','🕷️','🦂','🐢','🐍','🦎','🦖','🦕','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🦭','🐊','🐅','🐆','🦓','🦍','🦧','🦣','🐘','🦛','🦏','🐪','🐫','🦒','🦘','🦬','🐃','🐂','🐄','🐎','🐖','🐏','🐑','🦙','🐐','🦌','🐕','🐩','🦮','🐈','🐈‍⬛','🪶','🐓','🦃','🦤','🦚','🦜','🦢','🦩','🕊️','🐇','🦝','🦨','🦡','🦫','🦦','🦥','🐁','🐀','🐿️','🦔'],
+  'Food': ['🍏','🍎','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🫒','🥑','🍆','🥦','🥬','🥒','🌶️','🫑','🧄','🧅','🥔','🍠','🥐','🥯','🍞','🥖','🥨','🧀','🥚','🍳','🧈','🥞','🧇','🥓','🥩','🍗','🍖','🌭','🍔','🍟','🍕','🫓','🥪','🥙','🧆','🌮','🌯','🫔','🥗','🥘','🫕','🥫','🍝','🍜','🍲','🍛','🍣','🍱','🥟','🦪','🍤','🍙','🍘','🍥','🥮','🍢','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍿','🍩','🍪','🌰','🥜','🍯','🧃','🥤','🧋','🍵','☕','🫖','🍺','🍻','🥂','🍷','🥃','🍸','🍹','🧉','🍾','🧊'],
+  'Travel': ['🚗','🚕','🚙','🚌','🚎','🚐','🚑','🚒','🚓','🚔','🚖','🚗','🚘','🚚','🚛','🚜','🏎️','🏍️','🛵','🛺','🚲','🛴','🛹','🛼','🚏','🛣️','🛤️','⛽','🛞','🚨','🚥','🚦','🚧','⚓','🛟','⛵','🛶','🚤','🛳️','⛴️','🛥️','🚢','✈️','🛩️','🛫','🛬','🪂','💺','🚁','🛸','🚀','🛰️','🪐','🌍','🌎','🌏','🌐','🗺️','🧭','🏔️','⛰️','🌋','🗻','🏕️','🏖️','🏜️','🏝️','🏞️','🏟️','🏛️','🏗️','🧱','🏘️','🏚️','🏠','🏡','🏢','🏣','🏤','🏥','🏦','🏨','🏩','🏪','🏫','🏬','🏭','🏯','🏰','💒','🗼','🗽','⛪','🕌','🕍','🗾','🎌','🏴','🚩','🎏'],
+  'Objects': ['⌚','📱','💻','⌨️','🖥️','🖨️','🖱️','🖲️','💾','💿','📀','🧮','📷','📸','📹','🎥','📽️','🎞️','📞','☎️','📟','📠','📺','📻','🧭','⏱️','⏲️','⏰','🕰️','⌛','⏳','📡','🔋','🔌','💡','🔦','🕯️','🪔','🧯','🛢️','💰','💵','💴','💶','💷','💸','💳','🪙','💹','📈','📉','📊','📋','📁','📂','🗂️','🗒️','🗓️','📆','📅','📇','📌','📍','🗺️','📏','📐','✂️','🗃️','🗄️','🗑️','🔒','🔓','🔏','🔐','🔑','🗝️','🔨','🪓','⛏️','⚒️','🛠️','🗡️','⚔️','🛡️','🪃','🏹','🪚','🔧','🪛','🔩','⚙️','🗜️','⚗️','🧪','🧫','🧬','🔭','🔬','🕳️','🩹','🩺','💊','💉','🩸','🧬','🦠','🧲','🪜','🧱','🔑','🗝️','🔎','🔍'],
+  'Symbols': ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','❣️','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✝️','☪️','🕉️','☸️','✡️','🔯','🪯','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆔','⚛️','🉑','☢️','☣️','📴','📳','🈶','🈚','🈸','🈺','🈷️','✴️','🆚','💮','🉐','㊙️','㊗️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📛','🚫','💯','💢','♨️','🚷','🚯','🚳','🚱','🔞','📵','🚭','❗','❕','❓','❔','‼️','⁉️','🔅','🔆','〽️','⚠️','🔱','⚜️','🔰','♻️','✅','🈯','💹','❇️','✳️','❎','🌐','💠','Ⓜ️','🌀','💤','🏧','🚾','♿','🅿️','🛗','🈳','🈹','🚺','🚹','🚼','⚧️','🚻','🚮','🎦','🛂','🛃','🛄','🛅','🚸','🔃','🔄','🔙','🔛','🔝','🔜','🔚'],
+  'Activities': ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🏒','🏑','🥍','🏏','🪃','🥅','⛳','🪁','🛝','🏹','🎣','🤿','🥊','🥋','🥅','⛸️','🛷','🎿','🛼','🛹','🎯','🎱','🎮','🕹️','🎲','🧩','🧸','♟️','🪅','🪩','🪆','♠️','♥️','♦️','♣️','♟️','🃏','🀄','🎴','🎭','🎨','🧵','🪡','🧶','🪢','👓','🕶️','🥽','🌂','☂️','🎃','🎄','🎆','🎇','🧨','✨','🎉','🎊','🎋','🎍','🎎','🎐','🎑','🧧','🎁','🎗️','🎟️','🎫','🏅','🥇','🥈','🥉','🏆','🥁','🪘','🎷','🎺','🎸','🎻','🪕','🎹','🪗'],
+};
+var _FORUM_EMOJIS = Object.values(_EMOJI_CATS).flat();
+
+function _buildEmojiPicker() {
+  var picker = document.createElement('div');
+  picker.id = 'forum-emoji-picker-float';
+  picker.className = 'forum-emoji-picker-float';
+  var search = document.createElement('input');
+  search.type = 'text';
+  search.className = 'forum-emoji-search';
+  search.placeholder = 'Search emoji…';
+  var grid = document.createElement('div');
+  grid.className = 'forum-emoji-grid';
+  grid.id = 'forum-emoji-grid';
+  function renderGrid(filter) {
+    grid.innerHTML = '';
+    var list = filter ? _FORUM_EMOJIS.filter(function(em) { return em.includes(filter); }) : _FORUM_EMOJIS;
+    if (list.length === 0) {
+      var none = document.createElement('span');
+      none.style.cssText = 'grid-column:1/-1;font-size:12px;color:var(--text3);padding:8px;text-align:center;';
+      none.textContent = 'No results';
+      grid.appendChild(none);
+      return;
+    }
+    list.forEach(function(em) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'forum-emoji-btn'; b.textContent = em;
+      b.onclick = function() { insertForumEmoji(em); };
+      grid.appendChild(b);
+    });
+  }
+  search.addEventListener('input', function() { renderGrid(search.value); });
+  renderGrid('');
+  picker.appendChild(search);
+  picker.appendChild(grid);
+  document.body.appendChild(picker);
+  return picker;
+}
+
+function toggleForumEmoji(e) {
+  e.stopPropagation();
+  var picker = document.getElementById('forum-emoji-picker-float');
+  if (!picker) picker = _buildEmojiPicker();
+  var showing = picker.style.display === 'block';
+  picker.style.display = showing ? 'none' : 'block';
+  if (!showing) {
+    var searchEl = picker.querySelector('.forum-emoji-search');
+    if (searchEl) { searchEl.value = ''; }
+    var grid = document.getElementById('forum-emoji-grid');
+    if (grid) {
+      grid.innerHTML = '';
+      _FORUM_EMOJIS.forEach(function(em) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'forum-emoji-btn'; b.textContent = em;
+        b.onclick = function() { insertForumEmoji(em); };
+        grid.appendChild(b);
+      });
+    }
+    var btn = e.currentTarget;
+    picker.style.left = '-9999px';
+    picker.style.top = '-9999px';
+    requestAnimationFrame(function() {
+      var r = btn.getBoundingClientRect();
+      var ph = picker.offsetHeight;
+      var pw = picker.offsetWidth;
+      var top = r.top - ph - 8 + window.scrollY;
+      if (top < window.scrollY + 8) top = r.bottom + 8 + window.scrollY;
+      picker.style.left = Math.min(r.left, window.innerWidth - pw - 8) + 'px';
+      picker.style.top = top + 'px';
+      if (searchEl) searchEl.focus();
+    });
+  }
+}
+
+function insertForumEmoji(em) {
+  var ta = document.getElementById('chat-textarea');
+  var start = ta.selectionStart, end = ta.selectionEnd;
+  ta.value = ta.value.slice(0, start) + em + ta.value.slice(end);
+  ta.selectionStart = ta.selectionEnd = start + em.length;
+  ta.focus();
+  autoGrow(ta);
+  var p = document.getElementById('forum-emoji-picker-float');
+  if (p) p.style.display = 'none';
+}
+
+document.addEventListener('click', function(e) {
+  var p = document.getElementById('forum-emoji-picker-float');
+  if (p && !p.contains(e.target)) p.style.display = 'none';
+});
+
+async function sendChatMessage() {
+  var ta = document.getElementById('chat-textarea');
+  var content = ta.value.trim();
+  var files = typeof getChatFiles === 'function' ? getChatFiles() : [];
+  if (!content && files.length === 0) { ta.focus(); return; }
+
+  var btn = document.querySelector('.chat-send-btn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+
+  var fd = new FormData();
+  fd.append('content', ta.value);
+  var replyTo = document.getElementById('chat-reply-to');
+  if (replyTo && replyTo.value) fd.append('reply_to_msg_id', replyTo.value);
+  files.forEach(function(f) { fd.append('files', f); });
+
+  var formEl = document.getElementById('chat-form');
+  var action = formEl ? formEl.action : '/forum/post/{{ post.id }}/message';
+
+  try {
+    var resp = await fetch(action, { method: 'POST', body: fd });
+    var data = await resp.json();
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    if (data.success) {
+      ta.value = '';
+      ta.style.height = '';
+      if (typeof clearChatFiles === 'function') clearChatFiles();
+      cancelReply();
+      if (typeof showToast === 'function') showToast('Message sent!');
+      setTimeout(function() { _pollMessages(true); }, 600);
+    } else {
+      if (typeof showToast === 'function') showToast(data.error || 'Failed to send', 'error');
+    }
+  } catch(err) {
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    if (typeof showToast === 'function') showToast('Network error. Try again.', 'error');
+  }
+}
+
+// ── Discord-style live message polling ──────────────────
+var _lastMsgTs = '{{ (messages[-1].created_at if messages else "") | replace("'","") }}';
+
+function _escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function _renderNewMsgHtml(msg) {
+  var ts = msg.created_at ? msg.created_at.replace('T',' ').slice(0,16) : '';
+  return '<img src="https://i.imgur.com/BCzwCla.png" class="msg-avatar" alt="">' +
+    '<div class="msg-body">' +
+    '<div class="msg-header">' +
+    '<span class="msg-author">' + _escHtml(msg.author_name) + '</span>' +
+    '<span class="msg-time" style="margin-left:6px;font-size:12px;color:var(--text3);">' + ts + '</span>' +
+    '</div>' +
+    '<div class="msg-text">' + _escHtml(msg.content) + '</div>' +
+    '</div>';
+}
+
+var _pendingNewMsgs = 0;
+
+function _isNearBottom() {
+  var threshold = 220;
+  return (document.documentElement.scrollHeight - window.scrollY - window.innerHeight) < threshold;
+}
+
+function _showNewMsgsPill(count) {
+  var pill = document.getElementById('new-msgs-pill');
+  var txt  = document.getElementById('new-msgs-pill-text');
+  if (!pill) return;
+  _pendingNewMsgs += count;
+  if (txt) txt.textContent = '↓ ' + _pendingNewMsgs + ' new message' + (_pendingNewMsgs === 1 ? '' : 's');
+  pill.style.display = 'flex';
+}
+
+function _hideNewMsgsPill() {
+  var pill = document.getElementById('new-msgs-pill');
+  if (pill) pill.style.display = 'none';
+  _pendingNewMsgs = 0;
+}
+
+function _jumpToLatest() {
+  var bar = document.getElementById('chat-input-bar');
+  if (bar) bar.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  _hideNewMsgsPill();
+}
+
+function _appendNewMessages(msgs) {
+  var section = document.getElementById('messages');
+  if (!section) return;
+  var added = 0;
+  var atBottom = _isNearBottom();
+  msgs.forEach(function(msg) {
+    if (document.getElementById('msg-' + msg.id)) return;
+    var div = document.createElement('div');
+    div.className = 'message-card';
+    div.id = 'msg-' + msg.id;
+    div.style.cssText = 'animation:_fadeInMsg 0.3s ease;';
+    div.innerHTML = _renderNewMsgHtml(msg);
+    section.appendChild(div);
+    added++;
+  });
+  if (added > 0) {
+    if (atBottom) {
+      var bar = document.getElementById('chat-input-bar');
+      if (bar) bar.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    } else {
+      _showNewMsgsPill(added);
+    }
+  }
+}
+
+// Hide pill when user scrolls to bottom
+window.addEventListener('scroll', function() {
+  if (_isNearBottom() && _pendingNewMsgs > 0) _hideNewMsgsPill();
+}, { passive: true });
+
+function _pollMessages(immediate) {
+  if (!_lastMsgTs) return;
+  fetch('/api/forum/post/{{ post.id }}/messages?since=' + encodeURIComponent(_lastMsgTs))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success && data.messages && data.messages.length > 0) {
+        _lastMsgTs = data.messages[data.messages.length - 1].created_at;
+        _appendNewMessages(data.messages);
+      }
+    }).catch(function() {});
+}
+
+// Start polling every 5 seconds
+(function() {
+  var msgSection = document.getElementById('messages');
+  if (msgSection) {
+    setInterval(function() { _pollMessages(false); }, 5000);
+  }
+})();
+
+// file previews are handled by forum.js window.previewChatFiles (accumulates, not replaces)
+
+// ── Message reactions ───────────────────────────────────
+var _msgEmojiTarget = null; // {postId, msgId}
+var _QUICK_EMOJIS = ['😀','😂','😍','🥰','😎','🤩','😱','🤔','🙄','😴','💀','😈','🤡','👻','🔥','💯','✅','❌','👍','👎','👋','🙌','🤝','💪','❤️','💔','💕','⭐','🎉','🎮','⚔️','🛡️','🏆','🎯','💎','🍀','🌟','🚀','🌈','⚡','🧠','🫶','🤌','👌','✌️','😮','😵','😤','🤯','👀','🫡','🫣','🥹'];
+
+function _buildMsgEmojiPicker() {
+  var p = document.createElement('div');
+  p.id = 'msg-emoji-picker';
+  p.style.cssText = 'position:fixed;z-index:5000;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px;display:none;box-shadow:0 20px 60px rgba(0,0,0,0.7);width:260px;';
+  var search = document.createElement('input');
+  search.type = 'text';
+  search.placeholder = 'Search emoji…';
+  search.style.cssText = 'width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;font-family:inherit;box-sizing:border-box;margin-bottom:6px;outline:none;';
+  var grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(8,1fr);gap:2px;max-height:160px;overflow-y:auto;scrollbar-width:thin;';
+  function renderMsgGrid(filter) {
+    grid.innerHTML = '';
+    var filt = filter ? filter.toLowerCase() : '';
+    var list = _QUICK_EMOJIS.filter(function(em) {
+      if (!filt) return true;
+      if (em.includes(filt)) return true;
+      var names = {'😀':'smile happy','😂':'laugh cry','😍':'heart eyes love','🥰':'love hearts','😎':'cool sunglasses','👍':'thumbs up like','👎':'thumbs down','❤️':'heart love','🔥':'fire hot','💯':'hundred','✅':'check yes','❌':'no wrong','🎉':'party','😱':'scream shock','🤔':'thinking','💀':'skull dead','👻':'ghost','🌟':'star','🚀':'rocket','💪':'muscle strong','🙌':'hands celebrate','🤝':'handshake','🎮':'game','⚔️':'sword battle','🏆':'trophy win','👋':'wave hello','🤯':'mind blown','👀':'eyes','🫶':'heart hands','🫡':'salute','😮':'surprised','💔':'broken heart','😤':'angry','😴':'sleep','😈':'devil','😵':'dizzy','⭐':'star','🌈':'rainbow','⚡':'lightning','🧠':'brain'};
+      var n = names[em] || '';
+      return n.includes(filt);
+    });
+    list.forEach(function(em) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = em;
+      b.style.cssText = 'font-size:20px;padding:4px 2px;border:none;background:none;border-radius:5px;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;line-height:1.2;';
+      b.onmouseenter = function() { b.style.background = 'rgba(255,255,255,0.09)'; b.style.transform = 'scale(1.25)'; };
+      b.onmouseleave = function() { b.style.background = ''; b.style.transform = ''; };
+      b.onclick = function() {
+        if (_msgEmojiTarget) {
+          toggleMsgReact(_msgEmojiTarget.postId, _msgEmojiTarget.msgId, em);
+          p.style.display = 'none';
+          _msgEmojiTarget = null;
+        }
+      };
+      grid.appendChild(b);
+    });
+  }
+  search.addEventListener('input', function() { renderMsgGrid(search.value); });
+  renderMsgGrid('');
+  p.appendChild(search);
+  p.appendChild(grid);
+  document.body.appendChild(p);
+  return p;
+}
+
+function toggleMsgEmojiPicker(e, postId, msgId) {
+  e.stopPropagation();
+  var p = document.getElementById('msg-emoji-picker') || _buildMsgEmojiPicker();
+  var same = _msgEmojiTarget && _msgEmojiTarget.postId === postId && _msgEmojiTarget.msgId === msgId;
+  if (p.style.display === 'block' && same) { p.style.display = 'none'; _msgEmojiTarget = null; return; }
+  _msgEmojiTarget = { postId: postId, msgId: msgId };
+  var btn = e.currentTarget;
+  var r = btn.getBoundingClientRect();
+  var pw = 260, ph = 220;
+  var top = r.bottom + 6 + window.scrollY;
+  var left = r.left + window.scrollX;
+  if (r.left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8 + window.scrollX;
+  if (r.bottom + ph + 6 > window.innerHeight) top = r.top - ph - 6 + window.scrollY;
+  p.style.top = top + 'px';
+  p.style.left = left + 'px';
+  p.style.display = 'block';
+  var si = p.querySelector('input');
+  if (si) { si.value = ''; p.querySelector('div').innerHTML = ''; }
+  var grid = p.querySelector('div');
+  if (grid) {
+    grid.innerHTML = '';
+    _QUICK_EMOJIS.forEach(function(em) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = em;
+      b.style.cssText = 'font-size:20px;padding:4px 2px;border:none;background:none;border-radius:5px;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;line-height:1.2;';
+      b.onmouseenter = function() { b.style.background = 'rgba(255,255,255,0.09)'; b.style.transform = 'scale(1.25)'; };
+      b.onmouseleave = function() { b.style.background = ''; b.style.transform = ''; };
+      b.onclick = function() {
+        toggleMsgReact(_msgEmojiTarget.postId, _msgEmojiTarget.msgId, em);
+        p.style.display = 'none'; _msgEmojiTarget = null;
+      };
+      grid.appendChild(b);
+    });
+  }
+}
+
+document.addEventListener('click', function(e) {
+  var p = document.getElementById('msg-emoji-picker');
+  if (p && p.style.display === 'block' && !p.contains(e.target)) { p.style.display = 'none'; _msgEmojiTarget = null; }
+  var rp = document.getElementById('rep-emoji-picker');
+  if (rp && rp.style.display === 'block' && !rp.contains(e.target)) { rp.style.display = 'none'; _repEmojiTarget = null; }
+});
+
+// ── Reply reactions ──────────────────────────────────────
+var _repEmojiTarget = null; // {postId, msgId, repId}
+
+function toggleReplyEmojiPicker(e, postId, msgId, repId) {
+  e.stopPropagation();
+  var p = document.getElementById('rep-emoji-picker');
+  if (!p) {
+    p = document.createElement('div');
+    p.id = 'rep-emoji-picker';
+    p.style.cssText = 'position:fixed;z-index:5000;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px;display:none;box-shadow:0 20px 60px rgba(0,0,0,0.7);width:260px;';
+    var search = document.createElement('input');
+    search.type = 'text';
+    search.placeholder = 'Search emoji…';
+    search.style.cssText = 'width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;font-family:inherit;box-sizing:border-box;margin-bottom:6px;outline:none;';
+    var grid = document.createElement('div');
+    grid.id = 'rep-emoji-grid';
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(8,1fr);gap:2px;max-height:160px;overflow-y:auto;scrollbar-width:thin;';
+    function fillGrid(filter) {
+      grid.innerHTML = '';
+      var filt = (filter || '').toLowerCase();
+      var _names = {'😀':'smile happy','😂':'laugh cry','😍':'heart eyes love','🥰':'love hearts','😎':'cool','👍':'thumbs up like','👎':'thumbs down','❤️':'heart love','🔥':'fire hot','💯':'hundred','✅':'check yes','❌':'no wrong','🎉':'party','😱':'scream shock','🤔':'thinking','💀':'skull dead','👻':'ghost','🌟':'star','🚀':'rocket','💪':'muscle strong','🙌':'hands celebrate','🤝':'handshake','🎮':'game','⚔️':'sword battle','🏆':'trophy win','👋':'wave hello','🤯':'mind blown','👀':'eyes','🫶':'heart hands','🫡':'salute','😮':'surprised','💔':'broken heart','😤':'angry','😴':'sleep','😈':'devil','😵':'dizzy','⭐':'star','🌈':'rainbow','⚡':'lightning','🧠':'brain'};
+      _QUICK_EMOJIS.filter(function(em) {
+        if (!filt) return true;
+        if (em.includes(filt)) return true;
+        return (_names[em] || '').includes(filt);
+      }).forEach(function(em) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.textContent = em;
+        b.style.cssText = 'font-size:20px;padding:4px 2px;border:none;background:none;border-radius:5px;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;line-height:1.2;';
+        b.onmouseenter = function() { b.style.background = 'rgba(255,255,255,0.09)'; b.style.transform = 'scale(1.25)'; };
+        b.onmouseleave = function() { b.style.background = ''; b.style.transform = ''; };
+        b.onclick = function() {
+          if (_repEmojiTarget) {
+            toggleReplyReact(_repEmojiTarget.postId, _repEmojiTarget.msgId, _repEmojiTarget.repId, em);
+            p.style.display = 'none'; _repEmojiTarget = null;
+          }
+        };
+        grid.appendChild(b);
+      });
+    }
+    search.addEventListener('input', function() { fillGrid(search.value); });
+    fillGrid('');
+    p.appendChild(search);
+    p.appendChild(grid);
+    document.body.appendChild(p);
+  }
+  var same = _repEmojiTarget && _repEmojiTarget.repId === repId;
+  if (p.style.display === 'block' && same) { p.style.display = 'none'; _repEmojiTarget = null; return; }
+  _repEmojiTarget = { postId: postId, msgId: msgId, repId: repId };
+  var btn = e.currentTarget;
+  var r = btn.getBoundingClientRect();
+  var pw = 260, ph = 220;
+  var top = r.bottom + 6 + window.scrollY;
+  var left = r.left + window.scrollX;
+  if (r.left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8 + window.scrollX;
+  if (r.bottom + ph + 6 > window.innerHeight) top = r.top - ph - 6 + window.scrollY;
+  p.style.top = top + 'px';
+  p.style.left = left + 'px';
+  p.style.display = 'block';
+  var si = p.querySelector('input');
+  if (si) { si.value = ''; }
+  var grid2 = document.getElementById('rep-emoji-grid');
+  if (grid2) {
+    grid2.innerHTML = '';
+    _QUICK_EMOJIS.forEach(function(em) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = em;
+      b.style.cssText = 'font-size:20px;padding:4px 2px;border:none;background:none;border-radius:5px;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;line-height:1.2;';
+      b.onmouseenter = function() { b.style.background = 'rgba(255,255,255,0.09)'; b.style.transform = 'scale(1.25)'; };
+      b.onmouseleave = function() { b.style.background = ''; b.style.transform = ''; };
+      b.onclick = function() {
+        toggleReplyReact(_repEmojiTarget.postId, _repEmojiTarget.msgId, _repEmojiTarget.repId, em);
+        p.style.display = 'none'; _repEmojiTarget = null;
+      };
+      grid2.appendChild(b);
+    });
+  }
+}
+
+async function toggleReplyReact(postId, msgId, repId, emoji) {
+  try {
+    var resp = await fetch('/api/forum/react/' + postId + '/' + msgId + '/' + repId, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ emoji: emoji })
+    });
+    var data = await resp.json();
+    if (!data.success) { if (typeof showToast === 'function') showToast(data.error || 'Failed', 'error'); return; }
+    var container = document.getElementById('rep-reactions-' + repId);
+    if (!container) return;
+    var chip = container.querySelector('[data-emoji="' + emoji + '"][data-rep="' + repId + '"]');
+    if (data.count > 0) {
+      if (!chip) {
+        chip = document.createElement('button');
+        chip.className = 'react-chip';
+        chip.style.cssText = 'font-size:12px;padding:2px 8px;';
+        chip.dataset.emoji = emoji;
+        chip.dataset.rep = repId;
+        chip.type = 'button';
+        chip.setAttribute('onclick', 'toggleReplyReact(\'' + postId + '\',\'' + msgId + '\',\'' + repId + '\',this.dataset.emoji)');
+        chip.innerHTML = emoji + '<span>' + data.count + '</span>';
+        var addBtn = container.querySelector('.react-add-btn');
+        if (addBtn) container.insertBefore(chip, addBtn);
+        else container.appendChild(chip);
+      } else {
+        chip.querySelector('span').textContent = data.count;
+      }
+      chip.classList.toggle('active', data.added);
+    } else {
+      if (chip) chip.remove();
+    }
+  } catch(err) { if (typeof showToast === 'function') showToast('Network error', 'error'); }
+}
+
+async function toggleMsgReact(postId, msgId, emoji) {
+  try {
+    var resp = await fetch('/api/forum/react/' + postId + '/' + msgId, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ emoji: emoji })
+    });
+    var data = await resp.json();
+    if (!data.success) { if (typeof showToast === 'function') showToast(data.error || 'Failed', 'error'); return; }
+    var container = document.getElementById('msg-reactions-' + msgId);
+    if (!container) return;
+    var chip = container.querySelector('[data-emoji="' + emoji + '"]');
+    if (data.count > 0) {
+      if (!chip) {
+        chip = document.createElement('button');
+        chip.className = 'react-chip';
+        chip.style.cssText = 'font-size:12px;padding:2px 8px;';
+        chip.dataset.emoji = emoji;
+        chip.dataset.msg = msgId;
+        chip.type = 'button';
+        chip.setAttribute('onclick', 'toggleMsgReact(\'' + postId + '\',\'' + msgId + '\',this.dataset.emoji)');
+        chip.innerHTML = emoji + '<span>' + data.count + '</span>';
+        var addBtn = container.querySelector('.react-add-btn');
+        if (addBtn) container.insertBefore(chip, addBtn);
+        else container.appendChild(chip);
+      } else {
+        chip.querySelector('span').textContent = data.count;
+      }
+      chip.classList.toggle('active', data.added);
+    } else {
+      if (chip) chip.remove();
+    }
+  } catch(e) { if (typeof showToast === 'function') showToast('Network error', 'error'); }
+}
+
+function togglePin(postId) {
+  fetch('/api/forum/post/' + postId + '/pin', { method: 'POST' })
+    .then(r => r.json()).then(d => { if(d.success) location.reload(); });
+}
+function toggleLock(postId) {
+  fetch('/api/forum/post/' + postId + '/lock', { method: 'POST' })
+    .then(r => r.json()).then(d => { if(d.success) location.reload(); });
+}
+async function deletePost(postId) {
+  if(!await customConfirm('Delete this thread?', 'This action cannot be undone.')) return;
+  fetch('/api/forum/post/' + postId + '/delete', { method: 'POST' })
+    .then(r => r.json()).then(d => { if(d.success) window.location.href = '/forum'; });
+}
+async function deleteMsg(postId, msgId) {
+  if(!await customConfirm('Delete this message?', 'This action cannot be undone.')) return;
+  fetch('/api/forum/message/' + postId + '/' + msgId + '/delete', { method: 'POST' })
+    .then(r => r.json()).then(d => { if(d.success) location.reload(); });
+}
+async function deleteReply(postId, msgId, repId) {
+  if(!await customConfirm('Delete this reply?', 'This action cannot be undone.')) return;
+  fetch('/api/forum/reply/' + postId + '/' + msgId + '/' + repId + '/delete', { method: 'POST' })
+    .then(r => r.json()).then(d => {
+      if(d.success) {
+        var el = document.getElementById('rep-' + repId);
+        if(el) el.remove();
+      }
+    });
+}
+
+var _allImgs = [], _lbIdx = 0;
+function _buildImgList() {
+  _allImgs = Array.from(document.querySelectorAll('.attach-image-wrap[data-url]')).map(el => ({ url: el.dataset.url, name: el.dataset.name || '' }));
+}
+function openLightbox(e, el) {
+  if (e.target.closest('.img-3dot-btn') || e.target.closest('.img-menu-drop')) return;
+  _buildImgList();
+  var url = el.dataset.url;
+  _lbIdx = _allImgs.findIndex(i => i.url === url);
+  if (_lbIdx < 0) _lbIdx = 0;
+  _showLightbox();
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function _showLightbox() {
+  var item = _allImgs[_lbIdx];
+  if (!item) return;
+  document.getElementById('lightbox-img').src = item.url;
+  document.getElementById('lightbox-name').textContent = item.name;
+  document.getElementById('lightbox-counter').textContent = (_lbIdx + 1) + ' / ' + _allImgs.length;
+  var prev = document.querySelector('.lightbox-prev');
+  var next = document.querySelector('.lightbox-next');
+  if (prev) prev.style.display = _allImgs.length > 1 ? '' : 'none';
+  if (next) next.style.display = _allImgs.length > 1 ? '' : 'none';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function lightboxPrev(e) { e.stopPropagation(); _lbIdx = (_lbIdx - 1 + _allImgs.length) % _allImgs.length; _showLightbox(); }
+function lightboxNext(e) { e.stopPropagation(); _lbIdx = (_lbIdx + 1) % _allImgs.length; _showLightbox(); }
+function downloadForumImg(e, url, name) {
+  e.stopPropagation();
+  var a = document.createElement('a'); a.href = url; a.download = name || 'image'; a.click();
+}
+function toggleImgMenu(e, btn) {
+  e.stopPropagation();
+  var menu = btn.nextElementSibling;
+  document.querySelectorAll('.img-menu-drop.open').forEach(m => { if(m !== menu) m.classList.remove('open'); });
+  menu.classList.toggle('open');
+}
+document.addEventListener('click', function() { document.querySelectorAll('.img-menu-drop.open').forEach(m => m.classList.remove('open')); });
+document.addEventListener('keydown', function(e) { if(e.key === 'Escape') closeLightbox(); });
+
+// ── Auto-update polling ──────────────────────────────────
+var _pollTotal = {{ post.messages | length }};
+function _pollNewMsgs() {
+  fetch('/api/forum/post/{{ post.id }}/messages')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.success && d.total > _pollTotal) {
+        var diff = d.total - _pollTotal;
+        _pollTotal = d.total;
+        var b = document.getElementById('_new-msg-banner');
+        if (!b) {
+          b = document.createElement('div');
+          b.id = '_new-msg-banner';
+          b.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;padding:10px 24px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;z-index:300;box-shadow:0 4px 20px rgba(250,80,80,0.5);';
+          b.onclick = function() { location.reload(); };
+          document.body.appendChild(b);
+        }
+        b.textContent = diff + ' new ' + (diff === 1 ? 'message' : 'messages') + ' — click to load';
+        b.style.display = 'block';
+      }
+    }).catch(function() {});
+}
+setInterval(_pollNewMsgs, 6000);
+
+// ── Attach-button visibility (show + when files queued) ──
+function _updateAttachBtn() {
+  var input = document.getElementById('chat-files-input');
+  var label = document.getElementById('chat-attach-label');
+  if (!label) return;
+  var files = typeof getChatFiles === 'function' ? getChatFiles() : [];
+  if (files.length > 0) {
+    label.title = files.length + ' file(s) — click to add more';
+    label.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span style="font-size:11px;font-weight:700;background:var(--primary);color:#fff;border-radius:999px;padding:0 5px;margin-left:2px;">' + files.length + '</span>';
+    if (input) { var clone = input.cloneNode(true); input.replaceWith(clone); clone.addEventListener('change', function() { window.previewChatFiles(clone); _updateAttachBtn(); }); }
+  } else {
+    label.title = 'Attach files';
+    label.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>';
+  }
+}
+// Hook file input change to update attach btn
+(function() {
+  var inp = document.getElementById('chat-files-input');
+  if (inp) {
+    var orig = window.previewChatFiles;
+    window.previewChatFiles = function(i) { orig(i); _updateAttachBtn(); };
+  }
+})();
+</script>
+{% endblock %}

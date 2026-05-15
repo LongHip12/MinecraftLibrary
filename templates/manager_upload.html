@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+{% block title %}Manage Uploads — Lonely Hub{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/user.css">
+<style>
+.edit-img-area {
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius);
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.edit-img-area:hover { border-color: rgba(250,80,80,0.4); background: rgba(250,80,80,0.04); }
+.edit-img-area.has-img { border-style: solid; border-color: var(--primary); padding: 0; }
+.edit-img-area img { width: 100%; height: 110px; object-fit: cover; border-radius: calc(var(--radius) - 2px); display: block; }
+.edit-img-clear {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0,0,0,0.7);
+  border: none;
+  color: #fff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  z-index: 2;
+}
+.edit-img-empty-text { font-size: 13px; color: var(--text3); text-align: center; line-height: 1.5; }
+.edit-img-queue { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.edit-img-queue-item { position: relative; width: 64px; height: 64px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border2); flex-shrink: 0; }
+.edit-img-queue-item img { width: 100%; height: 100%; object-fit: cover; }
+.edit-img-queue-item .rmv { position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.75);border:none;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;line-height:1; }
+.edit-img-add-btn { width:64px;height:64px;border-radius:8px;border:2px dashed var(--border2);background:transparent;color:var(--text3);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;transition:border-color 0.15s,color 0.15s; }
+.edit-img-add-btn:hover { border-color:var(--primary);color:var(--primary); }
+/* Tags */
+.tag-input-wrap { display:flex;flex-direction:column;gap:8px; }
+.tag-pills-row { display:flex;flex-wrap:wrap;gap:6px;min-height:28px; }
+.tag-pill-edit { display:inline-flex;align-items:center;gap:5px;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.2);color:var(--primary);font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px; }
+.tag-pill-edit button { background:none;border:none;color:var(--primary);cursor:pointer;font-size:13px;line-height:1;padding:0;margin-left:2px; }
+.tag-text-input { background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text);font-size:13px;width:100%; }
+.tag-text-input:focus { outline:none;border-color:var(--primary); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-content">
+<div class="container">
+<div class="manager-upload-page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
+    <div>
+      <h1 style="font-size:26px;font-weight:800;margin-bottom:4px;">Manage Uploads</h1>
+      <p style="font-size:14px;color:var(--text2);">{{ target_user.display_name }}'s mods</p>
+    </div>
+    <a href="/users/{{ target_user.id }}/upload" class="btn btn-primary">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+      Upload New Mod
+    </a>
+  </div>
+  {% if mods %}
+  {% for mod in mods %}
+  <div class="manager-mod-card" id="mod-row-{{ mod.id }}">
+    {% if mod.banner %}
+    <img src="{{ mod.banner }}" alt="{{ mod.name }}" class="manager-mod-img">
+    {% else %}
+    <div class="manager-mod-img" style="background:var(--bg3);display:flex;align-items:center;justify-content:center;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+    </div>
+    {% endif %}
+    <div class="manager-mod-info">
+      <div class="manager-mod-name">{{ mod.name }}</div>
+      <div class="manager-mod-stats">
+        {{ mod.downloads }} downloads · {{ mod.views }} views · {{ mod.avg_rating }}/5 ⭐
+      </div>
+    </div>
+    <div class="manager-mod-actions">
+      <button class="btn btn-secondary btn-sm" onclick="openEditMod({{ mod.id }}, '{{ mod.name | replace("'", "\\'") }}', `{{ mod.description | replace('`', '\\`') }}`, '{{ mod.download_link }}', '{{ mod.loaders | join(",") }}', '{{ mod.mc_versions | join(",") }}', '{{ mod.editions | join(",") }}', '{{ mod.tags | join(",") if mod.tags else "" }}', '{{ mod.banner or "" }}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        Edit
+      </button>
+      <button class="btn btn-danger btn-sm" onclick="deleteMod({{ mod.id }})">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+        Delete
+      </button>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div style="text-align:center;padding:60px;color:var(--text3);">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 16px;display:block;opacity:0.3;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+    <p>No mods uploaded yet.</p>
+    <a href="/users/{{ target_user.id }}/upload" class="btn btn-primary" style="margin-top:16px;display:inline-flex;">Upload your first mod</a>
+  </div>
+  {% endif %}
+  {% if total_pages > 1 %}
+  <div class="pagination">
+    {% if page > 1 %}<a href="?page={{ page-1 }}" class="page-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></a>{% endif %}
+    {% for p in range(1, total_pages+1) %}
+    {% if p == page %}<span class="page-btn active">{{ p }}</span>{% else %}<a href="?page={{ p }}" class="page-btn">{{ p }}</a>{% endif %}
+    {% endfor %}
+    {% if page < total_pages %}<a href="?page={{ page+1 }}" class="page-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="edit-mod-modal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;position:sticky;top:0;background:var(--bg2);padding:4px 0 16px;z-index:2;border-bottom:1px solid var(--border2);">
+      <h2 class="modal-title" style="margin-bottom:0;">Edit Mod</h2>
+      <button onclick="closeEditMod()" style="background:none;border:none;color:var(--text2);cursor:pointer;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <form id="edit-mod-form" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:16px;">
+      <input type="hidden" id="edit-mod-id">
+      <div class="form-group">
+        <label class="form-label">Mod Name</label>
+        <input type="text" name="name" id="edit-name" class="input-field">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea name="description" id="edit-desc" class="input-field" rows="4"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Download Link</label>
+        <input type="url" name="download_link" id="edit-link" class="input-field">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Loaders</label>
+        <div class="loaders-grid" id="edit-loaders-grid">
+          {% for loader in ['Forge', 'Fabric', 'Quilt', 'NeoForge', 'Vanilla'] %}
+          <input type="checkbox" name="loaders" value="{{ loader }}" id="el-{{ loop.index }}" class="loader-checkbox">
+          <label for="el-{{ loop.index }}" class="loader-label">{{ loader }}</label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Minecraft Versions</label>
+        <input type="text" name="mc_versions" id="edit-versions" class="input-field" placeholder="e.g. 1.20.1, 1.19.4">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Edition(s)</label>
+        <div class="loaders-grid">
+          <input type="checkbox" name="editions" value="Java" id="ee-java" class="loader-checkbox">
+          <label for="ee-java" class="loader-label">Java</label>
+          <input type="checkbox" name="editions" value="Bedrock" id="ee-bedrock" class="loader-checkbox">
+          <label for="ee-bedrock" class="loader-label">Bedrock</label>
+        </div>
+      </div>
+      <!-- Tags -->
+      <div class="form-group">
+        <label class="form-label">Tags</label>
+        <div class="tag-input-wrap">
+          <div class="tag-pills-row" id="edit-tag-pills"></div>
+          <input class="tag-text-input" type="text" id="edit-tag-input" placeholder="Type a tag and press Enter…">
+        </div>
+        <input type="hidden" name="tags" id="edit-tags-hidden">
+      </div>
+      <!-- Banner image -->
+      <div class="form-group">
+        <label class="form-label">Banner Image</label>
+        <div class="edit-img-area" id="edit-img-area" onclick="_editImgAreaClick()">
+          <input type="file" id="edit-banner-input" name="banner" accept="image/*" style="display:none" onchange="_onEditBannerChange(this)">
+          <div id="edit-img-empty" class="edit-img-empty-text">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 6px;opacity:0.4;display:block;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            Click to select banner image
+          </div>
+          <div id="edit-img-preview" style="display:none;width:100%;">
+            <img id="edit-img-preview-img" src="" alt="Banner preview">
+            <button type="button" class="edit-img-clear" onclick="_clearEditBanner(event)" title="Remove">×</button>
+          </div>
+        </div>
+        <!-- Extra images queue -->
+        <div id="edit-img-queue" class="edit-img-queue" style="margin-top:8px;"></div>
+        <input type="file" id="edit-more-files-input" name="extra_images" multiple accept="image/*" style="display:none" onchange="_onEditMoreImages(this)">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button" onclick="closeEditMod()" class="btn btn-ghost">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="edit-save-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let editModId = null;
+let _editTags = [];
+let _editExtraImages = [];
+
+// ── Tag system ──────────────────────────────────
+function _renderEditTags() {
+  const pills = document.getElementById('edit-tag-pills');
+  pills.innerHTML = '';
+  _editTags.forEach(function(t, i) {
+    const pill = document.createElement('span');
+    pill.className = 'tag-pill-edit';
+    pill.innerHTML = '#' + t + ' <button type="button" onclick="_removeEditTag(' + i + ')">×</button>';
+    pills.appendChild(pill);
+  });
+  document.getElementById('edit-tags-hidden').value = _editTags.join(',');
+}
+function _addEditTag(tag) {
+  tag = tag.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!tag || _editTags.includes(tag) || _editTags.length >= 10) return;
+  _editTags.push(tag);
+  _renderEditTags();
+}
+function _removeEditTag(i) {
+  _editTags.splice(i, 1);
+  _renderEditTags();
+}
+document.getElementById('edit-tag-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    _addEditTag(this.value);
+    this.value = '';
+  }
+});
+
+// ── Banner image system ──────────────────────────────────
+function _editImgAreaClick() {
+  var preview = document.getElementById('edit-img-preview');
+  if (preview.style.display !== 'none') return; // already has image
+  document.getElementById('edit-banner-input').click();
+}
+function _onEditBannerChange(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('edit-img-preview-img').src = e.target.result;
+    document.getElementById('edit-img-preview').style.display = 'block';
+    document.getElementById('edit-img-empty').style.display = 'none';
+    var area = document.getElementById('edit-img-area');
+    area.classList.add('has-img');
+    // Render queue add button
+    _renderEditImgQueue();
+  };
+  reader.readAsDataURL(file);
+}
+function _clearEditBanner(e) {
+  e.stopPropagation();
+  document.getElementById('edit-banner-input').value = '';
+  document.getElementById('edit-img-preview').style.display = 'none';
+  document.getElementById('edit-img-empty').style.display = '';
+  var area = document.getElementById('edit-img-area');
+  area.classList.remove('has-img');
+  _renderEditImgQueue();
+}
+function _onEditMoreImages(input) {
+  Array.from(input.files).forEach(function(f) { _editExtraImages.push(f); });
+  input.value = '';
+  _renderEditImgQueue();
+}
+function _renderEditImgQueue() {
+  var queue = document.getElementById('edit-img-queue');
+  queue.innerHTML = '';
+  var hasBanner = document.getElementById('edit-img-preview').style.display !== 'none';
+  if (!hasBanner && _editExtraImages.length === 0) return;
+  _editExtraImages.forEach(function(f, i) {
+    var item = document.createElement('div');
+    item.className = 'edit-img-queue-item';
+    var img = document.createElement('img');
+    var reader = new FileReader();
+    reader.onload = function(e) { img.src = e.target.result; };
+    reader.readAsDataURL(f);
+    item.appendChild(img);
+    var rmv = document.createElement('button');
+    rmv.className = 'rmv';
+    rmv.type = 'button';
+    rmv.textContent = '×';
+    rmv.onclick = function() { _editExtraImages.splice(i, 1); _renderEditImgQueue(); };
+    item.appendChild(rmv);
+    queue.appendChild(item);
+  });
+  var addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'edit-img-add-btn';
+  addBtn.title = 'Add more images';
+  addBtn.textContent = '+';
+  addBtn.onclick = function() { document.getElementById('edit-more-files-input').click(); };
+  queue.appendChild(addBtn);
+}
+
+// ── Open/close ──────────────────────────────────
+function openEditMod(id, name, desc, link, loaders, versions, editions, tags, banner) {
+  editModId = id;
+  _editTags = tags ? tags.split(',').filter(Boolean) : [];
+  _editExtraImages = [];
+  document.getElementById('edit-mod-id').value = id;
+  document.getElementById('edit-name').value = name;
+  document.getElementById('edit-desc').value = desc;
+  document.getElementById('edit-link').value = link;
+  document.getElementById('edit-versions').value = versions;
+  const loaderArr = loaders.split(',');
+  document.querySelectorAll('#edit-loaders-grid input[type=checkbox]').forEach(cb => {
+    cb.checked = loaderArr.includes(cb.value);
+  });
+  const edArr = editions.split(',');
+  document.getElementById('ee-java').checked = edArr.includes('Java');
+  document.getElementById('ee-bedrock').checked = edArr.includes('Bedrock');
+  _renderEditTags();
+  // Reset banner
+  document.getElementById('edit-banner-input').value = '';
+  document.getElementById('edit-img-preview').style.display = 'none';
+  document.getElementById('edit-img-empty').style.display = '';
+  document.getElementById('edit-img-area').classList.remove('has-img');
+  if (banner) {
+    var img = document.getElementById('edit-img-preview-img');
+    img.src = banner;
+    document.getElementById('edit-img-preview').style.display = 'block';
+    document.getElementById('edit-img-empty').style.display = 'none';
+    document.getElementById('edit-img-area').classList.add('has-img');
+  }
+  _renderEditImgQueue();
+  document.getElementById('edit-mod-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeEditMod() {
+  document.getElementById('edit-mod-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('edit-mod-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('edit-mod-modal')) closeEditMod();
+});
+document.getElementById('edit-mod-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('edit-save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div>';
+  const fd = new FormData(e.target);
+  // Attach extra images
+  _editExtraImages.forEach(function(f) { fd.append('extra_images', f); });
+  try {
+    const resp = await fetch('/users/{{ target_user.id }}/manager-upload/edit/' + editModId, { method: 'POST', body: fd });
+    const data = await resp.json();
+    if (data.success) {
+      showToast('Mod updated!');
+      closeEditMod();
+      setTimeout(() => location.reload(), 800);
+    } else {
+      showToast(data.error || 'Update failed', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Save Changes';
+    }
+  } catch(err) {
+    showToast('Network error', 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Save Changes';
+  }
+});
+async function deleteMod(id) {
+  if (!await customConfirm('Delete this mod?', 'This action cannot be undone.')) return;
+  try {
+    const resp = await fetch('/users/{{ target_user.id }}/manager-upload/delete/' + id, { method: 'POST' });
+    const data = await resp.json();
+    if (data.success) {
+      const row = document.getElementById('mod-row-' + id);
+      if (row) { row.style.opacity = '0'; row.style.transform = 'translateX(-20px)'; setTimeout(() => row.remove(), 300); }
+      showToast('Mod deleted.');
+    } else {
+      showToast(data.error || 'Delete failed', 'error');
+    }
+  } catch(err) {
+    showToast('Network error', 'error');
+  }
+}
+</script>
+{% endblock %}

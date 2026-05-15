@@ -1,0 +1,21 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "username": "admin",
+      "display_name": "Administrator",
+      "password": "scrypt:32768:8:1$Peju2w437RjiY5lt$f807b7294236459994e3136c628965c4182c8e218db7e13a6c484d595210b40c7f9cf818781fa0613268fd13ff8ac8ea8082ad105b60b9aeef8657b328864fbb",
+      "tag": "admin",
+      "avatar": "",
+      "banner": "",
+      "description": "Site Administrator",
+      "followers": [],
+      "following": [],
+      "created_at": "2026-01-01T00:00:00",
+      "username_last_changed": null,
+      "muted_until": null,
+      "banned_until": null,
+      "admin_until": "lifetime"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Admin — Top Pages — Lonely Hub{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin.css">
+{% endblock %}
+{% block content %}
+<div class="admin-page">
+<div class="admin-header">
+  <div class="container">
+    <div class="admin-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+      Admin Panel
+    </div>
+    <div class="admin-tabs">
+      <a href="/api/v1/auth/admin?type=users" class="admin-tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        Top Users
+      </a>
+      <a href="/api/v1/auth/admin/pages" class="admin-tab active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        Top Pages
+      </a>
+    </div>
+  </div>
+</div>
+<div class="container" style="padding-top:24px;padding-bottom:60px;">
+  <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;color:var(--text2);">Top 10 Pages by Views</h2>
+  <div class="admin-mods-grid">
+    {% for mod in top_mods %}
+    <div class="admin-mod-row">
+      <div class="admin-mod-info">
+        <div class="admin-mod-name">{{ mod.name }}</div>
+        <div class="admin-mod-stats">
+          {{ mod.views }} views &nbsp;·&nbsp; {{ mod.downloads }} downloads &nbsp;·&nbsp; {{ mod.avg_rating }}/5 ⭐ &nbsp;·&nbsp; by @{{ mod.uploader_username }}
+        </div>
+      </div>
+      <div class="admin-mod-actions">
+        <a href="/mods/{{ mod.id }}/info" class="btn btn-ghost btn-sm">View</a>
+        <form method="POST" action="/api/v1/auth/admin/pages/delete/{{ mod.id }}" style="display:inline;" data-confirm="Delete this mod permanently?">
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+</div>
+{% endblock %}

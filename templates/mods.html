@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Mods Library — Lonely Hub{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/mods.css">
+{% endblock %}
+{% block content %}
+<div class="page-content">
+<div class="container">
+  <div class="mods-header">
+    <h1 class="mods-title">Mods Library</h1>
+    <p style="color:var(--text2);font-size:15px;margin-bottom:20px;">Browse {{ total_lib }} free Minecraft mods — safe, tested &amp; community-verified</p>
+    <div class="mods-stats-bar">
+      <div class="mods-stat">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span class="mods-stat-value">{{ total_downloads | int }}</span>
+        <span class="mods-stat-label">Total Downloads</span>
+      </div>
+      <div class="mods-stat">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        <span class="mods-stat-value" style="color:var(--blue)">{{ total_views | int }}</span>
+        <span class="mods-stat-label">Total Views</span>
+      </div>
+      <div class="mods-stat">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        <span class="mods-stat-value" style="color:var(--yellow)">{{ avg_rate }}/5</span>
+        <span class="mods-stat-label">Avg. Rating</span>
+      </div>
+      <div class="mods-stat">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        <span class="mods-stat-value" style="color:var(--green)">{{ total_lib }}</span>
+        <span class="mods-stat-label">Mods in Library</span>
+      </div>
+    </div>
+
+    <div class="mods-controls">
+      <div class="search-input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" class="search-input" id="search-input" data-i18n-placeholder="mods.search" placeholder="Search mods..." value="{{ search }}">
+        <button class="search-btn" style="display:none"></button>
+      </div>
+      <div class="dropdown-custom" data-type="filter">
+        <div class="dropdown-trigger" data-value="{{ filter_by }}">
+          <span class="dropdown-label">
+            {% if filter_by == 'most_download' %}<span>Most Downloaded</span>
+            {% elif filter_by == 'most_popular' %}<span>Most Popular</span>
+            {% elif filter_by == 'top_rated' %}<span>Top Rated</span>
+            {% else %}<span>Newest</span>{% endif %}
+          </span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="dropdown-menu">
+          <div class="dropdown-item {% if filter_by == 'newest' %}selected{% endif %}" data-value="newest">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span>Newest</span>
+          </div>
+          <div class="dropdown-item {% if filter_by == 'most_download' %}selected{% endif %}" data-value="most_download">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>Most Downloaded</span>
+          </div>
+          <div class="dropdown-item {% if filter_by == 'most_popular' %}selected{% endif %}" data-value="most_popular">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <span>Most Popular</span>
+          </div>
+          <div class="dropdown-item {% if filter_by == 'top_rated' %}selected{% endif %}" data-value="top_rated">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <span>Top Rated</span>
+          </div>
+        </div>
+      </div>
+      <div class="dropdown-custom" data-type="loader">
+        <div class="dropdown-trigger" data-value="{{ loader_filter }}">
+          <span class="dropdown-label">{{ loader_filter if loader_filter else '' }}<span {% if loader_filter %}style="display:none"{% endif %}>All Loaders</span></span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="dropdown-menu">
+          <div class="dropdown-item {% if not loader_filter %}selected{% endif %}" data-value=""><span>All Loaders</span></div>
+          <div class="dropdown-item {% if loader_filter == 'Forge' %}selected{% endif %}" data-value="Forge">Forge</div>
+          <div class="dropdown-item {% if loader_filter == 'Fabric' %}selected{% endif %}" data-value="Fabric">Fabric</div>
+          <div class="dropdown-item {% if loader_filter == 'Quilt' %}selected{% endif %}" data-value="Quilt">Quilt</div>
+          <div class="dropdown-item {% if loader_filter == 'NeoForge' %}selected{% endif %}" data-value="NeoForge">NeoForge</div>
+          <div class="dropdown-item {% if loader_filter == 'Vanilla' %}selected{% endif %}" data-value="Vanilla">Vanilla</div>
+        </div>
+      </div>
+      <div class="version-filter-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <input type="text" class="version-filter-input" id="version-filter-input" placeholder="MC version (e.g. 1.20.1)" value="{{ version_filter }}">
+      </div>
+      <div class="version-filter-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <input type="text" class="version-filter-input" id="uploader-filter-input" placeholder="Filter by uploader" value="{{ uploader_filter }}">
+      </div>
+    </div>
+
+    {% if popular_tags %}
+    <div class="tags-filter-bar" id="tags-filter-bar">
+      <div class="tags-filter-label">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+        <span>Tags:</span>
+      </div>
+      <div class="tags-filter-scroll">
+        <a href="?search={{ search }}&filter={{ filter_by }}&loader={{ loader_filter }}&version={{ version_filter }}&tag="
+           class="tag-filter-pill {% if not tag_filter %}active{% endif %}">
+          All
+        </a>
+        {% for tag, count in popular_tags %}
+        <a href="?search={{ search }}&filter={{ filter_by }}&loader={{ loader_filter }}&version={{ version_filter }}&tag={{ tag }}"
+           class="tag-filter-pill {% if tag_filter == tag %}active{% endif %}">
+          #{{ tag }}
+          <span class="tag-filter-count">{{ count }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if tag_filter %}
+    <div class="active-filter-bar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+      Tag:
+      <span class="active-tag-badge">#{{ tag_filter }}</span>
+      <span style="color:var(--text3);margin:0 6px;">·</span>
+      <strong style="color:var(--text);">{{ total }}</strong> mods
+      <a href="?search={{ search }}&filter={{ filter_by }}&loader={{ loader_filter }}&version={{ version_filter }}&tag=" class="clear-tag-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        Clear
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if mods %}
+  <div class="mods-grid">
+    {% for mod in mods %}
+    <div class="mod-card">
+      <a href="/mods/{{ mod.id }}/info" class="mod-card-img" style="display:block;text-decoration:none;">
+        {% if mod.banner %}
+        <img src="{{ mod.banner }}" alt="{{ mod.name }}">
+        {% else %}
+        <div class="mod-card-img-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        </div>
+        {% endif %}
+      </a>
+      <div class="mod-card-body">
+        <div class="mod-card-name">{{ mod.name }}</div>
+        <div class="mod-card-desc">{{ mod.description }}</div>
+        <div class="mod-card-tags">
+          {% for loader in mod.loaders[:2] %}
+          <span class="loader-badge loader-{{ loader.lower() }}">{{ loader }}</span>
+          {% endfor %}
+          {% for edition in mod.editions[:1] %}
+          <span class="badge {% if edition == 'Java' %}badge-blue{% else %}badge-green{% endif %}">{{ edition }}</span>
+          {% endfor %}
+          {% for tag in (mod.tags | default([]))[:2] %}
+          <a href="?search={{ search }}&filter={{ filter_by }}&loader={{ loader_filter }}&version={{ version_filter }}&tag={{ tag }}"
+             class="badge mod-card-tag {% if tag_filter == tag %}mod-card-tag-active{% endif %}"
+             onclick="event.stopPropagation()">
+            #{{ tag }}
+          </a>
+          {% endfor %}
+        </div>
+        <div class="mod-card-meta">
+          <span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            {{ mod.downloads }}
+          </span>
+          <span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            {{ mod.avg_rating }}/5
+          </span>
+        </div>
+        <div class="mod-card-actions">
+          <a href="/mods/{{ mod.id }}/info" class="btn btn-secondary btn-sm" style="width:100%">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            View
+          </a>
+          <a href="/mods/{{ mod.id }}/download" class="btn btn-primary btn-sm" style="width:100%">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Download
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:80px 24px;color:var(--text3);">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 20px;display:block;opacity:0.4"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    <p style="font-size:18px;font-weight:600;margin-bottom:8px;">No mods found</p>
+    <p style="font-size:14px;margin-bottom:20px;">Try adjusting your search or filters.</p>
+  </div>
+  {% endif %}
+
+  {% if total_pages > 1 %}
+  <div class="pagination">
+    {% if page > 1 %}
+    <a href="?page={{ page-1 }}&search={{ search }}&filter={{ filter_by }}&loader={{ loader_filter }}&version={{ version_filter }}&tag={{ tag_filter }}" class="page-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </a>
+    {% endif %}
+    {% for p in range(1, total_pages+1) %}
+    {% if p == page %}
+    <span class="page-btn active">{{ p }}</span>
+    {% elif p == 1 or p == total_pages or (p >= page-2 and p <= page+2) %}
+    <a href="?page={{ p }}&search={{ search }}&filter={{ filter_by }}&loader={{ loader_filter }}&version={{ version_filter }}&tag={{ tag_filter }}" class="page-btn">{{ p }}</a>
+    {% elif p == page-3 or p == page+3 %}
+    <span class="page-btn" style="cursor:default;color:var(--text3)">...</span>
+    {% endif %}
+    {% endfor %}
+    {% if page < total_pages %}
+    <a href="?page={{ page+1 }}&search={{ search }}&filter={{ filter_by }}&loader={{ loader_filter }}&version={{ version_filter }}&tag={{ tag_filter }}" class="page-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="/static/js/mods.js"></script>
+<script>
+(function() {
+  var searchInput = document.getElementById('search-input');
+  if (!searchInput) return;
+  var timeout;
+  searchInput.addEventListener('input', function() {
+    clearTimeout(timeout);
+    timeout = setTimeout(function() {
+      var url = new URL(window.location.href);
+      url.searchParams.set('search', searchInput.value);
+      url.searchParams.set('page', '1');
+      window.location.href = url.toString();
+    }, 500);
+  });
+  var uploaderInput = document.getElementById('uploader-filter-input');
+  if (uploaderInput) {
+    var uploaderTimeout;
+    uploaderInput.addEventListener('input', function() {
+      clearTimeout(uploaderTimeout);
+      uploaderTimeout = setTimeout(function() {
+        var url = new URL(window.location.href);
+        url.searchParams.set('uploader', uploaderInput.value);
+        url.searchParams.set('page', '1');
+        window.location.href = url.toString();
+      }, 500);
+    });
+  }
+})();
+</script>
+{% endblock %}

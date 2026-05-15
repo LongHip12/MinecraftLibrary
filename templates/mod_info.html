@@ -1,0 +1,840 @@
+{% extends "base.html" %}
+{% block title %}{{ mod.name }} — Lonely Hub{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/mods.css">
+<style>
+/* ── Image Slider ── */
+.mod-slider {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+  aspect-ratio: 16/7;
+  margin-bottom: 0;
+}
+.mod-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateX(0);
+  transition: opacity 0.4s ease, transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.mod-slide.active { opacity: 1; transform: translateX(0); }
+.mod-slide.slide-exit-left { opacity: 0 !important; transform: translateX(-6%) !important; }
+.mod-slide.slide-exit-right { opacity: 0 !important; transform: translateX(6%) !important; }
+.mod-slide.slide-enter-right { opacity: 0; transform: translateX(6%); transition: none !important; }
+.mod-slide.slide-enter-left { opacity: 0; transform: translateX(-6%); transition: none !important; }
+.mod-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.slider-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: background 0.2s;
+  font-size: 18px;
+  padding: 0;
+}
+.slider-nav-btn:hover { background: rgba(0,0,0,0.8); }
+.slider-prev { left: 10px; }
+.slider-next { right: 10px; }
+.slider-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 5;
+}
+.slider-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, transform 0.2s;
+}
+.slider-dot.active { background: #fff; transform: scale(1.3); }
+
+/* ── Comment reactions ── */
+.comment-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+.react-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  border: 1px solid var(--border2);
+  background: rgba(255,255,255,0.03);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  color: var(--text2);
+  font-family: inherit;
+}
+.react-chip:hover { border-color: var(--primary); background: rgba(250,80,80,0.07); }
+.react-chip.active { border-color: rgba(96,165,250,0.5); background: rgba(96,165,250,0.1); color: var(--blue); }
+.react-chip span { font-size: 12px; font-weight: 700; color: var(--text2); }
+.react-chip.active span { color: var(--blue); }
+.react-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 7px;
+  border-radius: 12px;
+  border: 1px dashed var(--border2);
+  background: none;
+  color: var(--text3);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  font-family: inherit;
+}
+.react-add-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(250,80,80,0.06); }
+.emoji-picker-float {
+  position: fixed;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+  z-index: 4000;
+  width: 320px;
+  overflow: hidden;
+  display: none;
+}
+.emoji-picker-head { padding: 9px 9px 5px; border-bottom: 1px solid var(--border2); }
+.emoji-search { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border2); border-radius: 8px; padding: 7px 12px; color: var(--text); font-size: 13px; font-family: inherit; box-sizing: border-box; }
+.emoji-search:focus { outline: none; border-color: var(--primary); }
+.ecat-tabs { display: flex; border-bottom: 1px solid var(--border2); padding: 2px 4px 0; overflow-x: auto; scrollbar-width: none; }
+.ecat-tabs::-webkit-scrollbar { display: none; }
+.ecat-btn { flex-shrink:0; padding:5px 8px; font-size:18px; background:none; border:none; cursor:pointer; border-radius:6px; transition:background 0.15s; opacity:0.5; line-height:1; }
+.ecat-btn:hover,.ecat-btn.active { background:rgba(255,255,255,0.08); opacity:1; }
+.emoji-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:2px; padding:6px; max-height:220px; overflow-y:auto; scrollbar-width:thin; }
+.emoji-btn { font-size:20px; padding:5px 2px; border:none; background:none; border-radius:6px; cursor:pointer; text-align:center; transition:background 0.12s, transform 0.1s; line-height:1.2; }
+.emoji-btn:hover { background:rgba(255,255,255,0.09); transform:scale(1.25); }
+
+/* ── Comment image ── */
+.comment-image { max-width: 260px; border-radius: 8px; margin-top: 8px; display: block; cursor: pointer; border: 1px solid var(--border2); }
+.comment-reply-bar {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(250,80,80,0.06);
+  border-left: 2px solid var(--primary);
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text2);
+}
+.comment-reply-bar.visible { display: flex; }
+.comment-reply-bar strong { color: var(--primary); }
+.comment-reply-x { background:none; border:none; color:var(--text3); cursor:pointer; font-size:16px; margin-left:auto; padding:0 4px; transition:color 0.15s; }
+.comment-reply-x:hover { color: var(--primary); }
+
+/* Comment reply indent indicator */
+.comment-reply-ref {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text3);
+  margin-bottom: 4px;
+  padding: 4px 8px;
+  background: rgba(255,255,255,0.03);
+  border-left: 2px solid rgba(250,80,80,0.35);
+  border-radius: 0 4px 4px 0;
+}
+.comment-reply-ref strong { color: var(--text2); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-content">
+<div class="container">
+<div class="mod-info-page">
+  <div style="margin-bottom:20px;">
+    <a href="/mods" class="btn btn-ghost btn-sm">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      Back to Library
+    </a>
+  </div>
+
+  {% set all_images = mod.images if mod.images else ([mod.banner] if mod.banner else []) %}
+  {% if all_images|length > 1 %}
+  <div class="mod-slider" id="mod-slider">
+    {% for img in all_images %}
+    <div class="mod-slide {% if loop.first %}active{% endif %}">
+      <img src="{{ img }}" alt="{{ mod.name }}">
+    </div>
+    {% endfor %}
+    <button class="slider-nav-btn slider-prev" onclick="sliderMove(-1)">&#8249;</button>
+    <button class="slider-nav-btn slider-next" onclick="sliderMove(1)">&#8250;</button>
+    <div class="slider-dots">
+      {% for img in all_images %}
+      <button class="slider-dot {% if loop.first %}active{% endif %}" onclick="sliderGo({{ loop.index0 }})"></button>
+      {% endfor %}
+    </div>
+  </div>
+  {% elif mod.banner %}
+  <div class="mod-info-banner">
+    <img src="{{ mod.banner }}" alt="{{ mod.name }}">
+  </div>
+  {% else %}
+  <div class="mod-info-banner">
+    <div class="mod-info-banner-placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="mod-info-header">
+    <div>
+      <h1 class="mod-info-title">{{ mod.name }}</h1>
+      <div class="mod-info-meta">
+        {% if uploader %}
+        <a href="/users/{{ uploader.username }}" class="mod-info-uploader">
+          <img src="{{ uploader.avatar if uploader.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="{{ uploader.display_name }}">
+          <span class="mod-info-uploader-name">{{ uploader.display_name }}</span>
+        </a>
+        {% endif %}
+        <span class="badge">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          {{ mod.downloads }} downloads
+        </span>
+        <span class="badge badge-blue">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          {{ mod.views }} views
+        </span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
+        {% for loader in mod.loaders %}
+        <span class="loader-badge loader-{{ loader.lower() }}">{{ loader }}</span>
+        {% endfor %}
+        {% for edition in mod.editions %}
+        <span class="badge {% if edition == 'Java' %}badge-blue{% else %}badge-green{% endif %}">{{ edition }}</span>
+        {% endfor %}
+        {% for ver in mod.mc_versions %}
+        <span class="badge badge-yellow">MC {{ ver }}</span>
+        {% endfor %}
+        {% for tag in (mod.tags | default([])) %}
+        <a href="/mods?tag={{ tag }}" class="badge" style="background:rgba(167,139,250,0.12);color:#a78bfa;border-color:rgba(167,139,250,0.25);text-decoration:none;">#{{ tag }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="mod-info-actions">
+    <a href="/mods/{{ mod.id }}/download" class="btn btn-primary btn-lg">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      Download Mod
+    </a>
+    {% if user %}
+    <button class="btn btn-secondary bookmark-btn" id="bookmark-btn" onclick="toggleBookmark({{ mod.id }})" data-bookmarked="{{ 'true' if is_bookmarked else 'false' }}">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="{{ 'currentColor' if is_bookmarked else 'none' }}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="bookmark-icon"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+      <span id="bookmark-label">{{ 'Saved' if is_bookmarked else 'Save Mod' }}</span>
+    </button>
+    {% endif %}
+    {% if user and user.id == mod.uploader_id %}
+    <a href="/users/{{ user.id }}/manager-upload" class="btn btn-secondary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+      Manage
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="mod-info-desc">
+    <h3 style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px;">About this mod</h3>
+    <p>{{ mod.description }}</p>
+  </div>
+
+  <div class="mod-info-details">
+    {% if mod.loaders %}
+    <div class="mod-info-detail-card">
+      <div class="mod-info-detail-title">Supported Loaders</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        {% for loader in mod.loaders %}
+        <span class="loader-badge loader-{{ loader.lower() }}">{{ loader }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if mod.mc_versions %}
+    <div class="mod-info-detail-card">
+      <div class="mod-info-detail-title">Minecraft Versions</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        {% for ver in mod.mc_versions %}
+        <span class="badge badge-yellow">{{ ver }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    <div class="mod-info-detail-card">
+      <div class="mod-info-detail-title">Edition</div>
+      <div style="display:flex;gap:6px;">
+        {% for edition in mod.editions %}
+        <span class="badge {% if edition == 'Java' %}badge-blue{% else %}badge-green{% endif %}">{{ edition }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="mod-info-detail-card">
+      <div class="mod-info-detail-title">Statistics</div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text2);">
+        <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg><strong style="color:var(--text);">{{ mod.downloads }}</strong> downloads</span>
+        <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg><strong style="color:var(--text);">{{ mod.views }}</strong> views</span>
+        <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><strong style="color:var(--yellow);">{{ mod.avg_rating }}/5</strong> ({{ mod.ratings | length }} ratings)</span>
+        <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><strong style="color:var(--text);">{{ mod.comments | length if mod.comments else 0 }}</strong> comments</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="rating-section">
+    <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+      Rate this mod
+    </h3>
+    <div style="display:flex;align-items:center;gap:20px;margin-bottom:20px;flex-wrap:wrap;">
+      <div>
+        <div class="rating-avg">{{ mod.avg_rating }}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px;">out of 5 · {{ mod.ratings | length }} ratings</div>
+      </div>
+    </div>
+    {% if not user %}
+    <div style="padding:16px;background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <span style="font-size:14px;color:var(--text3);">Login to rate this mod</span>
+      <a href="/login?next=/mods/{{ mod.id }}/info" class="btn btn-outline btn-sm">Login to Rate</a>
+    </div>
+    {% elif user_rate_blocked %}
+    <div style="padding:14px;background:rgba(74,222,128,0.05);border:1px solid rgba(74,222,128,0.2);border-radius:var(--radius-sm);font-size:14px;color:var(--green);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      You already rated this mod. You can rate again in 12 hours.
+    </div>
+    {% else %}
+    <div id="rating-widget">
+      <div style="margin-bottom:12px;font-size:14px;color:var(--text2);">Select your rating:</div>
+      <div class="stars-container" id="stars-container">
+        {% for i in range(1, 6) %}
+        <button class="star-btn" data-star="{{ i }}" onclick="selectStar({{ i }})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        </button>
+        {% endfor %}
+      </div>
+      <div id="rating-send-row" style="display:none;margin-top:16px;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span id="rating-label" style="font-size:14px;color:var(--text2);"></span>
+        <button class="btn btn-primary btn-sm" onclick="submitRating()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          Submit Rating
+        </button>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="comments-section">
+    <h3 class="comments-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      Comments
+      <span class="comments-count" id="comments-count">{{ mod.comments | length if mod.comments else 0 }}</span>
+    </h3>
+
+    {% if user %}
+    <div class="comment-form">
+      <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="comment-avatar" alt="{{ user.display_name }}">
+      <div class="comment-input-wrap" style="flex:1;">
+        <div class="comment-reply-bar" id="comment-reply-bar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+          Replying to <strong id="comment-reply-name"></strong>
+          <button class="comment-reply-x" onclick="cancelCommentReply()">×</button>
+        </div>
+        <textarea id="comment-input" class="input-field comment-textarea" placeholder="Share your thoughts about this mod..." rows="2" maxlength="1000"></textarea>
+        <input type="hidden" id="comment-reply-to-id" value="">
+        <input type="hidden" id="comment-reply-to-name" value="">
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;">
+          <label class="file-upload-label" style="padding:5px 12px;font-size:12px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            Image
+            <input type="file" id="comment-image-input" accept="image/*" style="display:none" onchange="previewCommentImg(this)">
+          </label>
+          <span id="comment-img-preview-name" style="font-size:11px;color:var(--text3);"></span>
+          <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="submitComment()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            Post Comment
+          </button>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="comment-login-prompt">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <a href="/login?next=/mods/{{ mod.id }}/info" style="color:var(--primary);">Log in</a> to comment
+    </div>
+    {% endif %}
+
+    <div class="comments-list" id="comments-list">
+      {% if mod.comments %}
+        {% for c in mod.comments | reverse %}
+        {% if not c.reply_to_id %}
+        <div class="comment-item" id="comment-{{ c.id }}">
+          <img src="{{ c.avatar if c.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="comment-avatar" alt="{{ c.display_name }}">
+          <div class="comment-body">
+            <div class="comment-header">
+              <a href="/users/{{ c.username }}" class="comment-name">{{ c.display_name }}</a>
+              <span class="comment-time">{{ c.created_at[:10] }}</span>
+              {% if user and (user.id == c.user_id or user.tag == 'admin') %}
+              <button class="comment-delete-btn" onclick="deleteComment('{{ c.id }}')" title="Delete">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
+              </button>
+              {% endif %}
+            </div>
+            <div class="comment-text">{{ c.text }}</div>
+            {% if c.image %}
+            <img src="{{ c.image }}" class="comment-image" alt="Attached image" onclick="window.open('{{ c.image }}','_blank')">
+            {% endif %}
+            <div class="comment-reactions" id="reactions-{{ c.id }}">
+              {% set reacts = c.reactions | default({}) %}
+              {% for emoji, users_reacted in reacts.items() %}
+              {% if users_reacted|length > 0 %}
+              <button class="react-chip {% if user and user.id in users_reacted %}active{% endif %}"
+                onclick="toggleReact('{{ c.id }}', this.dataset.emoji)"
+                data-emoji="{{ emoji }}" data-comment="{{ c.id }}">
+                {{ emoji }}<span>{{ users_reacted|length }}</span>
+              </button>
+              {% endif %}
+              {% endfor %}
+              {% if user %}
+              <button class="react-add-btn" onclick="toggleEmojiPicker(event,'{{ c.id }}')" title="Add reaction" type="button">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
+              {% endif %}
+            </div>
+            {% if user %}
+            <div class="cmt-msg-actions">
+              <button class="cmt-reply-action-btn" onclick="triggerCommentReply('{{ c.id }}','{{ c.display_name | replace("'","") }}')" type="button">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+                Reply
+              </button>
+            </div>
+            {% endif %}
+            {# Collect replies for this comment #}
+            {% set ns = namespace(replies=[]) %}
+            {% for r in mod.comments %}
+              {% if r.reply_to_id and r.reply_to_id | string == c.id | string %}
+                {% set ns.replies = ns.replies + [r] %}
+              {% endif %}
+            {% endfor %}
+            {% if ns.replies %}
+            <div class="cmt-replies-wrap">
+              <button class="cmt-toggle-btn" onclick="toggleCmtReplies('cmt-rep-{{ c.id }}', this)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                <span>{{ ns.replies|length }} {{ 'reply' if ns.replies|length == 1 else 'replies' }}</span>
+              </button>
+              <div class="cmt-replies-list" id="cmt-rep-{{ c.id }}">
+                {% for r in ns.replies %}
+                <div class="comment-item cmt-reply-item" id="comment-{{ r.id }}">
+                  <img src="{{ r.avatar if r.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="comment-avatar" alt="{{ r.display_name }}">
+                  <div class="comment-body">
+                    <div class="comment-header">
+                      <a href="/users/{{ r.username }}" class="comment-name">{{ r.display_name }}</a>
+                      <span class="comment-time">{{ r.created_at[:10] }}</span>
+                      {% if user and (user.id == r.user_id or user.tag == 'admin') %}
+                      <button class="comment-delete-btn" onclick="deleteComment('{{ r.id }}')" title="Delete">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
+                      </button>
+                      {% endif %}
+                    </div>
+                    <div class="comment-text">{{ r.text }}</div>
+                    {% if r.image %}
+                    <img src="{{ r.image }}" class="comment-image" alt="Attached image" onclick="window.open('{{ r.image }}','_blank')">
+                    {% endif %}
+                    <div class="comment-reactions" id="reactions-{{ r.id }}">
+                      {% set rreacts = r.reactions | default({}) %}
+                      {% for emoji, users_reacted in rreacts.items() %}
+                      {% if users_reacted|length > 0 %}
+                      <button class="react-chip {% if user and user.id in users_reacted %}active{% endif %}"
+                        onclick="toggleReact('{{ r.id }}', this.dataset.emoji)"
+                        data-emoji="{{ emoji }}" data-comment="{{ r.id }}">
+                        {{ emoji }}<span>{{ users_reacted|length }}</span>
+                      </button>
+                      {% endif %}
+                      {% endfor %}
+                      {% if user %}
+                      <button class="react-add-btn" onclick="toggleEmojiPicker(event,'{{ r.id }}')" title="Add reaction" type="button">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                      </button>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      {% else %}
+      <div class="comments-empty" id="comments-empty">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        <span>No comments yet. Be the first!</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+</div>
+</div>
+
+<script>
+// ── Slider ──────────────────────────────────────────────
+(function() {
+  var slides = document.querySelectorAll('.mod-slide');
+  var dots = document.querySelectorAll('.slider-dot');
+  if (!slides.length) return;
+  var cur = 0, timer = null, animating = false;
+  function goTo(idx, dir) {
+    if (slides.length < 2) return;
+    var prev = cur;
+    cur = ((idx % slides.length) + slides.length) % slides.length;
+    if (prev === cur) return;
+    if (animating) {
+      slides[prev].classList.remove('slide-exit-left','slide-exit-right','active');
+      slides[prev].style.transition = '';
+    }
+    animating = true;
+    var exitCls = dir >= 0 ? 'slide-exit-left' : 'slide-exit-right';
+    var enterCls = dir >= 0 ? 'slide-enter-right' : 'slide-enter-left';
+    slides[cur].classList.add(enterCls);
+    slides[cur].offsetWidth;
+    slides[prev].classList.add(exitCls);
+    slides[prev].classList.remove('active');
+    slides[cur].classList.remove(enterCls);
+    slides[cur].classList.add('active');
+    dots[prev] && dots[prev].classList.remove('active');
+    dots[cur] && dots[cur].classList.add('active');
+    setTimeout(function() {
+      slides[prev].classList.remove('slide-exit-left','slide-exit-right');
+      animating = false;
+    }, 480);
+  }
+  window.sliderMove = function(dir) { clearInterval(timer); goTo(cur + dir, dir); startAuto(); };
+  window.sliderGo = function(idx) {
+    var d = idx >= cur ? 1 : -1;
+    clearInterval(timer); goTo(idx, d); startAuto();
+  };
+  function startAuto() { timer = setInterval(function() { goTo(cur + 1, 1); }, 5000); }
+  if (slides.length > 1) startAuto();
+})();
+
+// ── Rating ──────────────────────────────────────────────
+let selectedStar = 0;
+const labels = ['Terrible', 'Poor', 'Average', 'Good', 'Excellent'];
+function selectStar(n) {
+  selectedStar = n;
+  document.querySelectorAll('.star-btn').forEach((btn, i) => btn.classList.toggle('active', i < n));
+  const row = document.getElementById('rating-send-row');
+  if (row) { row.style.display = 'flex'; document.getElementById('rating-label').textContent = labels[n-1] + ' (' + n + '/5)'; }
+}
+document.querySelectorAll('.star-btn').forEach((btn, i) => {
+  btn.addEventListener('mouseenter', () => document.querySelectorAll('.star-btn').forEach((b, j) => b.classList.toggle('hovered', j <= i)));
+  btn.addEventListener('mouseleave', () => document.querySelectorAll('.star-btn').forEach(b => b.classList.remove('hovered')));
+});
+async function submitRating() {
+  if (!selectedStar) return;
+  const btn = document.querySelector('#rating-widget .btn-primary');
+  btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
+  try {
+    const resp = await fetch('/api/rate/{{ mod.id }}', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({stars: selectedStar}) });
+    const data = await resp.json();
+    if (data.success) { showToast('Rating submitted! Avg: ' + data.avg + '/5'); setTimeout(() => location.reload(), 1500); }
+    else { showToast(data.error || 'Failed', 'error'); btn.disabled = false; btn.innerHTML = 'Submit Rating'; }
+  } catch(e) { showToast('Network error', 'error'); btn.disabled = false; }
+}
+
+// ── Bookmark ────────────────────────────────────────────
+async function toggleBookmark(modId) {
+  const btn = document.getElementById('bookmark-btn');
+  if (!btn) return;
+  btn.disabled = true;
+  try {
+    const resp = await fetch('/api/bookmark/' + modId, { method: 'POST' });
+    const data = await resp.json();
+    if (data.success) {
+      const icon = document.getElementById('bookmark-icon');
+      const label = document.getElementById('bookmark-label');
+      if (data.bookmarked) { icon.setAttribute('fill', 'currentColor'); label.textContent = 'Saved'; btn.dataset.bookmarked = 'true'; showToast('Mod saved to bookmarks!'); }
+      else { icon.setAttribute('fill', 'none'); label.textContent = 'Save Mod'; btn.dataset.bookmarked = 'false'; showToast('Removed from bookmarks'); }
+    } else { showToast(data.error || 'Error', 'error'); }
+  } catch(e) { showToast('Network error', 'error'); }
+  btn.disabled = false;
+}
+
+// ── Toggle nested comment replies ───────────────────────
+function toggleCmtReplies(id, btn) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var isOpen = el.style.display === 'block';
+  el.style.display = isOpen ? 'none' : 'block';
+  btn.classList.toggle('open', !isOpen);
+  var count = el.querySelectorAll('.cmt-reply-item').length;
+  var span = btn.querySelector('span');
+  if (span) span.textContent = (isOpen ? '' : 'Hide ') + count + ' ' + (count === 1 ? 'reply' : 'replies');
+}
+
+// ── Comment reply ───────────────────────────────────────
+function triggerCommentReply(commentId, authorName) {
+  document.getElementById('comment-reply-to-id').value = commentId;
+  document.getElementById('comment-reply-to-name').value = authorName;
+  document.getElementById('comment-reply-name').textContent = '@' + authorName;
+  document.getElementById('comment-reply-bar').classList.add('visible');
+  document.getElementById('comment-input').focus();
+}
+function cancelCommentReply() {
+  document.getElementById('comment-reply-to-id').value = '';
+  document.getElementById('comment-reply-to-name').value = '';
+  document.getElementById('comment-reply-bar').classList.remove('visible');
+}
+
+// ── Comment image preview ───────────────────────────────
+function previewCommentImg(input) {
+  const f = input.files[0];
+  const span = document.getElementById('comment-img-preview-name');
+  span.textContent = f ? '📎 ' + (f.name.length > 20 ? f.name.slice(0,18)+'…' : f.name) : '';
+}
+
+// ── Post comment ────────────────────────────────────────
+async function submitComment() {
+  const input = document.getElementById('comment-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const imageInput = document.getElementById('comment-image-input');
+  const replyToId = document.getElementById('comment-reply-to-id').value;
+  const replyToName = document.getElementById('comment-reply-to-name').value;
+  const btn = document.querySelector('.comment-input-wrap .btn-primary');
+  btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
+  try {
+    const fd = new FormData();
+    fd.append('text', text);
+    fd.append('reply_to_id', replyToId);
+    fd.append('reply_to_name', replyToName);
+    if (imageInput && imageInput.files[0]) fd.append('image', imageInput.files[0]);
+    const resp = await fetch('/api/comment/{{ mod.id }}', { method: 'POST', body: fd });
+    const data = await resp.json();
+    if (data.success) {
+      input.value = '';
+      if (imageInput) { imageInput.value = ''; document.getElementById('comment-img-preview-name').textContent = ''; }
+      cancelCommentReply();
+      const empty = document.getElementById('comments-empty');
+      if (empty) empty.remove();
+      const c = data.comment;
+      const list = document.getElementById('comments-list');
+      const el = document.createElement('div');
+      el.className = 'comment-item';
+      el.id = 'comment-' + c.id;
+      el.innerHTML = `
+        <img src="${c.avatar || 'https://i.imgur.com/BCzwCla.png'}" class="comment-avatar" alt="${c.display_name}">
+        <div class="comment-body">
+          <div class="comment-header">
+            <a href="/users/${c.username}" class="comment-name">${c.display_name}</a>
+            <span class="comment-time">${c.created_at.slice(0,10)}</span>
+            <button class="comment-delete-btn" onclick="deleteComment('${c.id}')" title="Delete">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
+            </button>
+          </div>
+          ${c.reply_to_name ? `<div class="comment-reply-ref"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg> Replying to <strong>@${c.reply_to_name}</strong></div>` : ''}
+          <div class="comment-text">${c.text}</div>
+          ${c.image ? `<img src="${c.image}" class="comment-image" alt="Attached image" onclick="window.open('${c.image}','_blank')">` : ''}
+          <div class="comment-reactions" id="reactions-${c.id}">
+            <button class="react-add-btn" onclick="toggleEmojiPicker(event,'${c.id}')" title="Add reaction" type="button">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+          </div>
+        </div>`;
+      list.insertBefore(el, list.firstChild);
+      const countEl = document.getElementById('comments-count');
+      if (countEl) countEl.textContent = parseInt(countEl.textContent || 0) + 1;
+      showToast('Comment posted!');
+    } else { showToast(data.error || 'Failed', 'error'); }
+  } catch(e) { showToast('Network error', 'error'); }
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Post Comment';
+}
+
+// ── Delete comment ──────────────────────────────────────
+async function deleteComment(commentId) {
+  if (!await customConfirm('Delete this comment?', 'This action cannot be undone.')) return;
+  try {
+    const resp = await fetch('/api/comment/{{ mod.id }}/' + commentId, { method: 'DELETE' });
+    const data = await resp.json();
+    if (data.success) {
+      const el = document.getElementById('comment-' + commentId);
+      if (el) el.remove();
+      const countEl = document.getElementById('comments-count');
+      if (countEl) countEl.textContent = Math.max(0, parseInt(countEl.textContent || 1) - 1);
+      showToast('Comment deleted');
+    } else { showToast(data.error || 'Failed', 'error'); }
+  } catch(e) { showToast('Network error', 'error'); }
+}
+
+// ── React (dynamic, any emoji) ──────────────────────────
+async function toggleReact(commentId, emoji) {
+  try {
+    const resp = await fetch('/api/react/{{ mod.id }}/' + commentId, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ emoji })
+    });
+    const data = await resp.json();
+    if (data.success) {
+      const reactionsDiv = document.getElementById('reactions-' + commentId);
+      if (!reactionsDiv) return;
+      let chip = reactionsDiv.querySelector('[data-emoji="' + emoji + '"]');
+      if (data.count > 0) {
+        if (!chip) {
+          chip = document.createElement('button');
+          chip.className = 'react-chip';
+          chip.dataset.emoji = emoji;
+          chip.dataset.comment = commentId;
+          chip.type = 'button';
+          chip.setAttribute('onclick', 'toggleReact(\'' + commentId + '\', this.dataset.emoji)');
+          chip.innerHTML = emoji + '<span>' + data.count + '</span>';
+          const addBtn = reactionsDiv.querySelector('.react-add-btn');
+          if (addBtn) reactionsDiv.insertBefore(chip, addBtn);
+          else reactionsDiv.appendChild(chip);
+        } else {
+          chip.querySelector('span').textContent = data.count;
+        }
+        chip.classList.toggle('active', data.active);
+      } else {
+        if (chip) chip.remove();
+      }
+    } else if (data.error === 'Not logged in') {
+      showToast('Log in to react', 'error');
+    }
+  } catch(e) { showToast('Network error', 'error'); }
+}
+
+// ── Emoji Picker ─────────────────────────────────────────
+const EMOJI_CATS = [
+  { key:'smileys', icon:'😀', emojis:['😀','😁','😂','🤣','😃','😄','😅','😆','😇','😉','😊','😋','😌','😍','🥰','😎','😏','😐','😑','😒','😓','😔','😕','🙃','😗','😙','😚','😛','😜','🤪','😝','😞','😟','😠','😡','😢','😭','😤','😩','😫','🥺','😮','😱','😳','🤯','😖','😣','🤬','😵','🥴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','😴','🥱','💀','☠️','😈','👿','🤡','👹','👺','👻','👽','👾','🤖','😺','😸','😹','😻','😼','😽','🙀','😿','😾','🫠','🫡','🫢','🫣','🫤','🥹','🫥','🥸','🤩','🥳','🫨'] },
+  { key:'people', icon:'👋', emojis:['👋','🤚','🖐','✋','🤙','👈','👉','👆','👇','☝','👍','👎','✊','👊','🤛','🤜','👏','🙌','🤲','🙏','🤝','💪','🫶','🤳','💅','🖖','🤘','🤞','🤟','👌','🤌','🤏','✌️','🖕','☝️','🫵','🫰','🫱','🫲','🫳','🫴','👁️','👅','👄','🫦','🦷','👃','👂','🧠','🦴','🦶','👣','🦵','🦾','🦿','💆','💇','🙍','🙎','🙅','🙆','💁','🙋','🙇','🤦','🤷','🧏','👶','🧒','👦','👧','🧑','👱','👨','🧔','👩','🧓','👴','👵','💃','🕺','🚶','🧍','🧎','🏃','🧖','🧗','🤸','🤼','🤺','🤾','🏌️','🧘','🏊','🏄','🚣','🚵','🚴','🛀','🛌','👫','👬','👭','💑','💏','🫂','👨‍👩‍👦','👨‍👩‍👧','🧑‍🤝‍🧑'] },
+  { key:'animals', icon:'🐶', emojis:['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐔','🐧','🐦','🦆','🦅','🦉','🦇','🐺','🦄','🐝','🦋','🐛','🐌','🐞','🐜','🪲','🐢','🐍','🦎','🐊','🦕','🦖','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🦈','🐋','🐊','🐘','🦛','🦒','🦓','🦍','🦧','🦣','🐃','🐄','🐎','🐖','🐏','🐑','🦙','🐐','🦌','🐕','🐩','🐈','🐈‍⬛','🐓','🦃','🦤','🦚','🦜','🦢','🦩','🕊️','🐇','🦝','🦨','🦡','🦫','🦦','🦥','🐿️','🦔','🪱','🐾','🌸','🌺','🌻','🌼','🌷','🌿','🍀','🍁','🍂','🍃','🌲','🌳','🌴','🌵','🌾','🌈','⭐','🌟','💫','⚡','☄️','💥','🔥','🌊','❄️','🌪️','🌫️','⛈️','🌧️','🌨️','☁️','⛅','🌤️','☀️','🌙','🌛','🌜','🌝','🪐','🌍','🌎','🌏','🗻','🏔️','⛰️','🌋'] },
+  { key:'food', icon:'🍕', emojis:['🍕','🍔','🌮','🌯','🍟','🍖','🍗','🥚','🍳','🥞','🥓','🧀','🥗','🍜','🍝','🍛','🍣','🍱','🍤','🍙','🍘','🍚','🥟','🦪','🥫','🧆','🧇','🥙','🥨','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍿','🍩','🍪','🌰','🥜','🫘','🍯','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥕','🌽','🥒','🧅','🥔','🧄','🍠','🥐','🍞','🥖','🥯','🧋','☕','🍵','🧃','🥤','🍺','🍻','🥂','🍷','🍸','🍹','🍾','🧊','🥛','🍼','🧉','🧈','🧂','🫙','🥣','🥧','🍡','🍧','🍨','🍦','🥠','🥮','🫔','🫕','🫛'] },
+  { key:'activity', icon:'⚽', emojis:['⚽','🏀','🏈','⚾','🥎','🏐','🏉','🎾','🥏','🎯','🎱','🏓','🏸','🥊','🥋','🎽','🛹','🛷','⛷️','🏂','🏋️','🤼','🤸','⛹️','🤾','🏌️','🏇','🧘','🏊','🏄','🚣','🧗','🚵','🚴','🏆','🥇','🥈','🥉','🎖️','🎗️','🎟️','🎪','🤹','🎭','🎨','🖼️','🎰','🎳','🎮','🕹️','🎲','🃏','🀄','🎻','🎸','🎹','🎺','🥁','🎷','🎤','🎧','🎼','🎬','🎡','🎢','🎠','⛳','🎣','🤿','🪃','🏹','🪁','🪀','🪅','🪆','🪄','🧩','🪤','🪆','🫧','🎊','🎉','🎈','🎀','🎁','🎑','🎐','🎏'] },
+  { key:'travel', icon:'✈️', emojis:['✈️','🚀','🛸','🚁','🛶','⛵','🚤','🛥️','🛳️','🚢','⚓','🚂','🚃','🚄','🚅','🚆','🚇','🚊','🚌','🚍','🚎','🚑','🚒','🚓','🚕','🚗','🚙','🛻','🚚','🚛','🚜','🏎️','🏍️','🛵','🚲','🛴','🛹','🛼','🛺','🚡','🚠','🚟','⛴️','🛩️','🪂','🗺️','🗼','🗽','⛪','🌁','🌃','🏙️','🌄','🌅','🌆','🌇','🌉','🌌','🌠','🎇','🎆','🏝️','🏔️','🌋','⛰️','🏕️','🏜️','🏞️','🗾','⛺','🏠','🏡','🏢','🏣','🏥','🏦','🏨','🏩','🏪','🏫','🏬','🏭','🏯','🏰','🛣️','🛤️','⛽','🚦','🚥','🗿','🧭','⏱️','⌚','⏳','⌛'] },
+  { key:'objects', icon:'💡', emojis:['💡','🔦','🕯️','💻','📱','⌚','📺','📻','🎥','📷','📸','📼','📟','📠','☎️','📞','📡','🔋','🪫','🔌','💾','💿','📀','⌨️','🖥️','🖨️','🖱️','🕹️','💸','💵','💴','💶','💷','🪙','💰','💳','💎','⚖️','🔑','🗝️','🔨','⛏️','⚒️','🛠️','🗡️','⚔️','🛡️','🔧','🔩','⚙️','🪛','🪚','💊','💉','🩸','🩹','🩺','🩻','🧬','🔬','🔭','🩼','🩺','📦','📫','📮','🚪','🪟','🪞','🛋️','🚿','🛁','🧴','🧷','🧹','🧺','🧻','🧼','🪥','🧽','🪣','🗑️','🧲','🪜','💈','🧰','🎁','🛍️','🪤','🧯','🔐','🔒','🔓','📖','📚','📝','✏️','🖊️','🖋️','🖌️','📌','📍','📎','✂️','📋','📁','📂','📅','📆','📈','📉','📊','🔍','🔎','🔏','💬','💭','📢','📣','🔔','🔕','🎵','🎶','🎙️','🪗','🎚️','🎛️'] },
+  { key:'symbols', icon:'❤️', emojis:['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','❤️‍🔥','❤️‍🩹','🩷','🩵','🩶','🫀','☮️','✝️','☪️','🕉️','☸️','✡️','🔯','🕎','☯️','🛐','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆒','🆓','🆕','🆖','🆗','🆙','🆚','💮','🉐','㊙️','㊗️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📛','🚫','💯','💢','♨️','🚷','🚯','🚳','🚱','🔞','📵','🚭','❗','❕','❓','❔','‼️','⁉️','🔀','🔁','🔂','▶️','⏩','⏭️','⏯️','◀️','⏪','⏮️','🔼','⏫','🔽','⏬','⏸️','⏹️','⏺️','✅','❌','❎','♾️','🔱','⚜️','🔰','♻️','✔️','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤','🟥','🟧','🟨','🟩','🟦','🟪','⬛','⬜','🔶','🔷','🔸','🔹','🔺','🔻','💠','🔘','🔲','🔳'] },
+  { key:'flags', icon:'🚩', emojis:['🏁','🚩','🎌','🏴','🏳️','🏳️‍🌈','🏳️‍⚧️','🏴‍☠️','🇦🇩','🇦🇪','🇦🇫','🇦🇬','🇦🇱','🇦🇲','🇦🇴','🇦🇷','🇦🇸','🇦🇹','🇦🇺','🇦🇿','🇧🇦','🇧🇧','🇧🇩','🇧🇪','🇧🇫','🇧🇬','🇧🇭','🇧🇮','🇧🇯','🇧🇲','🇧🇳','🇧🇴','🇧🇷','🇧🇸','🇧🇹','🇧🇼','🇧🇾','🇧🇿','🇨🇦','🇨🇩','🇨🇫','🇨🇬','🇨🇭','🇨🇮','🇨🇰','🇨🇱','🇨🇲','🇨🇳','🇨🇴','🇨🇷','🇨🇺','🇨🇻','🇨🇼','🇨🇾','🇨🇿','🇩🇪','🇩🇯','🇩🇰','🇩🇲','🇩🇴','🇩🇿','🇪🇨','🇪🇪','🇪🇬','🇪🇷','🇪🇸','🇪🇹','🇪🇺','🇫🇮','🇫🇯','🇫🇲','🇫🇷','🇬🇦','🇬🇧','🇬🇩','🇬🇪','🇬🇭','🇬🇮','🇬🇲','🇬🇳','🇬🇶','🇬🇷','🇬🇹','🇬🇺','🇬🇼','🇬🇾','🇭🇰','🇭🇳','🇭🇷','🇭🇹','🇭🇺','🇮🇩','🇮🇪','🇮🇱','🇮🇳','🇮🇶','🇮🇷','🇮🇸','🇮🇹','🇯🇲','🇯🇴','🇯🇵','🇰🇪','🇰🇬','🇰🇭','🇰🇮','🇰🇲','🇰🇳','🇰🇵','🇰🇷','🇰🇼','🇰🇾','🇰🇿','🇱🇦','🇱🇧','🇱🇨','🇱🇮','🇱🇰','🇱🇷','🇱🇸','🇱🇹','🇱🇺','🇱🇻','🇱🇾','🇲🇦','🇲🇨','🇲🇩','🇲🇪','🇲🇬','🇲🇰','🇲🇱','🇲🇲','🇲🇳','🇲🇴','🇲🇷','🇲🇹','🇲🇺','🇲🇻','🇲🇼','🇲🇽','🇲🇾','🇲🇿','🇳🇦','🇳🇪','🇳🇬','🇳🇮','🇳🇱','🇳🇴','🇳🇵','🇳🇷','🇳🇺','🇳🇿','🇴🇲','🇵🇦','🇵🇪','🇵🇬','🇵🇭','🇵🇰','🇵🇱','🇵🇷','🇵🇸','🇵🇹','🇵🇼','🇵🇾','🇶🇦','🇷🇴','🇷🇸','🇷🇺','🇷🇼','🇸🇦','🇸🇧','🇸🇨','🇸🇩','🇸🇪','🇸🇬','🇸🇮','🇸🇰','🇸🇱','🇸🇲','🇸🇳','🇸🇴','🇸🇷','🇸🇸','🇸🇹','🇸🇻','🇸🇾','🇸🇿','🇹🇩','🇹🇬','🇹🇭','🇹🇯','🇹🇱','🇹🇲','🇹🇳','🇹🇴','🇹🇷','🇹🇹','🇹🇻','🇹🇼','🇹🇿','🇺🇦','🇺🇬','🇺🇸','🇺🇾','🇺🇿','🇻🇦','🇻🇨','🇻🇪','🇻🇳','🇻🇺','🇼🇸','🇾🇪','🇿🇦','🇿🇲','🇿🇼'] },
+];
+
+var _activePicker = null;
+
+function toggleEmojiPicker(e, commentId) {
+  e.stopPropagation();
+  var picker = document.getElementById('emoji-picker-float');
+  if (picker.style.display === 'block' && _activePicker === commentId) {
+    picker.style.display = 'none'; _activePicker = null; return;
+  }
+  _activePicker = commentId;
+  var btn = e.currentTarget;
+  var rect = btn.getBoundingClientRect();
+  var pw = 320, ph = 340;
+  var top = rect.bottom + 6;
+  var left = rect.left;
+  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  if (top + ph > window.innerHeight - 8) top = rect.top - ph - 6;
+  if (top < 8) top = 8;
+  picker.style.top = top + 'px';
+  picker.style.left = left + 'px';
+  picker.style.display = 'block';
+  document.getElementById('emoji-search').value = '';
+  _showEmojiCat('smileys');
+  setTimeout(function() { document.getElementById('emoji-search').focus(); }, 30);
+}
+
+function _showEmojiCat(key) {
+  document.querySelectorAll('.ecat-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.cat === key); });
+  var cat = EMOJI_CATS.find(function(c) { return c.key === key; });
+  _renderEmojis(cat ? cat.emojis : []);
+}
+
+function _renderEmojis(list) {
+  var grid = document.getElementById('emoji-grid');
+  grid.innerHTML = '';
+  list.forEach(function(em) {
+    var b = document.createElement('button');
+    b.className = 'emoji-btn'; b.type = 'button';
+    b.textContent = em; b.title = em;
+    b.onclick = function() {
+      if (_activePicker) {
+        toggleReact(_activePicker, em);
+        var p = document.getElementById('emoji-picker-float');
+        if (p) p.style.display = 'none';
+        _activePicker = null;
+      }
+    };
+    grid.appendChild(b);
+  });
+}
+
+var _EMOJI_NAMES = {
+  '😀':'grinning smile happy','😁':'beam grin happy','😂':'laugh cry tears joy','🤣':'rolling laugh floor','😃':'smile open mouth happy','😄':'grin happy','😅':'sweat smile awkward','😆':'laughing satisfied','😊':'blush smile happy','😍':'heart eyes love','🥰':'smiling hearts love','😎':'cool sunglasses','😏':'smirk','😢':'cry sad tear','😭':'sob loud cry','😡':'angry rage mad','😤':'triumph steam nose','😱':'scream scared shock','🤔':'thinking hmm pondering','😴':'sleep zzz tired','💀':'skull death dead','😈':'devil smiling evil','👻':'ghost halloween','🔥':'fire hot flame','💯':'hundred percent ok cool','✅':'check mark ok yes done','❌':'cross x no wrong','👍':'thumbs up like approve','👎':'thumbs down dislike','👋':'wave hello hi','🙌':'raise hands celebrate','🤝':'handshake deal','💪':'muscle strong flex','❤️':'heart love red','💔':'broken heart sad','💕':'two hearts love','⭐':'star gold','🌟':'glowing star','🎉':'party celebrate','🎮':'game controller video','⚔️':'sword fight battle','🏆':'trophy win champion','🎯':'target bullseye','💎':'diamond gem','🍀':'four leaf clover luck','🚀':'rocket space launch','🌈':'rainbow color','⚡':'lightning bolt zap','🧠':'brain think smart','🪐':'planet saturn space','😮':'open mouth surprised wow','😵':'dizzy knocked out','🥴':'woozy drunk dizzy','🫠':'melting face','😤':'steam nose angry huff','🤯':'exploding head mind blown','👀':'eyes look watching','🫶':'heart hands love','🤌':'italian hand gesture','👌':'ok hand perfect','✌️':'victory peace','😇':'angel halo','😋':'yum delicious','😌':'relieved calm','😔':'pensive sad','😟':'worried nervous','😕':'confused','🙃':'upside down sarcastic','🥺':'pleading puppy eyes','🙄':'eye roll bored','😏':'smirk','🥳':'partying celebration','🤩':'star struck amazed','🫡':'salute respect','🫣':'peeking shy','🫤':'dotted mouth neutral','😬':'grimace awkward','🤐':'zipper mouth silent','😶':'no mouth silent','🥵':'hot sweating','🥶':'cold freezing','🤢':'nauseated sick','🤮':'vomit sick','🤧':'sneeze ill cold','😷':'mask sick medical','😰':'anxious cold sweat','😨':'fearful scared','😧':'anguished pain','😦':'frowning surprised'
+};
+function searchEmoji(q) {
+  q = q.trim().toLowerCase();
+  if (!q) {
+    var act = document.querySelector('.ecat-btn.active');
+    _showEmojiCat(act ? act.dataset.cat : 'smileys'); return;
+  }
+  var all = [], seen = new Set();
+  EMOJI_CATS.forEach(function(c) { c.emojis.forEach(function(em) { if (!seen.has(em)) { all.push(em); seen.add(em); } }); });
+  var results = all.filter(function(em) {
+    if (em.toLowerCase().includes(q)) return true;
+    var name = _EMOJI_NAMES[em] || '';
+    return name.toLowerCase().includes(q);
+  });
+  _renderEmojis(results.length ? results : []);
+}
+
+document.addEventListener('click', function(e) {
+  var picker = document.getElementById('emoji-picker-float');
+  if (picker && picker.style.display === 'block' && !picker.contains(e.target)) {
+    picker.style.display = 'none'; _activePicker = null;
+  }
+});
+</script>
+
+<!-- Floating Emoji Picker -->
+<div class="emoji-picker-float" id="emoji-picker-float">
+  <div class="emoji-picker-head">
+    <input type="text" class="emoji-search" id="emoji-search" placeholder="Search emojis..." oninput="searchEmoji(this.value)">
+  </div>
+  <div class="ecat-tabs" id="ecat-tabs">
+    <button class="ecat-btn active" data-cat="smileys" onclick="_showEmojiCat('smileys')" type="button" title="Smileys">😀</button>
+    <button class="ecat-btn" data-cat="people" onclick="_showEmojiCat('people')" type="button" title="People">👋</button>
+    <button class="ecat-btn" data-cat="animals" onclick="_showEmojiCat('animals')" type="button" title="Animals & Nature">🐶</button>
+    <button class="ecat-btn" data-cat="food" onclick="_showEmojiCat('food')" type="button" title="Food & Drink">🍕</button>
+    <button class="ecat-btn" data-cat="activity" onclick="_showEmojiCat('activity')" type="button" title="Activity">⚽</button>
+    <button class="ecat-btn" data-cat="travel" onclick="_showEmojiCat('travel')" type="button" title="Travel & Places">✈️</button>
+    <button class="ecat-btn" data-cat="objects" onclick="_showEmojiCat('objects')" type="button" title="Objects">💡</button>
+    <button class="ecat-btn" data-cat="symbols" onclick="_showEmojiCat('symbols')" type="button" title="Symbols">❤️</button>
+    <button class="ecat-btn" data-cat="flags" onclick="_showEmojiCat('flags')" type="button" title="Flags">🚩</button>
+  </div>
+  <div class="emoji-grid" id="emoji-grid"></div>
+</div>
+{% endblock %}

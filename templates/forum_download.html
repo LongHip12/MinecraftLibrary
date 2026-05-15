@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Download Warning — Lonely Hub{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/forum.css">
+{% endblock %}
+
+{% block content %}
+<div class="page-content" style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:0;">
+  <!-- Background stays visible behind overlay -->
+</div>
+
+<!-- Warning modal overlay -->
+<div class="dl-warning-overlay" id="dl-warning-modal">
+  <div class="dl-warning-box">
+    <div class="dl-warning-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+    </div>
+
+    <h2 class="dl-warning-title">Unverified File</h2>
+    <p class="dl-warning-sub">You are about to download a file uploaded by a community member.</p>
+
+    <div class="dl-filename">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+      {{ att.original_name }}
+      <span style="font-size:12px;color:var(--text3);font-weight:400;">
+        ({{ (att.size / 1024)|round(1) }} KB)
+      </span>
+    </div>
+
+    <div class="dl-warning-text">
+      <strong style="color:var(--primary);">⚠ Warning:</strong> This file has <strong>not been verified</strong> by Lonely Hub staff.
+      It may contain malware, viruses, or harmful code. Only download files from
+      sources you trust. Lonely Hub is not responsible for any damage caused by
+      community-uploaded files.
+    </div>
+
+    <div class="dl-warning-actions">
+      <button class="btn btn-ghost" id="dl-cancel-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        Cancel
+      </button>
+      <button class="btn btn-danger" id="dl-ok-btn" data-href="/forum/download/{{ file_id }}?redirect=true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        Download Anyway
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}<script src="/static/js/forum.js"></script>{% endblock %}

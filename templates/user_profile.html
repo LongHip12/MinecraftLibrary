@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.display_name }} — Lonely Hub{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/user.css">
+<link rel="stylesheet" href="/static/css/mods.css">
+{% endblock %}
+{% block content %}
+<div class="page-content" style="padding-top:64px;">
+  <div class="user-banner" style="height:220px;overflow:hidden;">
+    {% if profile.banner %}
+    <img src="{{ profile.banner }}" alt="Banner" style="width:100%;height:100%;object-fit:cover;">
+    {% else %}
+    <div class="user-banner-placeholder" style="height:100%;"></div>
+    {% endif %}
+  </div>
+  <div class="user-profile-header">
+    <div class="user-avatar-wrap">
+      <img src="{{ profile.avatar if profile.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="{{ profile.display_name }}" class="user-avatar-large">
+    </div>
+    <div class="user-info-row">
+      <div class="user-name-block">
+        <div class="user-display-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          {{ profile.display_name }}
+          {% if profile.verified %}
+          <span class="verified-badge" title="Verified">
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#3b82f6"/><path d="M4.5 8.5l2.5 2 4.5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          {% endif %}
+          {% if is_admin_user %}
+          <span class="tag tag-admin">Admin</span>
+          {% else %}
+          <span class="tag tag-user">User</span>
+          {% endif %}
+        </div>
+        <div class="user-username">@{{ profile.username }}</div>
+        {% if profile.description %}
+        <div class="user-description">{{ profile.description }}</div>
+        {% endif %}
+      </div>
+      <div class="user-actions-row">
+        {% if is_own %}
+        <button class="btn btn-secondary" onclick="openEditModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          Edit Profile
+        </button>
+        <button class="btn btn-ghost" onclick="openPasswordModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Change Password
+        </button>
+        <a href="/users/{{ profile.id }}/manager-upload" class="btn btn-ghost">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          Manage Mods
+        </a>
+        <a href="/users/{{ profile.id }}/upload" class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          Upload Mod
+        </a>
+        {% elif user %}
+        <button class="btn {% if is_following %}btn-secondary{% else %}btn-primary{% endif %}" id="follow-btn" onclick="toggleFollow('{{ profile.id }}')">
+          {% if is_following %}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+          Unfollow
+          {% else %}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+          Follow
+          {% endif %}
+        </button>
+        {% endif %}
+      </div>
+    </div>
+    <div class="user-follow-stats">
+      {% if not profile.hide_followers or is_own %}
+      <button class="follow-stat-btn" onclick="openFollowModal('followers', '{{ profile.id }}')">
+        <div class="follow-stat-value" id="followers-count">{{ profile.followers | length }}</div>
+        <div class="follow-stat-label">Followers</div>
+      </button>
+      <button class="follow-stat-btn" onclick="openFollowModal('following', '{{ profile.id }}')">
+        <div class="follow-stat-value">{{ profile.following | length }}</div>
+        <div class="follow-stat-label">Following</div>
+      </button>
+      {% endif %}
+      <div class="follow-stat">
+        <div class="follow-stat-value">{{ total_mods }}</div>
+        <div class="follow-stat-label">Mods</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="user-mods-section">
+    <div class="user-mods-title">
+      Uploaded Mods
+      <span>{{ total_mods }}</span>
+    </div>
+    {% if mods %}
+    <div class="mods-grid">
+      {% for mod in mods %}
+      <div class="mod-card">
+        <div class="mod-card-img">
+          {% if mod.banner %}
+          <img src="{{ mod.banner }}" alt="{{ mod.name }}">
+          {% else %}
+          <div class="mod-card-img-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          </div>
+          {% endif %}
+        </div>
+        <div class="mod-card-body">
+          <div class="mod-card-name">{{ mod.name }}</div>
+          <div class="mod-card-desc">{{ mod.description }}</div>
+          <div class="mod-card-tags">
+            {% for loader in mod.loaders[:3] %}
+            <span class="loader-badge loader-{{ loader.lower() }}">{{ loader }}</span>
+            {% endfor %}
+          </div>
+          <div class="mod-card-actions">
+            <a href="/mods/{{ mod.id }}/info" class="btn btn-secondary btn-sm" style="width:100%">View</a>
+            <a href="/mods/{{ mod.id }}/download" class="btn btn-primary btn-sm" style="width:100%">Download</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:60px 24px;color:var(--text3);">
+      <p>No mods uploaded yet.</p>
+    </div>
+    {% endif %}
+    {% if total_pages > 1 %}
+    <div class="pagination">
+      {% if page > 1 %}<a href="?page={{ page-1 }}" class="page-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></a>{% endif %}
+      {% for p in range(1, total_pages+1) %}
+      {% if p == page %}<span class="page-btn active">{{ p }}</span>
+      {% else %}<a href="?page={{ p }}" class="page-btn">{{ p }}</a>{% endif %}
+      {% endfor %}
+      {% if page < total_pages %}<a href="?page={{ page+1 }}" class="page-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal-overlay" id="follow-modal">
+  <div class="modal" style="max-width:440px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h2 class="modal-title" style="margin-bottom:0;" id="follow-modal-title">Followers</h2>
+      <button onclick="closeFollowModal()" style="background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div id="follow-modal-list" class="follow-user-modal-list">
+      <div style="text-align:center;padding:32px;color:var(--text3);">
+        <div class="spinner" style="margin:0 auto 12px;border-top-color:var(--primary);border-color:rgba(255,255,255,0.1);"></div>
+        Loading...
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if is_own %}
+<div class="modal-overlay" id="password-modal">
+  <div class="modal" style="max-width:420px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <h2 class="modal-title" style="margin-bottom:0;">Change Password</h2>
+      <button onclick="closePasswordModal()" style="background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Current Password</label>
+      <input type="password" id="pw-current" class="input-field" placeholder="Enter current password" autocomplete="current-password">
+    </div>
+    <div class="form-group">
+      <label class="form-label">New Password</label>
+      <input type="password" id="pw-new" class="input-field" placeholder="At least 6 characters" autocomplete="new-password">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirm New Password</label>
+      <input type="password" id="pw-confirm" class="input-field" placeholder="Repeat new password" autocomplete="new-password">
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+      <button type="button" onclick="closePasswordModal()" class="btn btn-ghost">Cancel</button>
+      <button type="button" id="pw-save-btn" class="btn btn-primary" onclick="submitChangePassword()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        Save Password
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <h2 class="modal-title" style="margin-bottom:0;">Edit Profile</h2>
+      <button onclick="closeEditModal()" style="background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <form class="edit-profile-form" id="edit-profile-form" enctype="multipart/form-data">
+      <div class="form-group">
+        <label class="form-label">Display Name</label>
+        <input type="text" name="display_name" class="input-field" value="{{ profile.display_name }}" maxlength="32">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Username <span style="font-size:11px;color:var(--text3);">(Once per 24h)</span></label>
+        <input type="text" name="username" class="input-field" value="{{ profile.username }}" maxlength="20">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bio / Description</label>
+        <textarea name="description" class="input-field" rows="3" maxlength="500">{{ profile.description }}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Avatar</label>
+        <div class="avatar-upload-wrap">
+          <img src="{{ profile.avatar if profile.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="Avatar" class="avatar-preview" id="avatar-preview">
+          <label class="file-upload-btn" for="avatar-file-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            Upload Avatar
+          </label>
+          <input type="file" name="avatar" id="avatar-file-input" accept="image/*" style="display:none;" onchange="previewAvatar(this)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Banner</label>
+        <div class="banner-upload-wrap" onclick="document.getElementById('banner-file-input').click()">
+          {% if profile.banner %}
+          <img class="banner-preview-img" id="banner-preview" src="{{ profile.banner }}" alt="Banner">
+          <div class="banner-upload-hint" id="banner-hint" style="display:none;">
+          {% else %}
+          <img class="banner-preview-img" id="banner-preview" style="display:none;">
+          <div class="banner-upload-hint" id="banner-hint">
+          {% endif %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            Click to upload banner
+          </div>
+          <input type="file" name="banner" id="banner-file-input" accept="image/*" style="display:none;" onchange="previewBanner(this)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;">
+          <input type="checkbox" name="hide_followers" id="hide-followers-check" value="1" {% if profile.hide_followers %}checked{% endif %} style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;">
+          <span class="form-label" style="margin:0;">Hide followers &amp; following count</span>
+        </label>
+        <span style="font-size:11px;color:var(--text3);margin-left:26px;">Others won't see your follower/following counts</span>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+        <button type="button" onclick="closeEditModal()" class="btn btn-ghost">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+<script src="/static/js/mods.js"></script>
+<script>
+var PROFILE_ID = '{{ profile.id }}';
+var CURRENT_USER_ID = '{{ user.id if user else "" }}';
+
+function openFollowModal(type, userId) {
+  var modal = document.getElementById('follow-modal');
+  var title = document.getElementById('follow-modal-title');
+  var list = document.getElementById('follow-modal-list');
+  title.textContent = type === 'followers' ? 'Followers' : 'Following';
+  list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text3);"><div class="spinner" style="margin:0 auto 12px;border-top-color:var(--primary);border-color:rgba(255,255,255,0.1);"></div>Loading...</div>';
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  fetch('/users/' + userId + '/' + type, { credentials: 'same-origin' })
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      if (!data.success || !data.users || !data.users.length) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:14px;">' + (data.error ? 'Error: ' + data.error : 'No users yet.') + '</div>';
+        return;
+      }
+      list.innerHTML = '';
+      data.users.forEach(function(u) {
+        var verifiedBadge = u.verified ? '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;vertical-align:middle;margin-left:3px;"><circle cx="8" cy="8" r="8" fill="#3b82f6"/><path d="M4.5 8.5l2.5 2 4.5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
+        var tagHtml = u.tag === 'admin' ? '<span class="tag tag-admin" style="font-size:9px;padding:1px 5px;">Admin</span>' : '';
+        var followBtn = '';
+        if (CURRENT_USER_ID && CURRENT_USER_ID !== u.id) {
+          followBtn = '<button class="btn btn-sm ' + (u.is_following ? 'btn-secondary' : 'btn-primary') + '" style="flex-shrink:0;" data-uid="' + u.id + '" onclick="toggleFollowInModal(this, \'' + u.id + '\')">' + (u.is_following ? 'Unfollow' : 'Follow') + '</button>';
+        }
+        var item = document.createElement('div');
+        item.className = 'follow-user-item';
+        item.innerHTML = '<a href="/users/' + u.username + '" style="display:contents;"><img class="follow-user-item-avatar" src="' + (u.avatar || 'https://i.imgur.com/BCzwCla.png') + '" alt="' + u.display_name + '"></a>' +
+          '<div class="follow-user-item-info">' +
+          '<a href="/users/' + u.username + '" class="follow-user-item-name">' + u.display_name + verifiedBadge + tagHtml + '</a>' +
+          '<div class="follow-user-item-username">@' + u.username + '</div>' +
+          '</div>' +
+          followBtn;
+        list.appendChild(item);
+      });
+    })
+    .catch(function() {
+      list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Failed to load.</div>';
+    });
+}
+
+function closeFollowModal() {
+  document.getElementById('follow-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('follow-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeFollowModal();
+});
+
+async function toggleFollowInModal(btn, userId) {
+  btn.disabled = true;
+  try {
+    var resp = await fetch('/api/follow/' + userId, { method: 'POST' });
+    var data = await resp.json();
+    if (data.success) {
+      if (data.following) {
+        btn.className = 'btn btn-sm btn-secondary';
+        btn.textContent = 'Unfollow';
+      } else {
+        btn.className = 'btn btn-sm btn-primary';
+        btn.textContent = 'Follow';
+      }
+    }
+  } catch(e) {}
+  btn.disabled = false;
+}
+
+function openEditModal() {
+  document.getElementById('edit-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('edit-modal')?.addEventListener('click', (e) => {
+  if (e.target === document.getElementById('edit-modal')) closeEditModal();
+});
+function openPasswordModal() {
+  document.getElementById('password-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('pw-current').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+}
+function closePasswordModal() {
+  document.getElementById('password-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('password-modal')?.addEventListener('click', (e) => {
+  if (e.target === document.getElementById('password-modal')) closePasswordModal();
+});
+async function submitChangePassword() {
+  const current = document.getElementById('pw-current').value.trim();
+  const newPw = document.getElementById('pw-new').value;
+  const confirm = document.getElementById('pw-confirm').value;
+  if (!current || !newPw || !confirm) { showToast('Please fill all fields', 'error'); return; }
+  if (newPw !== confirm) { showToast('New passwords do not match', 'error'); return; }
+  if (newPw.length < 6) { showToast('New password must be at least 6 characters', 'error'); return; }
+  const btn = document.getElementById('pw-save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div>';
+  try {
+    const resp = await fetch('/api/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ current_password: current, new_password: newPw, confirm_password: confirm })
+    });
+    const data = await resp.json();
+    if (data.success) {
+      showToast('Password changed successfully!');
+      closePasswordModal();
+    } else {
+      showToast(data.error || 'Failed to change password', 'error');
+    }
+  } catch(err) {
+    showToast('Network error', 'error');
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Save Password';
+}
+function previewAvatar(input) {
+  if (input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => { document.getElementById('avatar-preview').src = e.target.result; };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+function previewBanner(input) {
+  if (input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('banner-preview').src = e.target.result;
+      document.getElementById('banner-preview').style.display = 'block';
+      document.getElementById('banner-hint').style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+document.getElementById('edit-profile-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('.btn-primary');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div>';
+  const fd = new FormData(e.target);
+  try {
+    const resp = await fetch('/users/{{ profile.id }}/edit', { method: 'POST', body: fd });
+    const data = await resp.json();
+    if (data.success) {
+      showToast('Profile updated!');
+      closeEditModal();
+      setTimeout(() => {
+        const newUsername = data.username || '{{ profile.username }}';
+        window.location.href = '/users/' + newUsername;
+      }, 1000);
+    } else {
+      showToast(data.error || 'Update failed', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Save Changes';
+    }
+  } catch(err) {
+    showToast('Network error', 'error');
+    btn.disabled = false;
+  }
+});
+async function toggleFollow(userId) {
+  const btn = document.getElementById('follow-btn');
+  try {
+    const resp = await fetch('/api/follow/' + userId, { method: 'POST' });
+    const data = await resp.json();
+    if (data.success) {
+      document.getElementById('followers-count').textContent = data.count;
+      if (data.following) {
+        btn.className = 'btn btn-secondary';
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="23" y1="11" x2="17" y2="11"></line></svg> Unfollow';
+      } else {
+        btn.className = 'btn btn-primary';
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg> Follow';
+      }
+    }
+  } catch(err) {
+    showToast('Failed to update follow', 'error');
+  }
+}
+</script>
+{% endblock %}

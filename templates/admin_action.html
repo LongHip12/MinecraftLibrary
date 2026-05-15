@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}
+{% if action == 'mute' %}Mute User{% elif action == 'ban' %}Ban User{% elif action == 'perm' %}Grant Permissions{% else %}Delete Account{% endif %}
+— Lonely Hub Admin
+{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin.css">
+{% endblock %}
+{% block content %}
+<div class="page-content">
+<div class="container">
+<div class="admin-action-page">
+  <div style="margin-bottom:20px;">
+    <a href="/api/v1/auth/admin" class="btn btn-ghost btn-sm">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      Back to Admin
+    </a>
+  </div>
+  <div class="admin-action-card">
+    {% if action == 'mute' %}
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <div style="width:44px;height:44px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+      </div>
+      <h1 class="admin-action-title" style="margin-bottom:0;">Mute User</h1>
+    </div>
+    <p class="admin-action-sub">The user will not be able to upload mods for the specified duration.</p>
+    {% elif action == 'ban' %}
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <div style="width:44px;height:44px;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.25);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(250,80,80)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+      </div>
+      <h1 class="admin-action-title" style="margin-bottom:0;">Ban User</h1>
+    </div>
+    <p class="admin-action-sub">The user will be blocked from accessing the platform for the specified duration.</p>
+    {% elif action == 'perm' %}
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <div style="width:44px;height:44px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+      </div>
+      <h1 class="admin-action-title" style="margin-bottom:0;">Grant Permissions</h1>
+    </div>
+    <p class="admin-action-sub">Grant admin privileges to this user for a specified duration or permanently.</p>
+    {% else %}
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <div style="width:44px;height:44px;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.25);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(250,80,80)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+      </div>
+      <h1 class="admin-action-title" style="margin-bottom:0;">Delete Account</h1>
+    </div>
+    <p class="admin-action-sub">This will permanently delete the account and all associated data. This action cannot be undone.</p>
+    {% endif %}
+
+    <div class="admin-action-target">
+      <img src="{{ target.avatar if target.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="{{ target.display_name }}">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;">
+          {{ target.display_name }}
+          {% if target.tag == 'admin' %}
+          <span class="tag tag-admin">Admin</span>
+          {% else %}
+          <span class="tag tag-user">User</span>
+          {% endif %}
+        </div>
+        <div style="font-size:12px;color:var(--text3);">@{{ target.username }} · {{ target.followers | length }} followers</div>
+      </div>
+    </div>
+
+    {% if action == 'mute' %}
+    <form class="admin-action-form" method="POST" action="/api/v1/auth/admin/mute">
+      <input type="hidden" name="user_id" value="{{ target.id }}">
+      <div class="form-group">
+        <label class="form-label">Mute Duration (Hours)</label>
+        <input type="number" name="hours" class="input-field" value="24" min="1" max="8760" required>
+        <span style="font-size:12px;color:var(--text3);">Max 8760 hours (1 year)</span>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <a href="/api/v1/auth/admin" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn" style="background:linear-gradient(135deg,#fbbf24,#d97706);color:#000;font-weight:700;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+          Apply Mute
+        </button>
+      </div>
+    </form>
+
+    {% elif action == 'ban' %}
+    <form class="admin-action-form" method="POST" action="/api/v1/auth/admin/ban">
+      <input type="hidden" name="user_id" value="{{ target.id }}">
+      <div class="form-group">
+        <label class="form-label">Ban Duration (Hours)</label>
+        <input type="number" name="hours" class="input-field" value="72" min="1" max="876000" required>
+        <span style="font-size:12px;color:var(--text3);">Use a very large number for a permanent ban</span>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <a href="/api/v1/auth/admin" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-danger">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+          Apply Ban
+        </button>
+      </div>
+    </form>
+
+    {% elif action == 'perm' %}
+    <form class="admin-action-form" method="POST" action="/api/v1/auth/admin/perm">
+      <input type="hidden" name="user_id" value="{{ target.id }}">
+      <div class="form-group">
+        <label class="form-label" style="display:flex;align-items:center;justify-content:space-between;">
+          Duration (Hours)
+          <label class="remember-label" style="font-size:12px;">
+            Lifetime
+            <label class="toggle-switch">
+              <input type="checkbox" name="lifetime" id="lifetime-toggle" onchange="toggleLifetime(this)">
+              <span class="toggle-slider"></span>
+            </label>
+          </label>
+        </label>
+        <input type="number" name="hours" id="hours-input" class="input-field" value="168" min="1" required>
+        <span style="font-size:12px;color:var(--text3);">168 hours = 1 week. Toggle Lifetime for permanent admin.</span>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <a href="/api/v1/auth/admin" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn" style="background:linear-gradient(135deg,#4ade80,#16a34a);color:#000;font-weight:700;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          Grant Permissions
+        </button>
+      </div>
+    </form>
+
+    {% else %}
+    <div style="padding:20px;background:rgba(250,80,80,0.05);border:1px solid rgba(250,80,80,0.2);border-radius:var(--radius-sm);margin-bottom:20px;font-size:14px;color:var(--text2);line-height:1.6;">
+      <strong style="color:var(--primary);">Warning:</strong> Deleting this account will permanently remove all user data, uploaded mods, ratings, and session tokens. This cannot be recovered.
+    </div>
+    <form method="POST" action="/api/v1/auth/admin/delete">
+      <input type="hidden" name="user_id" value="{{ target.id }}">
+      <div style="display:flex;gap:10px;">
+        <a href="/api/v1/auth/admin" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-danger">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+          Yes, Delete Account
+        </button>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</div>
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function toggleLifetime(checkbox) {
+  const hoursInput = document.getElementById('hours-input');
+  if (hoursInput) {
+    hoursInput.disabled = checkbox.checked;
+    hoursInput.style.opacity = checkbox.checked ? '0.4' : '1';
+  }
+}
+</script>
+{% endblock %}

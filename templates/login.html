@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Sign In — Lonely Hub{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/auth.css">
+<script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="https://i.imgur.com/xY7M2iE.jpeg" alt="Lonely Hub">
+      <span class="auth-logo-text">Lonely Hub</span>
+    </div>
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-sub">Sign in to your account to continue</p>
+    <form class="auth-form" id="login-form">
+      <div class="auth-error" id="auth-error" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <span></span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="input-field" data-i18n-placeholder="login.username" placeholder="Enter your username" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="pw-wrap">
+          <input type="password" name="password" id="login-pw" class="input-field" data-i18n-placeholder="login.password" placeholder="Enter your password" required autocomplete="current-password">
+          <button type="button" class="pw-toggle" onclick="togglePw('login-pw', this)" tabindex="-1" title="Show / hide password">
+            <svg id="login-pw-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+        </div>
+      </div>
+      <div class="remember-row">
+        <label class="remember-label">
+          <label class="toggle-switch">
+            <input type="checkbox" name="remember" id="remember">
+            <span class="toggle-slider"></span>
+          </label>
+          <span>Remember me for 30 days</span>
+        </label>
+      </div>
+      <div class="h-captcha-wrap">
+        <div class="h-captcha" data-sitekey="{{ hcaptcha_site_key }}" data-theme="dark"></div>
+      </div>
+      <button type="submit" class="auth-submit-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+        <span>Sign In</span>
+      </button>
+    </form>
+    <div class="auth-link"><span>Don't have an account?</span> <a href="/register{% if next_url %}?next={{ next_url }}{% endif %}">Create one</a></div>
+  </div>
+</div>
+<div class="success-overlay" id="success-overlay">
+  <div class="success-box">
+    <div class="success-circle">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    </div>
+    <div class="success-text">Login Successful!</div>
+    <div class="success-sub">Redirecting you shortly...</div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="/static/js/auth.js"></script>
+<script>
+var _EYE_OPEN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+var _EYE_OFF = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+var _SCRAMBLE_CHARS = '0123456789!@#$%^&*abcdefghijklmnopqrstuvwxyz_-+=';
+
+function togglePw(inputId, btn) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  var showing = input.type === 'text';
+  var actual = input.value;
+  if (!showing) {
+    input.type = 'text';
+    btn.innerHTML = _EYE_OFF;
+    input.classList.add('pw-scrambling');
+    var len = actual.length || 8;
+    var iter = 0;
+    var maxIter = len * 3;
+    var iv = setInterval(function() {
+      input.value = actual.split('').map(function(ch, i) {
+        if (iter / maxIter > i / (len || 1)) return ch;
+        return _SCRAMBLE_CHARS[Math.floor(Math.random() * _SCRAMBLE_CHARS.length)];
+      }).join('');
+      iter++;
+      if (iter > maxIter) {
+        clearInterval(iv);
+        input.value = actual;
+        input.classList.remove('pw-scrambling');
+      }
+    }, 28);
+  } else {
+    input.classList.add('pw-scrambling');
+    var iv2 = setInterval(function() {
+      input.value = input.value.split('').map(function() {
+        return _SCRAMBLE_CHARS[Math.floor(Math.random() * _SCRAMBLE_CHARS.length)];
+      }).join('');
+    }, 30);
+    setTimeout(function() {
+      clearInterval(iv2);
+      input.type = 'password';
+      input.value = actual;
+      input.classList.remove('pw-scrambling');
+      btn.innerHTML = _EYE_OPEN;
+    }, 280);
+  }
+}
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('.auth-submit-btn');
+  const errEl = document.getElementById('auth-error');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> ' + (window.__i18n ? window.__i18n.get('login.btn') : 'Signing in...');
+  const fd = new FormData(e.target);
+  try {
+    const resp = await fetch('/login' + window.location.search, { method: 'POST', body: fd });
+    const data = await resp.json();
+    if (data.success) {
+      document.getElementById('success-overlay').classList.add('show');
+      setTimeout(() => { window.location.href = data.redirect || '/'; }, 2000);
+    } else {
+      errEl.querySelector('span').textContent = data.error || 'Invalid credentials';
+      errEl.style.display = 'flex';
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg> <span>Sign In</span>';
+      if (window.__i18n) window.__i18n.applyLang(localStorage.getItem('lh_lang')||'en');
+      if (window.hcaptcha) window.hcaptcha.reset();
+    }
+  } catch(err) {
+    errEl.querySelector('span').textContent = 'Network error. Please try again.';
+    errEl.style.display = 'flex';
+    btn.disabled = false;
+    btn.innerHTML = '<span>Sign In</span>';
+  }
+});
+</script>
+{% endblock %}

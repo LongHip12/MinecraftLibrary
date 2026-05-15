@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/home.css">
+{% endblock %}
+{% block content %}
+<main>
+  <section class="hero">
+    <div class="hero-deco-svg">
+      <svg viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="400" cy="300" r="280" stroke="rgba(250,80,80,0.07)" stroke-width="1.5"/>
+        <circle cx="400" cy="300" r="180" stroke="rgba(250,80,80,0.05)" stroke-width="1"/>
+        <circle cx="400" cy="300" r="380" stroke="rgba(250,80,80,0.04)" stroke-width="1"/>
+        <line x1="0" y1="300" x2="800" y2="300" stroke="rgba(250,80,80,0.04)" stroke-width="1"/>
+        <line x1="400" y1="0" x2="400" y2="600" stroke="rgba(250,80,80,0.04)" stroke-width="1"/>
+      </svg>
+    </div>
+    <div class="hero-typewriter">
+      <span class="hero-typewriter-dot"></span>
+      <span class="hero-typewriter-text"><span id="typewriter-text"></span><span class="cursor"></span></span>
+    </div>
+    <h1 class="hero-title">
+      <span class="hero-title-gradient">Lonely Hub</span>
+    </h1>
+    <p class="hero-sub-title">Download free Minecraft mods for every version &amp; loader</p>
+    <div class="hero-cta">
+      <a href="/browse" class="btn btn-primary btn-lg">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        <span>Browse Mods Library</span>
+      </a>
+      <a href="https://dsc.gg/lonelyhub" target="_blank" class="btn btn-discord btn-lg">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+        <span>Join Discord Community</span>
+      </a>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-value" data-count="{{ stats.total_mods }}">{{ stats.total_mods }}</div>
+        <div class="stat-label">Total Mods</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" data-count="{{ stats.active_users }}">{{ stats.active_users }}</div>
+        <div class="stat-label">Active Users</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" data-count="{{ stats.total_users }}">{{ stats.total_users }}</div>
+        <div class="stat-label">Total Users</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ stats.uptime }}</div>
+        <div class="stat-label">Uptime</div>
+      </div>
+    </div>
+  </section>
+
+  {% if trending %}
+  <section class="trending-section">
+    <div class="container">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div class="section-eyebrow" style="margin-bottom:6px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="display:inline;vertical-align:middle;margin-right:4px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            Live
+          </div>
+          <h2 class="section-title" style="margin-bottom:0;font-size:26px;">Hot Today</h2>
+        </div>
+        <a href="/mods" class="btn btn-ghost btn-sm">View all mods →</a>
+      </div>
+      <div class="trending-list">
+        {% for mod in trending %}
+        <a href="/mods/{{ mod.id }}/info" class="trending-item">
+          <div class="trending-rank">
+            {% if loop.index == 1 %}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#fbbf24" stroke="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            {% else %}
+            <span>{{ loop.index }}</span>
+            {% endif %}
+          </div>
+          <div class="trending-banner">
+            {% if mod.banner %}
+            <img src="{{ mod.banner }}" alt="{{ mod.name }}">
+            {% else %}
+            <div class="trending-banner-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            </div>
+            {% endif %}
+          </div>
+          <div class="trending-info">
+            <div class="trending-name">{{ mod.name }}</div>
+            <div class="trending-by">by {{ mod.uploader_username }}</div>
+            <div class="trending-tags">
+              {% for loader in mod.loaders[:2] %}
+              <span class="badge badge-sm loader-{{ loader.lower() }}">{{ loader }}</span>
+              {% endfor %}
+              {% for tag in (mod.tags | default([]))[:2] %}
+              <span class="badge badge-sm" style="background:rgba(167,139,250,0.12);color:#a78bfa;">#{{ tag }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="trending-stats">
+            <div class="trending-stat">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              {{ mod.views }}
+            </div>
+            <div class="trending-stat">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              {{ mod.downloads }}
+            </div>
+            <div class="trending-rating">★ {{ mod.avg_rating }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="features">
+    <div class="features-wrap">
+      <div style="text-align:center;margin-bottom:60px;">
+        <div class="section-eyebrow">Why Us</div>
+        <h2 class="section-title">Why Choose Lonely Hub?</h2>
+        <p class="section-sub">Everything you need to enhance your Minecraft experience</p>
+      </div>
+      <div class="features-grid">
+
+        <div class="feature-card tilt-card">
+          <div class="feature-card-deco">
+            <svg viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <circle cx="60" cy="60" r="55" stroke="rgba(250,80,80,0.12)" stroke-width="1.5"/>
+              <circle cx="60" cy="60" r="35" stroke="rgba(250,80,80,0.08)" stroke-width="1"/>
+              <path d="M60 5 L60 115 M5 60 L115 60" stroke="rgba(250,80,80,0.06)" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <polyline points="9 12 11 14 15 10"/>
+            </svg>
+          </div>
+          <div class="feature-title">100% Safe &amp; Virus-Free</div>
+          <div class="feature-desc">Every mod uploaded is scanned and verified. No malware, no adware, no surprises.</div>
+          <div class="feature-tag">Verified</div>
+        </div>
+
+        <div class="feature-card tilt-card">
+          <div class="feature-card-deco">
+            <svg viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <polygon points="60,8 112,88 8,88" stroke="rgba(250,80,80,0.1)" stroke-width="1.5" fill="none"/>
+              <polygon points="60,28 92,78 28,78" stroke="rgba(250,80,80,0.07)" stroke-width="1" fill="none"/>
+              <circle cx="60" cy="60" r="8" stroke="rgba(250,80,80,0.1)" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <div class="feature-title">Completely Free Forever</div>
+          <div class="feature-desc">No subscriptions, no premium tiers, no hidden fees. Every single mod is free to download for everyone, always.</div>
+          <div class="feature-tag">Free</div>
+        </div>
+
+        <div class="feature-card tilt-card">
+          <div class="feature-card-deco">
+            <svg viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <rect x="15" y="15" width="90" height="90" rx="12" stroke="rgba(250,80,80,0.1)" stroke-width="1.5"/>
+              <rect x="30" y="30" width="60" height="60" rx="8" stroke="rgba(250,80,80,0.07)" stroke-width="1"/>
+              <rect x="45" y="45" width="30" height="30" rx="4" stroke="rgba(250,80,80,0.06)" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </div>
+          <div class="feature-title">All Loaders Supported</div>
+          <div class="feature-desc">Forge, Fabric, Quilt, NeoForge, Vanilla — we support every major mod loader. All Minecraft versions from 1.8 to latest.</div>
+          <div class="feature-tag">Multi-Loader</div>
+        </div>
+
+        <div class="feature-card tilt-card">
+          <div class="feature-card-deco">
+            <svg viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <circle cx="60" cy="60" r="50" stroke="rgba(250,80,80,0.08)" stroke-width="1" stroke-dasharray="6 4"/>
+              <circle cx="60" cy="60" r="30" stroke="rgba(250,80,80,0.06)" stroke-width="1" stroke-dasharray="4 3"/>
+              <circle cx="60" cy="60" r="10" stroke="rgba(250,80,80,0.1)" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+              <line x1="12" y1="18" x2="12.01" y2="18"/>
+            </svg>
+          </div>
+          <div class="feature-title">Java &amp; Bedrock Edition</div>
+          <div class="feature-desc">Mods and addons for both Java Edition and Bedrock Edition. Whether you play on PC, console, or mobile — we have you covered.</div>
+          <div class="feature-tag">Cross-Edition</div>
+        </div>
+
+        <div class="feature-card tilt-card">
+          <div class="feature-card-deco">
+            <svg viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <path d="M60 10 L110 40 L110 80 L60 110 L10 80 L10 40 Z" stroke="rgba(250,80,80,0.1)" stroke-width="1.5"/>
+              <path d="M60 28 L92 46 L92 74 L60 92 L28 74 L28 46 Z" stroke="rgba(250,80,80,0.07)" stroke-width="1"/>
+              <circle cx="60" cy="60" r="12" stroke="rgba(250,80,80,0.09)" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="feature-title">Community Driven</div>
+          <div class="feature-desc">Upload your own mods, follow creators, rate your favorites. A thriving community of Minecraft enthusiasts sharing content.</div>
+          <div class="feature-tag">Community</div>
+        </div>
+
+        <div class="feature-card tilt-card">
+          <div class="feature-card-deco">
+            <svg viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <path d="M20 60 L60 20 L100 60 L60 100 Z" stroke="rgba(250,80,80,0.1)" stroke-width="1.5"/>
+              <path d="M35 60 L60 35 L85 60 L60 85 Z" stroke="rgba(250,80,80,0.07)" stroke-width="1"/>
+              <line x1="60" y1="10" x2="60" y2="110" stroke="rgba(250,80,80,0.05)" stroke-width="1"/>
+              <line x1="10" y1="60" x2="110" y2="60" stroke="rgba(250,80,80,0.05)" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="feature-card-glow"></div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <div class="feature-title">Instant Downloads</div>
+          <div class="feature-desc">No waiting, no countdown timers, no captcha walls. Click download and get your mod instantly. Fast CDN delivery worldwide.</div>
+          <div class="feature-tag">Instant</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-logo">
+        <img src="https://i.imgur.com/xY7M2iE.jpeg" alt="Lonely Hub" style="width:28px;height:28px;border-radius:6px;">
+        <span>Lonely Hub</span>
+      </div>
+      <p style="color:var(--text3);font-size:13px;">&copy; 2026 Lonely Hub — Free Minecraft Mods Platform. Not affiliated with Mojang or Microsoft.</p>
+      <a href="https://dsc.gg/lonelyhub" target="_blank" class="footer-discord">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+        Join our Discord
+      </a>
+    </div>
+  </footer>
+</main>
+{% endblock %}
+{% block extra_js %}
+<script src="/static/js/home.js"></script>
+{% endblock %}

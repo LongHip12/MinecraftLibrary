@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel — Lonely Hub{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin.css">
+{% endblock %}
+{% block content %}
+<div class="admin-page">
+<div class="admin-header">
+  <div class="container">
+    <div class="admin-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+      Admin Panel
+    </div>
+    <div class="admin-tabs">
+      <a href="/api/v1/auth/admin?type=users" class="admin-tab {% if panel_type == 'users' %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        Manage Users
+      </a>
+      <a href="/api/v1/auth/admin?type=pages" class="admin-tab {% if panel_type == 'pages' %}active{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        Top Pages
+      </a>
+    </div>
+  </div>
+</div>
+<div class="container" style="padding-top:24px;padding-bottom:60px;">
+  {% if panel_type == 'users' %}
+  <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;color:var(--text2);">Top 10 Users by Followers</h2>
+  <div class="admin-users-grid">
+    {% for u in top_users %}
+    <div class="admin-user-row">
+      <img src="{{ u.avatar if u.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="{{ u.display_name }}" class="admin-user-avatar">
+      <div class="admin-user-info">
+        <div class="admin-user-name" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+          {{ u.display_name }}
+          {% if u.verified %}
+          <span title="Verified" style="display:inline-flex;align-items:center;">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#3b82f6"/><path d="M4.5 8.5l2.5 2 4.5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          {% endif %}
+          {% if u.tag == 'admin' %}
+          <span class="tag tag-admin">Admin</span>
+          {% else %}
+          <span class="tag tag-user">User</span>
+          {% endif %}
+          {% if u.banned_until %}
+          <span class="tag" style="background:rgba(239,68,68,0.1);color:#f87171;border-color:rgba(239,68,68,0.2);">Banned</span>
+          {% endif %}
+          {% if u.muted_until %}
+          <span class="tag" style="background:rgba(251,191,36,0.1);color:#fbbf24;border-color:rgba(251,191,36,0.2);">Muted</span>
+          {% endif %}
+        </div>
+        <div class="admin-user-stats">
+          @{{ u.username }} &nbsp;·&nbsp; {{ u.followers | length }} followers &nbsp;·&nbsp; {{ u.following | length }} following
+        </div>
+      </div>
+      <div class="admin-user-actions">
+        <button class="three-dot-btn" onclick="event.stopPropagation()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+        </button>
+        <div class="user-actions-menu">
+          <button class="user-action-item" onclick="grantVerifiedBadge('{{ u.id }}', this)" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#3b82f6"/><path d="M4.5 8.5l2.5 2 4.5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            {% if u.verified %}Revoke Verified Badge{% else %}Grant Verified Badge{% endif %}
+          </button>
+          <a href="/api/v1/auth/admin/mute?user={{ u.id }}" class="user-action-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+            Mute User
+          </a>
+          <a href="/api/v1/auth/admin/ban?user={{ u.id }}" class="user-action-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+            Ban User
+          </a>
+          <a href="/api/v1/auth/admin/perm?user={{ u.id }}" class="user-action-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            Grant Permissions
+          </a>
+          <a href="/users/{{ u.username }}" class="user-action-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            View Profile
+          </a>
+          <div style="height:1px;background:var(--border2);margin:4px 0;"></div>
+          <a href="/api/v1/auth/admin/delete?user={{ u.id }}" class="user-action-item danger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+            Delete Account
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% elif panel_type == 'pages' %}
+  <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;color:var(--text2);">Top 10 Pages by Views</h2>
+  <div class="admin-mods-grid">
+    {% for mod in top_mods %}
+    <div class="admin-mod-row">
+      <div class="admin-mod-info">
+        <div class="admin-mod-name">{{ mod.name }}</div>
+        <div class="admin-mod-stats">
+          {{ mod.views }} views &nbsp;·&nbsp; {{ mod.downloads }} downloads &nbsp;·&nbsp; {{ mod.avg_rating }}/5 ⭐ &nbsp;·&nbsp; by @{{ mod.uploader_username }}
+        </div>
+      </div>
+      <div class="admin-mod-actions">
+        <a href="/mods/{{ mod.id }}/info" class="btn btn-ghost btn-sm">View</a>
+        <button class="btn btn-secondary btn-sm" onclick="openAdminEditMod({{ mod.id }}, '{{ mod.name | replace("'", "\\'") }}', `{{ mod.description | replace('`', '\\`') }}`, '{{ mod.download_link }}', '{{ mod.loaders | join(",") }}', '{{ mod.mc_versions | join(",") }}', '{{ mod.editions | join(",") }}')">Edit</button>
+        <form method="POST" action="/api/v1/auth/admin/pages/delete/{{ mod.id }}" style="display:inline;" data-confirm="Delete this mod permanently?">
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+</div>
+
+<div class="modal-overlay" id="admin-edit-modal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <h2 class="modal-title" style="margin-bottom:0;">Edit Mod (Admin)</h2>
+      <button onclick="document.getElementById('admin-edit-modal').classList.remove('open')" style="background:none;border:none;color:var(--text2);cursor:pointer;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <form id="admin-edit-form" style="display:flex;flex-direction:column;gap:16px;">
+      <input type="hidden" id="admin-edit-id">
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input type="text" name="name" id="admin-edit-name" class="input-field">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea name="description" id="admin-edit-desc" class="input-field" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Download Link</label>
+        <input type="url" name="download_link" id="admin-edit-link" class="input-field">
+      </div>
+      <div class="form-group">
+        <label class="form-label">MC Versions</label>
+        <input type="text" name="mc_versions" id="admin-edit-versions" class="input-field">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button" onclick="document.getElementById('admin-edit-modal').classList.remove('open')" class="btn btn-ghost">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function openAdminEditMod(id, name, desc, link, loaders, versions, editions) {
+  document.getElementById('admin-edit-id').value = id;
+  document.getElementById('admin-edit-name').value = name;
+  document.getElementById('admin-edit-desc').value = desc;
+  document.getElementById('admin-edit-link').value = link;
+  document.getElementById('admin-edit-versions').value = versions;
+  document.getElementById('admin-edit-modal').classList.add('open');
+}
+document.getElementById('admin-edit-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('.btn-primary');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div>';
+  const id = document.getElementById('admin-edit-id').value;
+  const fd = new FormData(e.target);
+  try {
+    const resp = await fetch('/api/v1/auth/admin/pages/edit/' + id, { method: 'POST', body: fd });
+    if (resp.redirected || resp.ok) {
+      showToast('Mod updated!');
+      setTimeout(() => location.reload(), 800);
+    }
+  } catch(err) {
+    showToast('Error updating mod', 'error');
+    btn.disabled = false;
+    btn.innerHTML = 'Save';
+  }
+});
+
+async function grantVerifiedBadge(userId, btn) {
+  btn.disabled = true;
+  const origText = btn.lastChild && btn.lastChild.nodeType === 3 ? btn.lastChild.textContent : btn.textContent;
+  try {
+    const fd = new FormData();
+    fd.append('user_id', String(userId));
+    const resp = await fetch('/api/v1/auth/admin/verify', {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: fd
+    });
+    let data;
+    try { data = await resp.json(); } catch(e) {
+      showToast('Server error: ' + resp.status, 'error');
+      btn.disabled = false; return;
+    }
+    if (data.success) {
+      showToast(data.verified ? 'Verified badge granted!' : 'Verified badge revoked!', 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showToast(data.error || 'Failed to update badge', 'error');
+      btn.disabled = false;
+    }
+  } catch(e) {
+    showToast('Network error: ' + e.message, 'error');
+    btn.disabled = false;
+  }
+}
+</script>
+{% endblock %}

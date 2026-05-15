@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Muted — Lonely Hub{% endblock %}
+{% block content %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;">
+  <div style="text-align:center;max-width:480px;">
+    <div style="width:90px;height:90px;background:rgba(251,191,36,0.1);border:2px solid rgba(251,191,36,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+    </div>
+    <h1 style="font-size:26px;font-weight:800;color:var(--text);margin-bottom:10px;">You Are Muted</h1>
+    <p style="font-size:15px;color:var(--text2);line-height:1.6;margin-bottom:24px;">
+      Your account has been temporarily muted. You cannot upload mods during this period.
+    </p>
+    <div style="display:flex;justify-content:center;gap:12px;">
+      <a href="/" class="btn btn-primary">Go Home</a>
+      <a href="/mods" class="btn btn-secondary">Browse Mods</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

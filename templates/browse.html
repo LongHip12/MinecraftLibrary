@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Browse — Lonely Hub{% endblock %}
+{% block content %}
+<div class="page-content">
+  <div class="container">
+    <div style="max-width:680px;margin:0 auto;padding:60px 0 80px;">
+      <h1 style="font-size:clamp(26px,5vw,42px);font-weight:800;color:var(--text);text-align:center;margin-bottom:10px;letter-spacing:-0.5px;">
+        Browse the Library
+      </h1>
+      <p style="text-align:center;color:var(--text2);font-size:15px;margin-bottom:48px;">
+        What are you looking for today?
+      </p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+        <!-- Mods -->
+        <a href="/mods" class="browse-card" style="text-decoration:none;">
+          <div class="browse-card-icon" style="background:linear-gradient(135deg,rgba(250,80,80,0.15),rgba(250,80,80,0.04));border:1px solid rgba(250,80,80,0.2);">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><polyline points="8 21 12 17 16 21"></polyline><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="14" y2="12"></line></svg>
+          </div>
+          <div class="browse-card-label">Mods</div>
+          <div class="browse-card-sub">
+            {{ mod_count }} mod{{ 's' if mod_count != 1 else '' }} available
+          </div>
+          <div class="browse-card-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </div>
+        </a>
+
+        <!-- Clients -->
+        <a href="/clients" class="browse-card" style="text-decoration:none;">
+          <div class="browse-card-icon" style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(99,102,241,0.04));border:1px solid rgba(99,102,241,0.2);">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+          </div>
+          <div class="browse-card-label">Clients</div>
+          <div class="browse-card-sub">
+            {{ client_count }} client{{ 's' if client_count != 1 else '' }} available
+          </div>
+          <div class="browse-card-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.browse-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 36px 24px 28px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.browse-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background 0.2s;
+  pointer-events: none;
+}
+.browse-card:hover {
+  border-color: rgba(255,255,255,0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+}
+.browse-card:hover::before { background: rgba(255,255,255,0.025); }
+.browse-card-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.browse-card-label {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.browse-card-sub {
+  font-size: 13px;
+  color: var(--text3);
+  font-weight: 500;
+}
+.browse-card-arrow {
+  margin-top: 6px;
+  color: var(--text3);
+  transition: color 0.2s, transform 0.2s;
+}
+.browse-card:hover .browse-card-arrow {
+  color: var(--text);
+  transform: translateX(4px);
+}
+@media (max-width: 520px) {
+  .browse-card { padding: 28px 16px 22px; }
+  .browse-card-icon { width: 64px; height: 64px; border-radius: 14px; }
+  .browse-card-icon svg { width: 30px; height: 30px; }
+  .browse-card-label { font-size: 18px; }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,853 @@
+{% extends "base.html" %}
+{% block title %}API Docs — Lonely Hub{% endblock %}
+{% block extra_css %}
+<style>
+/* ── Reset inline code everywhere on this page ─────── */
+.api-page code {
+  font-family: 'Fira Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12.5px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 5px;
+  padding: 1px 7px;
+  color: #c0d0f0;
+  white-space: nowrap;
+}
+
+/* ── Hero ───────────────────────────────────────────── */
+.api-hero {
+  padding: 48px 0 32px;
+  text-align: center;
+}
+.api-hero-title {
+  font-size: clamp(26px, 5vw, 40px);
+  font-weight: 900;
+  letter-spacing: -.02em;
+  background: linear-gradient(135deg, #ffffff 0%, #8899cc 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+.api-hero-sub { font-size: 14px; color: var(--text3); max-width: 480px; margin: 0 auto; line-height: 1.65; }
+
+/* ── Base URL bar ──────────────────────────────────── */
+.api-base-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.api-base-label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; }
+.api-base-url-val {
+  font-family: 'Fira Mono', monospace;
+  font-size: 13px;
+  color: #7dd3fc;
+  font-weight: 600;
+  background: rgba(125, 211, 252, 0.07);
+  border: 1px solid rgba(125,211,252,0.15);
+  border-radius: 6px;
+  padding: 3px 10px;
+}
+.api-base-note { margin-left: auto; font-size: 11px; color: var(--text3); }
+
+/* ── Page layout ───────────────────────────────────── */
+.api-page { padding-bottom: 80px; }
+.api-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 36px;
+  align-items: start;
+}
+@media(max-width: 900px) { .api-layout { grid-template-columns: 1fr; } .api-toc-col { display: none; } }
+
+/* ── TOC ───────────────────────────────────────────── */
+.api-toc-col { position: sticky; top: 84px; }
+.api-toc-inner {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 14px 0;
+  overflow: hidden;
+}
+.api-toc-title {
+  font-size: 10px; font-weight: 800; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .1em;
+  padding: 0 14px 10px;
+}
+.api-toc-link {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px;
+  font-size: 12.5px; color: var(--text3);
+  text-decoration: none;
+  transition: color .14s, background .14s;
+  border-left: 2px solid transparent;
+  margin-left: -1px;
+}
+.api-toc-link:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.api-toc-link.toc-active { color: #fff; border-left-color: var(--primary); font-weight: 600; background: rgba(250,80,80,0.06); }
+.api-toc-sub { padding-left: 28px; font-size: 11.5px; }
+
+/* ── Sections ──────────────────────────────────────── */
+.api-section { margin-bottom: 52px; }
+.api-section-head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px; padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.api-section-title {
+  font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -.01em;
+}
+.section-badge {
+  font-size: 10px; font-weight: 800;
+  padding: 3px 9px; border-radius: 999px;
+  letter-spacing: .05em;
+}
+.badge-auth { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+.badge-admin { background: rgba(250,80,80,0.15); color: #ff6060; border: 1px solid rgba(250,80,80,0.25); }
+
+/* ── Auth note ─────────────────────────────────────── */
+.api-auth-note {
+  background: rgba(96,165,250,0.06);
+  border: 1px solid rgba(96,165,250,0.18);
+  border-left: 3px solid #60a5fa;
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+}
+.api-auth-note strong { color: #93c5fd; }
+.api-auth-note a { color: var(--primary); text-decoration: none; }
+.api-auth-note a:hover { text-decoration: underline; }
+
+/* ── Endpoint cards ────────────────────────────────── */
+.ep-card {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  transition: border-color .18s;
+}
+.ep-card:hover { border-color: rgba(255,255,255,0.12); }
+.ep-card.is-open { border-color: rgba(255,255,255,0.12); }
+
+.ep-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 15px 18px;
+  cursor: pointer; user-select: none;
+  transition: background .15s;
+}
+.ep-header:hover { background: rgba(255,255,255,0.025); }
+
+.ep-method {
+  font-size: 10px; font-weight: 900;
+  padding: 4px 10px; border-radius: 6px;
+  letter-spacing: .08em;
+  flex-shrink: 0;
+  font-family: 'Fira Mono', monospace;
+}
+.m-get  { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+.m-post { background: rgba(96,165,250,0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); }
+
+.ep-path {
+  font-family: 'Fira Mono', 'Consolas', monospace;
+  font-size: 13px; font-weight: 600;
+  color: #e2e8f0;
+  flex-shrink: 0;
+}
+.ep-desc {
+  font-size: 12.5px; color: var(--text3);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  min-width: 0;
+}
+.ep-chevron {
+  margin-left: auto; color: var(--text3);
+  transition: transform .25s ease; flex-shrink: 0;
+}
+.ep-card.is-open .ep-chevron { transform: rotate(180deg); }
+
+/* ── Card body ─────────────────────────────────────── */
+.ep-body-wrap {
+  max-height: 0; overflow: hidden;
+  transition: max-height .35s cubic-bezier(.4,0,.2,1);
+}
+.ep-card.is-open .ep-body-wrap { max-height: 4000px; transition: max-height .5s cubic-bezier(.4,0,.2,1); }
+.ep-body {
+  padding: 0 18px 20px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 0;
+}
+
+/* ── Parameter table ───────────────────────────────── */
+.param-table-wrap { overflow-x: auto; margin: 16px 0 10px; }
+.param-table {
+  width: 100%; border-collapse: collapse; font-size: 12.5px;
+  min-width: 460px;
+}
+.param-table thead th {
+  text-align: left; color: var(--text3); font-weight: 700;
+  font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
+  padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.param-table tbody td {
+  padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: top; color: var(--text2);
+}
+.param-table tbody tr:last-child td { border-bottom: none; }
+.p-name { font-family: 'Fira Mono', monospace; color: #93c5fd; font-size: 12.5px; font-weight: 600; }
+.p-type { color: var(--text3); font-size: 11px; font-family: 'Fira Mono', monospace; }
+.p-req  { color: #fb923c; font-size: 10px; font-weight: 700; }
+.p-opt  { color: var(--text3); font-size: 10px; }
+
+/* ── Code block ────────────────────────────────────── */
+.api-code-block { position: relative; margin: 10px 0 14px; }
+.api-code-label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.api-code-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 800; letter-spacing: .05em;
+  padding: 3px 10px; border-radius: 999px;
+}
+.tag-success { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.22); }
+.tag-error   { background: rgba(250,80,80,0.12);  color: #ff6b6b; border: 1px solid rgba(250,80,80,0.22); }
+.tag-request { background: rgba(96,165,250,0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.22); }
+
+pre.api-pre {
+  background: #0d1117;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 16px 18px;
+  padding-right: 70px;
+  font-family: 'Fira Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.75;
+  overflow-x: auto;
+  white-space: pre;
+  color: #c9d1d9;
+  margin: 0;
+}
+pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: inherit; background: none; border: none; padding: 0; }
+.api-copy-btn {
+  position: absolute; top: 10px; right: 10px;
+  padding: 4px 11px; font-size: 11px; font-weight: 700;
+  border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05); color: var(--text2);
+  cursor: pointer; font-family: inherit;
+  transition: all .15s; white-space: nowrap;
+}
+.api-copy-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+.api-copy-btn.copied { color: #34d399; border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.07); }
+
+/* ── JSON syntax colours ───────────────────────────── */
+.jk { color: #79b8ff; }  /* key */
+.js { color: #9ecbff; }  /* string value */
+.jn { color: #f8c555; }  /* number */
+.jb { color: #f47067; }  /* boolean/null */
+.jc { color: #6b7280; font-style: italic; }  /* comment */
+
+/* ── Note box ──────────────────────────────────────── */
+.api-note-box {
+  background: rgba(96,165,250,0.06);
+  border: 1px solid rgba(96,165,250,0.18);
+  border-left: 3px solid #60a5fa;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 12.5px; color: var(--text2);
+  line-height: 1.65; margin: 12px 0;
+}
+
+/* ── Mobile ────────────────────────────────────────── */
+@media(max-width: 540px) {
+  .ep-header { flex-wrap: wrap; gap: 8px; }
+  .ep-desc { order: 3; width: 100%; white-space: normal; }
+  .ep-path { font-size: 12px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content api-page">
+<div class="container">
+
+<div class="api-hero">
+  <h1 class="api-hero-title">Lonely Hub API Docs</h1>
+  <p class="api-hero-sub">Integrate mods, clients, forum, and user data into your own bots, tools, and apps.</p>
+</div>
+
+<div class="api-base-bar">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+  <span class="api-base-label">Base URL</span>
+  <span class="api-base-url-val">https://lonelyhubmc.onrender.com</span>
+  <span class="api-base-note">All endpoints return JSON</span>
+</div>
+
+<div class="api-layout">
+
+  <!-- TOC -->
+  <nav class="api-toc-col" aria-label="Contents">
+    <div class="api-toc-inner">
+      <div class="api-toc-title">Contents</div>
+      <a class="api-toc-link" href="#auth">Authentication</a>
+      <a class="api-toc-link" href="#public">Public API</a>
+      <a class="api-toc-link api-toc-sub" href="#v2-mods">Browse Mods</a>
+      <a class="api-toc-link api-toc-sub" href="#v2-clients">Browse Clients</a>
+      <a class="api-toc-link api-toc-sub" href="#forum-msgs">Forum Messages</a>
+      <a class="api-toc-link" href="#user-api">User API</a>
+      <a class="api-toc-link api-toc-sub" href="#v2-upload">Upload</a>
+      <a class="api-toc-link api-toc-sub" href="#v2-edit">Edit</a>
+      <a class="api-toc-link api-toc-sub" href="#v2-delete">Delete</a>
+      <a class="api-toc-link api-toc-sub" href="#v2-dashboard">Dashboard Data</a>
+      <a class="api-toc-link api-toc-sub" href="#v2-profile">Edit Profile</a>
+      <a class="api-toc-link" href="#admin-api">
+        Admin API
+        <span class="section-badge badge-admin" style="font-size:9px;padding:2px 7px;">Admin</span>
+      </a>
+      <a class="api-toc-link api-toc-sub" href="#v3-edit">Admin Edit</a>
+      <a class="api-toc-link api-toc-sub" href="#v3-user">Manage Users</a>
+      <a class="api-toc-link api-toc-sub" href="#v3-data">Site Stats</a>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main>
+
+    <!-- Authentication -->
+    <section class="api-section" id="auth">
+      <div class="api-section-head">
+        <div class="api-section-title">Authentication</div>
+      </div>
+      <div class="api-auth-note">
+        <strong>API tokens</strong> identify you to the API. Get yours from your
+        <a href="/dashboard">Dashboard</a>.
+        Send the token in the <code>X-Token</code> header for endpoints that require it.<br><br>
+        Some endpoints also accept the token as a <code>token</code> query parameter.
+      </div>
+    </section>
+
+    <!-- Public API -->
+    <section class="api-section" id="public">
+      <div class="api-section-head">
+        <div class="api-section-title">Public API</div>
+      </div>
+
+      <!-- GET /api/v2/mods -->
+      <div class="ep-card" id="v2-mods">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-get">GET</span>
+          <span class="ep-path">/api/v2/mods</span>
+          <span class="ep-desc">Browse and search mods</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">search</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Search by name or description</td></tr>
+                  <tr><td class="p-name">tag</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Filter by tag (e.g. <code>pvp</code>, <code>survival</code>)</td></tr>
+                  <tr><td class="p-name">loaders</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Filter by loader, comma-separated (e.g. <code>Fabric,Forge</code>)</td></tr>
+                  <tr><td class="p-name">mcversion</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Edition: <code>Java</code>, <code>Bedrock</code>, or <code>All</code></td></tr>
+                  <tr><td class="p-name">version</td><td class="p-type">string</td><td class="p-opt">optional</td><td>MC version (e.g. <code>1.20.1</code>)</td></tr>
+                  <tr><td class="p-name">max</td><td class="p-type">integer</td><td class="p-opt">optional</td><td>Max results (default 20, max 100)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-request">Request</span>
+              </div>
+              <pre class="api-pre"><code>GET /api/v2/mods?tag=pvp&amp;loaders=Fabric&amp;max=5</code></pre>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Response 200</span>
+              </div>
+              <pre class="api-pre"><code>{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"count"</span>: <span class="jn">1</span>,
+  <span class="jk">"mods"</span>: [
+    {
+      <span class="jk">"id"</span>: <span class="jn">3</span>,
+      <span class="jk">"name"</span>: <span class="js">"PvP Master"</span>,
+      <span class="jk">"description"</span>: <span class="js">"Enhance your PvP experience"</span>,
+      <span class="jk">"MinecraftVersion"</span>: [<span class="js">"Java"</span>],
+      <span class="jk">"Version"</span>: [<span class="js">"1.20.1"</span>],
+      <span class="jk">"Tags"</span>: [<span class="js">"pvp"</span>, <span class="js">"combat"</span>],
+      <span class="jk">"Loaders"</span>: [<span class="js">"Fabric"</span>],
+      <span class="jk">"Download"</span>: <span class="js">"https://example.com/mod.jar"</span>,
+      <span class="jk">"views"</span>: <span class="jn">1024</span>,
+      <span class="jk">"downloads"</span>: <span class="jn">382</span>
+    }
+  ]
+}</code></pre>
+              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/v2/clients -->
+      <div class="ep-card" id="v2-clients">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-get">GET</span>
+          <span class="ep-path">/api/v2/clients</span>
+          <span class="ep-desc">Browse and search clients</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">search</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Search by name or description</td></tr>
+                  <tr><td class="p-name">tag</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Filter by tag</td></tr>
+                  <tr><td class="p-name">mcversion</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Filter by edition</td></tr>
+                  <tr><td class="p-name">version</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Filter by MC version</td></tr>
+                  <tr><td class="p-name">max</td><td class="p-type">integer</td><td class="p-opt">optional</td><td>Max results (default 20, max 100)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Response 200</span>
+              </div>
+              <pre class="api-pre"><code>{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"count"</span>: <span class="jn">2</span>,
+  <span class="jk">"clients"</span>: [
+    { <span class="jk">"id"</span>: <span class="jn">1</span>, <span class="jk">"name"</span>: <span class="js">"Wurst Client"</span>, <span class="jk">"description"</span>: <span class="js">"..."</span> }
+  ]
+}</code></pre>
+              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/forum/post/<id>/messages -->
+      <div class="ep-card" id="forum-msgs">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-get">GET</span>
+          <span class="ep-path">/api/forum/post/&lt;post_id&gt;/messages</span>
+          <span class="ep-desc">Get messages for a forum thread</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">since</td><td class="p-type">string</td><td class="p-opt">optional</td><td>ISO datetime — return only messages newer than this timestamp</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Response 200</span>
+              </div>
+              <pre class="api-pre"><code>{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"total"</span>: <span class="jn">12</span>,
+  <span class="jk">"messages"</span>: [
+    {
+      <span class="jk">"id"</span>: <span class="js">"uuid-here"</span>,
+      <span class="jk">"author_name"</span>: <span class="js">"CoolPlayer"</span>,
+      <span class="jk">"author_tag"</span>: <span class="js">"user"</span>,
+      <span class="jk">"content"</span>: <span class="js">"Great mod!"</span>,
+      <span class="jk">"created_at"</span>: <span class="js">"2026-05-15T10:00:00"</span>,
+      <span class="jk">"reply_count"</span>: <span class="jn">2</span>
+    }
+  ]
+}</code></pre>
+              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- User API -->
+    <section class="api-section" id="user-api">
+      <div class="api-section-head">
+        <div class="api-section-title">User API</div>
+        <span class="section-badge badge-auth">Token required</span>
+      </div>
+      <div class="api-auth-note" style="margin-bottom:20px;">
+        All User API endpoints require the header <code>X-Token: your_api_token</code>.
+      </div>
+
+      <!-- POST /api/v2/upload -->
+      <div class="ep-card" id="v2-upload">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/v2/upload</span>
+          <span class="ep-desc">Upload a new mod or client</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Header</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">X-Token</td><td class="p-type">string</td><td class="p-req">required</td><td>Your API token</td></tr>
+                  <tr><td class="p-name">X-Type</td><td class="p-type">string</td><td class="p-req">required</td><td><code>Mods</code> or <code>Clients</code></td></tr>
+                  <tr><td class="p-name">X-Name</td><td class="p-type">string</td><td class="p-req">required</td><td>Name of the mod/client</td></tr>
+                  <tr><td class="p-name">X-Description</td><td class="p-type">string</td><td class="p-req">required</td><td>Description</td></tr>
+                  <tr><td class="p-name">X-DownloadLink</td><td class="p-type">string</td><td class="p-req">required</td><td>Direct download URL</td></tr>
+                  <tr><td class="p-name">X-MCVersion</td><td class="p-type">string</td><td class="p-opt">optional</td><td><code>Java</code>, <code>Bedrock</code>, or <code>All</code></td></tr>
+                  <tr><td class="p-name">X-Version</td><td class="p-type">string</td><td class="p-opt">optional</td><td>MC versions, comma-separated (e.g. <code>1.20.1, 1.20.4</code>)</td></tr>
+                  <tr><td class="p-name">X-Tag</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Tags, comma-separated (max 10)</td></tr>
+                  <tr><td class="p-name">X-Image</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Image URLs, comma-separated (first = banner)</td></tr>
+                  <tr><td class="p-name">X-Loaders</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Loaders, comma-separated (mods only, e.g. <code>Fabric, Forge</code>)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Success 200</span>
+              </div>
+              <pre class="api-pre"><code>{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"id"</span>: <span class="jn">42</span>,
+  <span class="jk">"url"</span>: <span class="js">"/mods/42/info"</span>,
+  <span class="jk">"name"</span>: <span class="js">"My Mod"</span>,
+  <span class="jk">"type"</span>: <span class="js">"mod"</span>
+}</code></pre>
+              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-error">&#10005; Error</span>
+              </div>
+              <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">false</span>, <span class="jk">"error"</span>: <span class="js">"X-Name is required"</span> }</code></pre>
+              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/v2/edit -->
+      <div class="ep-card" id="v2-edit">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/v2/edit</span>
+          <span class="ep-desc">Edit your mod or client</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Header</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">X-Token</td><td class="p-type">string</td><td class="p-req">required</td><td>Your API token</td></tr>
+                  <tr><td class="p-name">X-Type</td><td class="p-type">string</td><td class="p-req">required</td><td><code>Mods</code> or <code>Clients</code></td></tr>
+                  <tr><td class="p-name">X-IdProduct</td><td class="p-type">integer</td><td class="p-req">required</td><td>ID of the mod/client to edit</td></tr>
+                  <tr><td class="p-name">X-Name</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New name</td></tr>
+                  <tr><td class="p-name">X-Description</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New description</td></tr>
+                  <tr><td class="p-name">X-Tag</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New tags (replaces all existing)</td></tr>
+                  <tr><td class="p-name">X-Image</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New images (replaces all existing)</td></tr>
+                  <tr><td class="p-name">X-DownloadLink</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New download link</td></tr>
+                  <tr><td class="p-name">X-Version</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New MC versions</td></tr>
+                  <tr><td class="p-name">X-MCVersion</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New edition</td></tr>
+                  <tr><td class="p-name">X-Loaders</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New loaders (mods only)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Success 200</span>
+              </div>
+              <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"id"</span>: <span class="jn">42</span>, <span class="jk">"name"</span>: <span class="js">"Updated Mod Name"</span> }</code></pre>
+              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/v2/delete -->
+      <div class="ep-card" id="v2-delete">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/v2/delete</span>
+          <span class="ep-desc">Delete your mod or client</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Header</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">X-Token</td><td class="p-type">string</td><td class="p-req">required</td><td>Your API token</td></tr>
+                  <tr><td class="p-name">X-Type</td><td class="p-type">string</td><td class="p-req">required</td><td><code>Mods</code> or <code>Clients</code></td></tr>
+                  <tr><td class="p-name">X-PostId</td><td class="p-type">integer</td><td class="p-req">required</td><td>ID of the mod/client to delete</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Success 200</span>
+              </div>
+              <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"deleted"</span>: <span class="jn">42</span> }</code></pre>
+              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/v2/dashboard-data -->
+      <div class="ep-card" id="v2-dashboard">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-get">GET</span>
+          <span class="ep-path">/api/v2/dashboard-data</span>
+          <span class="ep-desc">Get your dashboard statistics</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">token</td><td class="p-type">string</td><td class="p-req">required</td><td>Your API token (query param)</td></tr>
+                  <tr><td class="p-name">showfollow</td><td class="p-type">boolean</td><td class="p-opt">optional</td><td>Include follower/following lists (<code>true</code> / <code>false</code>)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Response 200</span>
+              </div>
+              <pre class="api-pre"><code>{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"username"</span>: <span class="js">"CoolPlayer"</span>,
+  <span class="jk">"display_name"</span>: <span class="js">"Cool Player"</span>,
+  <span class="jk">"TotalViews"</span>: <span class="jn">5420</span>,
+  <span class="jk">"TotalDownloads"</span>: <span class="jn">382</span>,
+  <span class="jk">"ViewsToday"</span>: <span class="jn">104</span>,
+  <span class="jk">"DownloadsToday"</span>: <span class="jn">12</span>,
+  <span class="jk">"TotalMods"</span>: <span class="jn">3</span>,
+  <span class="jk">"Followers"</span>: <span class="jn">48</span>,
+  <span class="jk">"Following"</span>: <span class="jn">12</span>,
+  <span class="jk">"TopMods"</span>: [
+    { <span class="jk">"id"</span>: <span class="jn">5</span>, <span class="jk">"name"</span>: <span class="js">"My Mod"</span>, <span class="jk">"views"</span>: <span class="jn">3200</span>, <span class="jk">"downloads"</span>: <span class="jn">240</span> }
+  ]
+}</code></pre>
+              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/v2/profile-edit -->
+      <div class="ep-card" id="v2-profile">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/v2/profile-edit</span>
+          <span class="ep-desc">Edit your profile</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Header</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">X-Token</td><td class="p-type">string</td><td class="p-req">required</td><td>Your API token</td></tr>
+                  <tr><td class="p-name">X-Username</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New username (once per 24h)</td></tr>
+                  <tr><td class="p-name">X-DisplayName</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New display name (max 32 chars)</td></tr>
+                  <tr><td class="p-name">X-Avatar</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New avatar URL</td></tr>
+                  <tr><td class="p-name">X-Banner</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New banner URL</td></tr>
+                  <tr><td class="p-name">X-Password</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New password (min 6 chars)</td></tr>
+                  <tr><td class="p-name">X-HideFollowers</td><td class="p-type">boolean</td><td class="p-opt">optional</td><td><code>true</code> to hide followers count</td></tr>
+                  <tr><td class="p-name">X-HideFollowing</td><td class="p-type">boolean</td><td class="p-opt">optional</td><td><code>true</code> to hide following count</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Success 200</span>
+              </div>
+              <pre class="api-pre"><code>{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"username"</span>: <span class="js">"NewName"</span>,
+  <span class="jk">"display_name"</span>: <span class="js">"New Display Name"</span>
+}</code></pre>
+              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Admin API -->
+    <section class="api-section" id="admin-api">
+      <div class="api-section-head">
+        <div class="api-section-title">Admin API</div>
+        <span class="section-badge badge-admin">Admin only</span>
+      </div>
+      <div class="api-auth-note" style="margin-bottom:20px;">
+        <strong>Admin endpoints</strong> require an API token that belongs to an admin account.
+        Non-admin tokens will receive a <code>403</code> error.
+      </div>
+
+      <!-- POST /api/v3/edit -->
+      <div class="ep-card" id="v3-edit">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/v3/edit</span>
+          <span class="ep-desc">Admin edit any mod or client</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <p style="color:var(--text2);font-size:13px;margin:14px 0 10px;">Same headers as <code>/api/v2/edit</code> but works on any mod/client regardless of ownership.</p>
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Header</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">X-Token</td><td class="p-type">string</td><td class="p-req">required</td><td>Admin API token</td></tr>
+                  <tr><td class="p-name">X-Type</td><td class="p-type">string</td><td class="p-req">required</td><td><code>Mods</code> or <code>Clients</code></td></tr>
+                  <tr><td class="p-name">X-PostId</td><td class="p-type">integer</td><td class="p-req">required</td><td>ID of the product to edit</td></tr>
+                  <tr><td class="p-name">X-Name, X-Description, X-Tag, X-Image, X-DownloadLink</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Fields to update</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Success 200</span>
+              </div>
+              <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"id"</span>: <span class="jn">42</span>, <span class="jk">"name"</span>: <span class="js">"Updated Name"</span> }</code></pre>
+              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /api/v3/user -->
+      <div class="ep-card" id="v3-user">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/v3/user</span>
+          <span class="ep-desc">Manage users</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Header</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">X-Token</td><td class="p-type">string</td><td class="p-req">required</td><td>Admin API token</td></tr>
+                  <tr><td class="p-name">X-UserId</td><td class="p-type">string</td><td class="p-req">required</td><td>Target user ID</td></tr>
+                  <tr><td class="p-name">X-Action</td><td class="p-type">string</td><td class="p-req">required</td><td><code>ban</code>, <code>unban</code>, <code>promote</code>, <code>demote</code></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Success 200</span>
+              </div>
+              <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"action"</span>: <span class="js">"ban"</span>, <span class="jk">"user_id"</span>: <span class="js">"uuid"</span> }</code></pre>
+              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /api/v3/data -->
+      <div class="ep-card" id="v3-data">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-get">GET</span>
+          <span class="ep-path">/api/v3/data</span>
+          <span class="ep-desc">Get site-wide statistics</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">token</td><td class="p-type">string</td><td class="p-req">required</td><td>Admin API token (query param)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Response 200</span>
+              </div>
+              <pre class="api-pre"><code>{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"total_users"</span>: <span class="jn">1284</span>,
+  <span class="jk">"total_mods"</span>: <span class="jn">342</span>,
+  <span class="jk">"total_clients"</span>: <span class="jn">58</span>,
+  <span class="jk">"total_views"</span>: <span class="jn">98421</span>,
+  <span class="jk">"total_downloads"</span>: <span class="jn">24890</span>
+}</code></pre>
+              <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div><!-- /api-layout -->
+
+</div><!-- /container -->
+</div><!-- /page-content -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function _toggleEp(header) {
+  var card = header.closest('.ep-card');
+  card.classList.toggle('is-open');
+}
+
+function _copyPre(btn) {
+  var pre = btn.closest('.api-code-block').querySelector('pre');
+  var text = pre ? pre.innerText : '';
+  navigator.clipboard.writeText(text).then(function() {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  }).catch(function() {
+    btn.textContent = 'Error';
+    setTimeout(function() { btn.textContent = 'Copy'; }, 1500);
+  });
+}
+
+// TOC active on scroll
+(function() {
+  var links = document.querySelectorAll('.api-toc-link[href^="#"]');
+  var sections = Array.from(links).map(function(l) {
+    return document.querySelector(l.getAttribute('href'));
+  }).filter(Boolean);
+
+  function updateActive() {
+    var scrollY = window.scrollY + 120;
+    var active = sections[0];
+    sections.forEach(function(s) { if (s.offsetTop <= scrollY) active = s; });
+    links.forEach(function(l) {
+      var target = document.querySelector(l.getAttribute('href'));
+      l.classList.toggle('toc-active', target === active);
+    });
+  }
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+{% endblock %}

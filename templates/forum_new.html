@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}New Thread — Lonely Hub{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/forum.css">
+<style>
+.forum-custom-dd {
+  position: relative;
+}
+.forum-custom-dd .dd-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  user-select: none;
+}
+.forum-custom-dd .dd-trigger:hover,
+.forum-custom-dd.open .dd-trigger {
+  border-color: var(--primary);
+  background: rgba(250,80,80,0.04);
+}
+.forum-custom-dd .dd-trigger svg { flex-shrink:0; transition: transform 0.2s; }
+.forum-custom-dd.open .dd-trigger svg { transform: rotate(180deg); }
+.forum-custom-dd .dd-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  z-index: 200;
+  overflow: hidden;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.forum-custom-dd.open .dd-menu { display: block; }
+.forum-custom-dd .dd-item {
+  padding: 11px 14px;
+  font-size: 14px;
+  color: var(--text2);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.forum-custom-dd .dd-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.forum-custom-dd .dd-item.selected { color: var(--primary); background: rgba(250,80,80,0.07); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+<div class="container" style="padding-top:calc(var(--nav-h) + 28px);padding-bottom:60px;">
+
+  <div class="forum-breadcrumb">
+    <a href="/forum">Forum</a>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    <span>New Thread</span>
+  </div>
+
+  <div class="forum-form-card">
+    <div style="margin-bottom:24px;">
+      <h1 style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;">Create a New Thread</h1>
+      <p style="font-size:14px;color:var(--text3);">Ask a question, share something cool, or start a discussion.</p>
+    </div>
+
+    {% if error %}
+    <div style="padding:12px 16px;background:rgba(250,80,80,0.08);border:1px solid rgba(250,80,80,0.25);border-radius:var(--radius-sm);font-size:13px;color:var(--primary);margin-bottom:20px;">
+      {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/forum/new" enctype="multipart/form-data" id="forum-new-form">
+      <div class="form-group" style="margin-bottom:18px;">
+        <label class="form-label">Thread Title *</label>
+        <input class="input-field" type="text" name="title" placeholder="Give your thread a clear title…" maxlength="150" required>
+      </div>
+
+      <div class="form-group" style="margin-bottom:18px;">
+        <label class="form-label">Category</label>
+        <div class="forum-custom-dd" id="forum-cat-dd">
+          <div class="dd-trigger" id="forum-cat-trigger" onclick="toggleCatDD()">
+            <span id="forum-cat-label">{% if categories %}{{ categories[0] }}{% else %}General{% endif %}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="dd-menu" id="forum-cat-menu">
+            {% for cat in categories %}
+            <div class="dd-item {% if loop.first %}selected{% endif %}" data-value="{{ cat }}" onclick="selectCat(this)">{{ cat }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        <input type="hidden" name="category" id="forum-cat-value" value="{% if categories %}{{ categories[0] }}{% else %}General{% endif %}">
+      </div>
+
+      <div class="form-group" style="margin-bottom:18px;">
+        <label class="form-label">Content *</label>
+        <textarea name="content" placeholder="Write your thread content here…" rows="8" required></textarea>
+      </div>
+
+      <div class="form-group" style="margin-bottom:24px;">
+        <label class="form-label">Attachments <span style="color:var(--text3);font-weight:400;">(images, files — max 50 MB each)</span></label>
+        <label class="file-upload-label">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          Choose Files
+          <input type="file" id="post-files" name="files" multiple>
+        </label>
+        <div class="attach-preview-area" id="post-files-preview"></div>
+      </div>
+
+      <div style="display:flex;gap:12px;">
+        <button type="submit" id="forum-post-btn" class="btn btn-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          <span id="forum-post-btn-label">Post Thread</span>
+        </button>
+        <a href="/forum" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="/static/js/forum.js"></script>
+<script>
+function toggleCatDD() {
+  document.getElementById('forum-cat-dd').classList.toggle('open');
+}
+function selectCat(el) {
+  document.getElementById('forum-cat-label').textContent = el.dataset.value;
+  document.getElementById('forum-cat-value').value = el.dataset.value;
+  document.querySelectorAll('#forum-cat-menu .dd-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('forum-cat-dd').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  var dd = document.getElementById('forum-cat-dd');
+  if (dd && !dd.contains(e.target)) dd.classList.remove('open');
+});
+
+// AJAX form submission with toast feedback
+document.getElementById('forum-new-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var btn = document.getElementById('forum-post-btn');
+  var lbl = document.getElementById('forum-post-btn-label');
+  if (btn) { btn.disabled = true; if (lbl) lbl.textContent = 'Posting…'; }
+  var fd = new FormData(this);
+  try {
+    var resp = await fetch('/forum/new', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' },
+      body: fd
+    });
+    var data = await resp.json();
+    if (data.success && data.redirect) {
+      if (typeof showToast === 'function') showToast('Thread posted!', 'success');
+      setTimeout(function() { window.location.href = data.redirect; }, 600);
+    } else {
+      if (btn) { btn.disabled = false; if (lbl) lbl.textContent = 'Post Thread'; }
+      if (typeof showToast === 'function') showToast(data.error || 'Failed to post thread', 'error');
+      else alert(data.error || 'Failed to post thread');
+    }
+  } catch(err) {
+    if (btn) { btn.disabled = false; if (lbl) lbl.textContent = 'Post Thread'; }
+    if (typeof showToast === 'function') showToast('Network error. Try again.', 'error');
+  }
+});
+</script>
+{% endblock %}

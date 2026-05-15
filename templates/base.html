@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Lonely Hub — Free Minecraft Mods{% endblock %}</title>
+<link rel="icon" type="image/jpeg" href="https://i.imgur.com/xY7M2iE.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/main.css">
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<div id="page-loader" class="page-loader">
+  <div class="page-loader-bar"></div>
+</div>
+
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="https://i.imgur.com/xY7M2iE.jpeg" alt="Lonely Hub">
+    <span>Lonely Hub</span>
+  </a>
+
+  <div class="nav-links-desktop">
+    <a href="/" class="nav-link" id="nl-home">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      <span>Home</span>
+    </a>
+    <a href="/mods" class="nav-link" id="nl-mods">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+      <span>Mods</span>
+    </a>
+    <a href="/clients" class="nav-link" id="nl-clients">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><polyline points="8 21 12 17 16 21"></polyline><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="14" y2="12"></line></svg>
+      <span>Clients</span>
+    </a>
+    <a href="/forum" class="nav-link" id="nl-forum">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <span>Forum</span>
+    </a>
+    {% if user %}
+    <a href="/upload" class="nav-link" id="nl-upload">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+      <span>Upload</span>
+    </a>
+    <a href="/dashboard" class="nav-link" id="nl-dashboard">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+      <span>Dashboard</span>
+    </a>
+    {% if user.tag == 'admin' %}
+    <a href="/admin/dashboard" class="nav-link" style="color:var(--yellow);" id="nl-admin">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+      <span>Admin</span>
+    </a>
+    {% endif %}
+    {% endif %}
+    <a href="/api/docs" class="nav-link" id="nl-api">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+      <span>API</span>
+    </a>
+    <a href="https://dsc.gg/lonelyhub" target="_blank" class="nav-link nav-discord-link">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+      <span>Discord</span>
+    </a>
+  </div>
+
+  <div class="nav-right">
+    {% if user %}
+    <a href="/users/{{ user.username }}" title="{{ user.display_name }}">
+      <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="Avatar" class="nav-avatar">
+    </a>
+    <a href="/logout" class="btn btn-ghost btn-sm nav-auth-desktop">Sign Out</a>
+    {% else %}
+    <a href="/login" class="btn btn-ghost btn-sm nav-auth-desktop">Sign In</a>
+    <a href="/register" class="btn btn-primary btn-sm nav-auth-desktop">Register</a>
+    {% endif %}
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="nav-mobile-overlay" id="nav-mobile-overlay"></div>
+
+<!-- PC Sidebar (desktop only) -->
+<aside class="page-sidebar" id="page-sidebar" aria-label="Navigation">
+  <nav class="page-sidebar-nav">
+    <a href="/" class="sb-link" id="sb-home">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      <span>Home</span>
+    </a>
+    <a href="/mods" class="sb-link" id="sb-mods">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+      <span>Mods</span>
+    </a>
+    <a href="/clients" class="sb-link" id="sb-clients">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><polyline points="8 21 12 17 16 21"></polyline><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="14" y2="12"></line></svg>
+      <span>Clients</span>
+    </a>
+    <a href="/forum" class="sb-link" id="sb-forum">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <span>Forum</span>
+    </a>
+    {% if user %}
+    <a href="/upload" class="sb-link" id="sb-upload">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+      <span>Upload</span>
+    </a>
+    <a href="/dashboard" class="sb-link" id="sb-dashboard">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+      <span>Dashboard</span>
+    </a>
+    {% if user.tag == 'admin' %}
+    <a href="/admin/dashboard" class="sb-link sb-admin" id="sb-admin">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+      <span>Admin</span>
+    </a>
+    {% endif %}
+    {% endif %}
+    <a href="/api/docs" class="sb-link" id="sb-api">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+      <span>API Docs</span>
+    </a>
+    <a href="https://dsc.gg/lonelyhub" target="_blank" class="sb-link sb-discord">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+      <span>Discord</span>
+    </a>
+  </nav>
+  {% if user %}
+  <a href="/users/{{ user.username }}" class="sb-user-row">
+    <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="" class="sb-user-avatar">
+    <div class="sb-user-info">
+      <div class="sb-user-name">{{ user.display_name }}</div>
+      <div class="sb-user-sub">@{{ user.username }}</div>
+    </div>
+  </a>
+  {% endif %}
+</aside>
+
+<div class="nav-drawer" id="nav-drawer">
+  <button class="nav-drawer-close" id="nav-drawer-close" aria-label="Close menu">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+  </button>
+  <div class="nav-drawer-links">
+    <a href="/" class="nav-link" id="nd-home">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      <span>Home</span>
+    </a>
+    <a href="/mods" class="nav-link" id="nd-mods">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+      <span>Mods</span>
+    </a>
+    <a href="/clients" class="nav-link" id="nd-clients">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><polyline points="8 21 12 17 16 21"></polyline><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="14" y2="12"></line></svg>
+      <span>Clients</span>
+    </a>
+    <a href="/forum" class="nav-link" id="nd-forum">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <span>Forum</span>
+    </a>
+    {% if user %}
+    <a href="/upload" class="nav-link" id="nd-upload">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+      <span>Upload</span>
+    </a>
+    <a href="/dashboard" class="nav-link" id="nd-dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+      <span>Dashboard</span>
+    </a>
+    {% if user.tag == 'admin' %}
+    <a href="/admin/dashboard" class="nav-link" style="color:var(--yellow);" id="nd-admin">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+      <span>Admin</span>
+    </a>
+    {% endif %}
+    {% endif %}
+    <a href="/api/docs" class="nav-link" id="nd-api">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+      <span>API</span>
+    </a>
+    <a href="https://dsc.gg/lonelyhub" target="_blank" class="nav-link nav-discord-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+      <span>Discord</span>
+    </a>
+  </div>
+  <div class="nav-drawer-footer">
+    {% if user %}
+    <a href="/users/{{ user.username }}" class="nav-drawer-user">
+      <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="Avatar" class="nav-drawer-avatar">
+      <span>{{ user.display_name }}</span>
+      {% if user.verified %}
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-left:2px;"><circle cx="8" cy="8" r="8" fill="#3b82f6"/><path d="M4.5 8.5l2.5 2 4.5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      {% endif %}
+    </a>
+    <a href="/logout" class="btn btn-ghost btn-sm nav-drawer-btn">Sign Out</a>
+    {% else %}
+    <a href="/login" class="btn btn-ghost btn-sm nav-drawer-btn">Sign In</a>
+    <a href="/register" class="btn btn-primary btn-sm nav-drawer-btn">Register</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="sb-content-wrap">
+{% block content %}{% endblock %}
+</div>
+
+<div id="cconfirm-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:10001;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:32px 36px;max-width:400px;width:90%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.04);">
+    <div style="width:52px;height:52px;border-radius:50%;background:rgba(250,80,80,0.12);border:2px solid rgba(250,80,80,0.28);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+    </div>
+    <div id="cconfirm-msg" style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px;"></div>
+    <div id="cconfirm-detail" style="font-size:13px;color:var(--text3);margin-bottom:26px;line-height:1.6;"></div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button id="cconfirm-cancel" class="btn btn-ghost" style="min-width:90px;">Cancel</button>
+      <button id="cconfirm-ok" class="btn btn-danger" style="min-width:90px;">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast"></div>
+<script src="/static/js/main.js"></script>
+<script>
+window.customConfirm = function(msg, detail) {
+  return new Promise(function(resolve) {
+    var ov = document.getElementById('cconfirm-overlay');
+    document.getElementById('cconfirm-msg').textContent = msg || 'Are you sure?';
+    document.getElementById('cconfirm-detail').textContent = detail || '';
+    ov.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    function done(r) {
+      ov.style.display = 'none';
+      document.body.style.overflow = '';
+      resolve(r);
+    }
+    document.getElementById('cconfirm-ok').onclick = function() { done(true); };
+    document.getElementById('cconfirm-cancel').onclick = function() { done(false); };
+    ov.onclick = function(e) { if(e.target === ov) done(false); };
+  });
+};
+document.addEventListener('keydown', function(e) {
+  if(e.key === 'Escape' && document.getElementById('cconfirm-overlay').style.display === 'flex')
+    document.getElementById('cconfirm-cancel').click();
+});
+document.addEventListener('submit', function(e) {
+  var frm = e.target;
+  var msg = frm.getAttribute('data-confirm');
+  if (msg && !frm._cok) {
+    e.preventDefault();
+    customConfirm(msg, 'This action cannot be undone.').then(function(ok) {
+      if (ok) { frm._cok = true; frm.submit(); }
+    });
+  }
+});
+</script>
+<script>
+(function(){
+  var path = window.location.pathname;
+  var ids = [
+    ['nl-home','nd-home','sb-home','/'],
+    ['nl-mods','nd-mods','sb-mods','/mods'],
+    ['nl-forum','nd-forum','sb-forum','/forum'],
+    ['nl-upload','nd-upload','sb-upload','/upload'],
+    ['nl-api','nd-api','sb-api','/api/docs'],
+    ['nl-dashboard','nd-dashboard','sb-dashboard','/dashboard'],
+    ['nl-admin','nd-admin','sb-admin','/admin']
+  ];
+  ids.forEach(function(item){
+    var p2 = item[3];
+    var isActive = (p2 === '/' ? path === '/' : path.startsWith(p2));
+    if(isActive){
+      var el1 = document.getElementById(item[0]);
+      var el2 = document.getElementById(item[1]);
+      var el3 = document.getElementById(item[2]);
+      if(el1) el1.classList.add('active');
+      if(el2) el2.classList.add('active');
+      if(el3) el3.classList.add('active');
+    }
+  });
+
+  var hamburger = document.getElementById('nav-hamburger');
+  var drawer = document.getElementById('nav-drawer');
+  var overlay = document.getElementById('nav-mobile-overlay');
+  var drawerClose = document.getElementById('nav-drawer-close');
+
+  function openMenu(){
+    drawer.classList.add('open');
+    overlay.classList.add('open');
+    hamburger.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMenu(){
+    drawer.classList.remove('open');
+    overlay.classList.remove('open');
+    hamburger.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  if(hamburger){
+    hamburger.addEventListener('click', function(){
+      drawer.classList.contains('open') ? closeMenu() : openMenu();
+    });
+  }
+  if(drawerClose) drawerClose.addEventListener('click', closeMenu);
+  if(overlay) overlay.addEventListener('click', closeMenu);
+
+  function animateCount(el, target, duration) {
+    var start = 0;
+    var step = target / (duration / 16);
+    var timer = setInterval(function() {
+      start += step;
+      if (start >= target) { el.textContent = target.toLocaleString(); clearInterval(timer); }
+      else { el.textContent = Math.floor(start).toLocaleString(); }
+    }, 16);
+  }
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var el = entry.target;
+        var val = parseInt(el.getAttribute('data-count') || '0');
+        animateCount(el, val, 900);
+        observer.unobserve(el);
+      }
+    });
+  }, { threshold: 0.2 });
+  document.querySelectorAll('[data-count]').forEach(function(el) { observer.observe(el); });
+
+  var loader = document.getElementById('page-loader');
+  var loaderBar = loader ? loader.querySelector('.page-loader-bar') : null;
+
+  function startLoader() {
+    if (!loader) return;
+    loader.classList.add('active');
+    if (loaderBar) { loaderBar.style.transition = 'none'; loaderBar.style.width = '0%'; }
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        if (loaderBar) { loaderBar.style.transition = 'width 0.3s ease'; loaderBar.style.width = '70%'; }
+      });
+    });
+  }
+
+  function finishLoader() {
+    if (!loaderBar) return;
+    loaderBar.style.transition = 'width 0.2s ease';
+    loaderBar.style.width = '100%';
+    setTimeout(function() {
+      if (loader) loader.classList.remove('active');
+      if (loaderBar) { loaderBar.style.transition = 'none'; loaderBar.style.width = '0%'; }
+    }, 260);
+  }
+
+  document.addEventListener('click', function(e) {
+    var a = e.target.closest('a');
+    if (!a) return;
+    var href = a.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript') || href.startsWith('mailto') || a.target === '_blank' || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    if (href.startsWith('http') && !href.includes(window.location.hostname)) return;
+    startLoader();
+  });
+
+  document.addEventListener('submit', function(e) {
+    if (!e.defaultPrevented) startLoader();
+  });
+
+  window.addEventListener('pageshow', function(e) {
+    finishLoader();
+  });
+
+  finishLoader();
+})();
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

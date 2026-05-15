@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}
+{% if error_type == 'ban' %}403 — Banned{% elif error_type == 'admin' %}403 — Forbidden{% elif error_type == 'notfound' %}404 — Not Found{% else %}Error{% endif %}
+— Lonely Hub
+{% endblock %}
+{% block content %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;position:relative;">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(250,80,80,0.08) 0%,transparent 70%);pointer-events:none;"></div>
+  <div style="text-align:center;position:relative;z-index:1;max-width:500px;">
+    {% if error_type == 'ban' %}
+    <div style="width:100px;height:100px;background:rgba(250,80,80,0.1);border:2px solid rgba(250,80,80,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 28px;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgb(250,80,80)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+    </div>
+    <div style="font-size:80px;font-weight:900;color:rgba(250,80,80,0.15);line-height:1;margin-bottom:8px;">403</div>
+    <h1 style="font-size:28px;font-weight:800;color:var(--text);margin-bottom:12px;">You've Been Banned</h1>
+    <p style="font-size:15px;color:var(--text2);line-height:1.6;margin-bottom:20px;">
+      <span>Your account has been banned from Lonely Hub.</span>
+      {% if remaining %}
+      <br><br>
+      <span style="color:var(--primary);font-weight:600;"><span>Ban expires in:</span> {{ remaining }}</span>
+      {% else %}
+      <br><br><span>Please contact an administrator if you believe this is a mistake.</span>
+      {% endif %}
+    </p>
+    <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+      <a href="https://dsc.gg/lonelyhub" target="_blank" class="btn btn-discord">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        <span>Appeal on Discord</span>
+      </a>
+    </div>
+
+    {% elif error_type == 'admin' %}
+    <div style="width:100px;height:100px;background:rgba(250,80,80,0.1);border:2px solid rgba(250,80,80,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 28px;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgb(250,80,80)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+    </div>
+    <div style="font-size:80px;font-weight:900;color:rgba(250,80,80,0.15);line-height:1;margin-bottom:8px;">403</div>
+    <h1 style="font-size:28px;font-weight:800;color:var(--text);margin-bottom:12px;">Access Forbidden</h1>
+    <p style="font-size:15px;color:var(--text2);line-height:1.6;margin-bottom:24px;">
+      You do not have permission to access this page. Administrator credentials are required.
+    </p>
+    <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+      <a href="/" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <span>Go Home</span>
+      </a>
+      <a href="/login" class="btn btn-secondary">Sign In</a>
+    </div>
+
+    {% else %}
+    <div style="width:100px;height:100px;background:rgba(96,165,250,0.1);border:2px solid rgba(96,165,250,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 28px;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    </div>
+    <div style="font-size:80px;font-weight:900;color:rgba(96,165,250,0.15);line-height:1;margin-bottom:8px;">404</div>
+    <h1 style="font-size:28px;font-weight:800;color:var(--text);margin-bottom:12px;">Page Not Found</h1>
+    <p style="font-size:15px;color:var(--text2);line-height:1.6;margin-bottom:24px;">
+      The page you're looking for doesn't exist or has been moved.
+    </p>
+    <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+      <a href="/" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <span>Go Home</span>
+      </a>
+      <a href="/mods" class="btn btn-secondary">Browse Mods</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

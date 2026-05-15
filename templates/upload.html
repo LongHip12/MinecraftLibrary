@@ -1,0 +1,552 @@
+{% extends "base.html" %}
+{% block title %}Upload Mod — Lonely Hub{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/user.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+<style>
+.upload-type-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.upload-type-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.upload-type-btn:hover { border-color: var(--primary); color: var(--primary); }
+.upload-type-btn.active {
+  border-color: var(--primary);
+  background: rgba(167,139,250,0.1);
+  color: var(--primary);
+}
+.img-queue { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+.img-queue-item {
+  position: relative;
+  width: 110px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid var(--border2);
+  background: var(--bg2);
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+.img-queue-item.banner-item { border-color: var(--primary); }
+.img-queue-item img { width:100%; height:80px; object-fit:cover; display:block; }
+.img-queue-badge {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.img-queue-btns {
+  display: flex;
+  gap: 0;
+}
+.img-queue-btn {
+  flex: 1;
+  padding: 5px 0;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background: rgba(255,255,255,0.05);
+  color: var(--text2);
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+}
+.img-queue-btn:hover { background: rgba(250,80,80,0.1); color: var(--primary); }
+.img-queue-btn.remove-btn:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+.img-queue-btn + .img-queue-btn { border-left: 1px solid var(--border2); }
+.img-select-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px 24px;
+  background: rgba(255,255,255,0.02);
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  text-align: center;
+}
+.img-select-area:hover { border-color: var(--primary); background: rgba(250,80,80,0.03); }
+.img-select-area svg { color: var(--text3); }
+.img-select-area span { font-size: 13px; color: var(--text3); }
+
+/* Cropper modal */
+.cropper-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+.cropper-modal-overlay.open { display: flex; }
+.cropper-modal-box {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 600px;
+  width: 94%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.cropper-modal-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cropper-img-wrap {
+  flex: 1;
+  max-height: 400px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #000;
+}
+.cropper-img-wrap img { max-width: 100%; display: block; }
+.cropper-opts {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.cropper-opts label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text2);
+  cursor: pointer;
+}
+.cropper-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-content">
+<div class="container">
+<div class="upload-page">
+  <div class="upload-type-toggle" id="upload-type-toggle">
+    <button type="button" class="upload-type-btn active" id="type-btn-mod" onclick="setUploadType('mod')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+      Mod
+    </button>
+    <button type="button" class="upload-type-btn" id="type-btn-client" onclick="setUploadType('client')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><polyline points="8 21 12 17 16 21"></polyline><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="14" y2="12"></line></svg>
+      Client
+    </button>
+  </div>
+  <h1 class="upload-title" id="upload-title">Upload a Mod</h1>
+  <p class="upload-sub" id="upload-sub">Share your favorite Minecraft mods with the community. All uploads are reviewed for safety.</p>
+  <form class="upload-form" id="upload-form" enctype="multipart/form-data">
+    <input type="hidden" name="upload_type" id="upload-type-input" value="mod">
+    <div class="form-group">
+      <label class="form-label" id="name-label">Mod Name *</label>
+      <input type="text" name="name" class="input-field" placeholder="e.g. OptiFine, Sodium, JourneyMap..." required maxlength="100" id="name-input">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description *</label>
+      <textarea name="description" class="input-field" placeholder="Describe what this mod does..." required rows="5" maxlength="2000"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Download Link *</label>
+      <input type="url" name="download_link" class="input-field" placeholder="https://..." required>
+      <span class="form-error" style="color:var(--text3);font-size:11px;">Direct download URL or mod page URL</span>
+    </div>
+    <div class="form-group" id="loaders-group">
+      <label class="form-label">Mod Loader(s)</label>
+      <div class="loaders-grid">
+        {% for loader in ['Forge', 'Fabric', 'Quilt', 'NeoForge', 'Vanilla'] %}
+        <input type="checkbox" name="loaders" value="{{ loader }}" id="loader-{{ loop.index }}" class="loader-checkbox">
+        <label for="loader-{{ loop.index }}" class="loader-label loader-{{ loader.lower() }}">{{ loader }}</label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Edition(s)</label>
+      <div class="loaders-grid">
+        <input type="checkbox" name="editions" value="Java" id="ed-java" class="loader-checkbox" checked>
+        <label for="ed-java" class="loader-label">Java Edition</label>
+        <input type="checkbox" name="editions" value="Bedrock" id="ed-bedrock" class="loader-checkbox">
+        <label for="ed-bedrock" class="loader-label">Bedrock Edition</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Minecraft Versions</label>
+      <input type="text" name="mc_versions" class="input-field" placeholder="e.g. 1.20.1, 1.19.4, 1.18.2 (comma separated)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Tags</label>
+      <div class="tag-input-wrap" id="tag-input-wrap">
+        <div class="tag-pills-row" id="tag-pills-row"></div>
+        <input type="text" id="tag-text-input" class="tag-text-input" placeholder="Type a tag then Enter (pvp, survival, optimization...)" autocomplete="off">
+        <input type="hidden" name="tags" id="tags-hidden">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" id="images-label">Images <span style="color:var(--text3);font-weight:400;">(optional)</span></label>
+      <div class="img-select-area" id="img-select-area" onclick="document.getElementById('images-input').click()">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+        <span>Click to select images (PNG, JPG, GIF, WebP)</span>
+        <span style="font-size:11px;color:var(--text3);">First selected image will be used as the banner</span>
+      </div>
+      <input type="file" id="images-input" accept="image/*" multiple style="display:none" onchange="onImagesSelected(this)">
+      <div class="img-queue" id="img-queue"></div>
+    </div>
+
+    <div class="upload-actions">
+      <a href="/users/{{ user_id }}/manager-upload" class="btn btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <span>Cancel</span>
+      </a>
+      <button type="submit" class="btn btn-primary" id="submit-btn">
+        <span id="submit-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></span>
+        <span id="submit-label">Publish Mod</span>
+      </button>
+    </div>
+  </form>
+</div>
+</div>
+</div>
+
+<!-- Cropper Modal -->
+<div class="cropper-modal-overlay" id="cropper-overlay">
+  <div class="cropper-modal-box">
+    <div class="cropper-modal-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path><polyline points="15 14 20 9 15 4"></polyline></svg>
+      Crop Image
+    </div>
+    <div class="cropper-img-wrap" id="cropper-img-wrap">
+      <img id="cropper-img" src="" alt="">
+    </div>
+    <div class="cropper-opts">
+      <label>
+        <input type="checkbox" id="round-toggle" onchange="toggleRound(this)">
+        Round corners
+      </label>
+      <span style="font-size:12px;color:var(--text3);">Drag to crop · Scroll to zoom</span>
+    </div>
+    <div class="cropper-btns">
+      <button class="btn btn-ghost btn-sm" onclick="skipCrop()">Skip</button>
+      <button class="btn btn-primary btn-sm" onclick="saveCrop()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        Save Crop
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+.tag-input-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  cursor: text;
+  min-height: 44px;
+  transition: border-color 0.2s;
+}
+.tag-input-wrap:focus-within { border-color: var(--primary); background: rgba(250,80,80,0.04); }
+.tag-pills-row { display: contents; }
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px 3px 10px;
+  background: rgba(167,139,250,0.15);
+  border: 1px solid rgba(167,139,250,0.3);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #a78bfa;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tag-pill button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #a78bfa;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 1px;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.tag-pill button:hover { background: rgba(167,139,250,0.25); color: #fff; }
+.tag-text-input {
+  flex: 1;
+  min-width: 120px;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  padding: 2px 4px;
+}
+.tag-text-input::placeholder { color: var(--text3); }
+</style>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<script>
+// ── Tag input ──────────────────────────────────────────
+const tagPillsRow = document.getElementById('tag-pills-row');
+const tagTextInput = document.getElementById('tag-text-input');
+const tagsHidden = document.getElementById('tags-hidden');
+const tagWrap = document.getElementById('tag-input-wrap');
+let tags = [];
+const MAX_TAGS = 10;
+function renderPills() {
+  tagPillsRow.innerHTML = '';
+  tags.forEach((t, i) => {
+    const pill = document.createElement('span');
+    pill.className = 'tag-pill';
+    pill.innerHTML = '#' + t + '<button type="button" onclick="removeTag(' + i + ')">×</button>';
+    tagPillsRow.appendChild(pill);
+  });
+  tagsHidden.value = tags.join(',');
+}
+function addTag(t) {
+  t = t.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!t || tags.includes(t) || tags.length >= MAX_TAGS) return;
+  tags.push(t); renderPills(); tagTextInput.value = '';
+}
+function removeTag(i) { tags.splice(i, 1); renderPills(); }
+tagTextInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); addTag(this.value); }
+  if (e.key === 'Backspace' && !this.value && tags.length) { tags.pop(); renderPills(); }
+});
+tagWrap.addEventListener('click', function() { tagTextInput.focus(); });
+
+// ── Multi-image queue ──────────────────────────────────
+let imageQueue = []; // [{file, blob (cropped or null), dataUrl}]
+let cropperInstance = null;
+let cropTargetIdx = -1;
+
+function onImagesSelected(input) {
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      imageQueue.push({ file, blob: null, dataUrl: e.target.result });
+      renderQueue();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function renderQueue() {
+  const q = document.getElementById('img-queue');
+  q.innerHTML = '';
+  imageQueue.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'img-queue-item' + (idx === 0 ? ' banner-item' : '');
+    const src = item.blob ? URL.createObjectURL(item.blob) : item.dataUrl;
+    div.innerHTML =
+      `<img src="${src}" alt="Image ${idx+1}">` +
+      (idx === 0 ? `<div class="img-queue-badge">Banner</div>` : '') +
+      `<div class="img-queue-btns">
+        <button type="button" class="img-queue-btn" onclick="openCropper(${idx})">✂ Crop</button>
+        <button type="button" class="img-queue-btn remove-btn" onclick="removeImg(${idx})">✕</button>
+      </div>`;
+    q.appendChild(div);
+  });
+  const area = document.getElementById('img-select-area');
+  area.style.display = imageQueue.length === 0 ? 'flex' : 'none';
+  if (imageQueue.length > 0) {
+    const addMore = document.createElement('div');
+    addMore.className = 'img-queue-item';
+    addMore.style.cssText = 'display:flex;align-items:center;justify-content:center;height:110px;cursor:pointer;border:2px dashed var(--border2);background:rgba(255,255,255,0.02);';
+    addMore.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+    addMore.onclick = () => document.getElementById('images-input').click();
+    q.appendChild(addMore);
+  }
+}
+
+function removeImg(idx) {
+  imageQueue.splice(idx, 1);
+  renderQueue();
+}
+
+function openCropper(idx) {
+  cropTargetIdx = idx;
+  const src = imageQueue[idx].dataUrl;
+  const overlay = document.getElementById('cropper-overlay');
+  const img = document.getElementById('cropper-img');
+  img.src = src;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => {
+    if (cropperInstance) cropperInstance.destroy();
+    cropperInstance = new Cropper(img, {
+      viewMode: 1, autoCropArea: 1,
+      dragMode: 'move', background: false,
+      movable: true, zoomable: true, rotatable: false
+    });
+  }, 100);
+}
+
+function saveCrop() {
+  if (!cropperInstance || cropTargetIdx < 0) return;
+  const canvas = cropperInstance.getCroppedCanvas({ maxWidth: 1280, maxHeight: 720 });
+  const doRound = document.getElementById('round-toggle').checked;
+  let finalCanvas = canvas;
+  if (doRound) {
+    const rc = document.createElement('canvas');
+    rc.width = canvas.width; rc.height = canvas.height;
+    const ctx = rc.getContext('2d');
+    const r = Math.min(canvas.width, canvas.height) * 0.1;
+    ctx.beginPath();
+    ctx.moveTo(r, 0); ctx.lineTo(canvas.width - r, 0);
+    ctx.arcTo(canvas.width, 0, canvas.width, r, r);
+    ctx.lineTo(canvas.width, canvas.height - r);
+    ctx.arcTo(canvas.width, canvas.height, canvas.width - r, canvas.height, r);
+    ctx.lineTo(r, canvas.height);
+    ctx.arcTo(0, canvas.height, 0, canvas.height - r, r);
+    ctx.lineTo(0, r);
+    ctx.arcTo(0, 0, r, 0, r);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(canvas, 0, 0);
+    finalCanvas = rc;
+  }
+  finalCanvas.toBlob(blob => {
+    if (blob) {
+      imageQueue[cropTargetIdx].blob = blob;
+      imageQueue[cropTargetIdx].dataUrl = URL.createObjectURL(blob);
+    }
+    closeCropper();
+    renderQueue();
+  }, 'image/jpeg', 0.92);
+}
+
+function skipCrop() { closeCropper(); }
+
+function closeCropper() {
+  document.getElementById('cropper-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+  cropTargetIdx = -1;
+  document.getElementById('round-toggle').checked = false;
+}
+
+function toggleRound() {}
+
+// ── Form submit ─────────────────────────────────────────
+document.getElementById('upload-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type=submit]');
+  const uploadType = document.getElementById('upload-type-input').value;
+  if (uploadType === 'mod') {
+    const loaders = Array.from(form.querySelectorAll('input[name="loaders"]:checked'));
+    if (loaders.length === 0) { showToast('Please select at least one mod loader', 'error'); return; }
+  }
+  submitBtn.disabled = true;
+  document.getElementById('submit-icon').innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 0.8s linear infinite;display:block;"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>';
+  document.getElementById('submit-label').textContent = 'Uploading…';
+  try {
+    const fd = new FormData(form);
+    for (const item of imageQueue) {
+      const blob = item.blob || item.file;
+      fd.append('images', blob, item.file.name);
+    }
+    const resp = await fetch('/users/{{ user_id }}/upload', { method: 'POST', body: fd });
+    const data = await resp.json();
+    const isClient = document.getElementById('upload-type-input').value === 'client';
+    if (data.success) {
+      showToast(isClient ? 'Client published!' : 'Mod published!');
+      setTimeout(() => { window.location.href = data.redirect || (isClient ? '/clients' : '/mods'); }, 1000);
+    } else {
+      showToast(data.error || 'Upload failed', 'error');
+      submitBtn.disabled = false;
+      document.getElementById('submit-icon').innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>';
+      document.getElementById('submit-label').textContent = isClient ? 'Publish Client' : 'Publish Mod';
+    }
+  } catch(err) {
+    showToast('Network error — please try again', 'error');
+    submitBtn.disabled = false;
+    const isClient2 = document.getElementById('upload-type-input').value === 'client';
+    document.getElementById('submit-icon').innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>';
+    document.getElementById('submit-label').textContent = isClient2 ? 'Publish Client' : 'Publish Mod';
+  }
+});
+
+function setUploadType(type) {
+  document.getElementById('upload-type-input').value = type;
+  const btnMod = document.getElementById('type-btn-mod');
+  const btnClient = document.getElementById('type-btn-client');
+  const title = document.getElementById('upload-title');
+  const sub = document.getElementById('upload-sub');
+  const nameLabel = document.getElementById('name-label');
+  const nameInput = document.getElementById('name-input');
+  const loadersGroup = document.getElementById('loaders-group');
+  const submitLabel = document.getElementById('submit-label');
+  if (type === 'client') {
+    btnMod.classList.remove('active');
+    btnClient.classList.add('active');
+    title.textContent = 'Upload a Client';
+    sub.textContent = 'Share your favorite Minecraft client mods with the community. All uploads are reviewed for safety.';
+    nameLabel.textContent = 'Client Name *';
+    nameInput.placeholder = 'e.g. Badlion, Lunar, Feather...';
+    if (loadersGroup) loadersGroup.style.display = 'none';
+    if (submitLabel) submitLabel.textContent = 'Publish Client';
+  } else {
+    btnClient.classList.remove('active');
+    btnMod.classList.add('active');
+    title.textContent = 'Upload a Mod';
+    sub.textContent = 'Share your favorite Minecraft mods with the community. All uploads are reviewed for safety.';
+    nameLabel.textContent = 'Mod Name *';
+    nameInput.placeholder = 'e.g. OptiFine, Sodium, JourneyMap...';
+    if (loadersGroup) loadersGroup.style.display = '';
+    if (submitLabel) submitLabel.textContent = 'Publish Mod';
+  }
+}
+</script>
+{% endblock %}
