@@ -1840,11 +1840,11 @@ def api_forum_messages(post_id):
 
 
 def _get_api_user(token_header):
-    token = token_header or ""
+    token = (token_header or "").strip()
     if not token:
         return None
     accounts = load_json("accounts-data.json")
-    user = next((u for u in accounts.get("users", []) if u.get("api_token") == token), None)
+    user = next((u for u in accounts.get("users", []) if (u.get("api_token") or "").strip() == token), None)
     return user
 
 
@@ -1880,7 +1880,7 @@ def api_v2_token_regen():
 @app.route("/api/v2/upload", methods=["POST"])
 def api_v2_upload():
     try:
-        token = request.headers.get("X-Token", "")
+        token = request.headers.get("X-Token", "").strip()
         uploader = _get_api_user(token)
         if not uploader:
             return jsonify({"success": False, "error": "Invalid or missing token"}), 401
@@ -1946,7 +1946,7 @@ def api_v2_upload():
 @app.route("/api/v2/edit", methods=["POST"])
 def api_v2_edit():
     try:
-        token = request.headers.get("X-Token", "")
+        token = request.headers.get("X-Token", "").strip()
         editor = _get_api_user(token)
         if not editor:
             return jsonify({"success": False, "error": "Invalid or missing token"}), 401
@@ -2006,7 +2006,7 @@ def api_v2_edit():
 @app.route("/api/v2/delete", methods=["POST"])
 def api_v2_delete():
     try:
-        token = request.headers.get("X-Token", "")
+        token = request.headers.get("X-Token", "").strip()
         deleter = _get_api_user(token)
         if not deleter:
             return jsonify({"success": False, "error": "Invalid or missing token"}), 401
@@ -2054,23 +2054,23 @@ def api_v2_mods():
         if tag:
             mods = [m for m in mods if tag in [t.strip().lower() for t in m.get("tags", [])]]
         if search:
-            mods = [m for m in mods if search in m.get("name", "").lower() or search in m.get("description", "").lower()]
+            mods = [m for m in mods if search in str(m.get("name") or "").lower() or search in str(m.get("description") or "").lower()]
         if loaders_raw:
             req_loaders = [l.strip() for l in loaders_raw.replace(", ", ",").split(",") if l.strip()]
-            mods = [m for m in mods if any(rl in [l.strip().lower() for l in m.get("loaders", [])] for rl in req_loaders)]
+            mods = [m for m in mods if any(rl in [str(l or "").strip().lower() for l in m.get("loaders", [])] for rl in req_loaders)]
         if mcversion:
-            mods = [m for m in mods if any(mcversion in v.lower() for v in m.get("mc_versions", []))]
+            mods = [m for m in mods if any(mcversion in str(v or "").lower() for v in m.get("mc_versions", []))]
         if edition:
-            mods = [m for m in mods if edition in [e.strip().lower() for e in m.get("editions", [])]]
+            mods = [m for m in mods if edition in [str(e or "").strip().lower() for e in m.get("editions", [])]]
         if version:
             req_vers = [v.strip().lower() for v in version.replace(", ", ",").split(",") if v.strip()]
-            mods = [m for m in mods if any(rv in vv.lower() for rv in req_vers for vv in m.get("mc_versions", []))]
+            mods = [m for m in mods if any(rv in str(vv or "").lower() for rv in req_vers for vv in m.get("mc_versions", []))]
         if sort_by == "downloads":
-            mods = sorted(mods, key=lambda m: m.get("downloads", 0), reverse=True)
+            mods = sorted(mods, key=lambda m: m.get("downloads") or 0, reverse=True)
         elif sort_by == "views":
-            mods = sorted(mods, key=lambda m: m.get("views", 0), reverse=True)
+            mods = sorted(mods, key=lambda m: m.get("views") or 0, reverse=True)
         else:
-            mods = sorted(mods, key=lambda m: m.get("created_at", ""), reverse=True)
+            mods = sorted(mods, key=lambda m: str(m.get("created_at") or ""), reverse=True)
         mods = mods[:max_count]
         result = [{
             "id": m["id"],
@@ -2106,23 +2106,23 @@ def api_v2_clients():
         if tag:
             clients = [c for c in clients if tag in [t.strip().lower() for t in c.get("tags", [])]]
         if search:
-            clients = [c for c in clients if search in c.get("name", "").lower() or search in c.get("description", "").lower()]
+            clients = [c for c in clients if search in str(c.get("name") or "").lower() or search in str(c.get("description") or "").lower()]
         if loaders_raw:
             req_loaders = [l.strip() for l in loaders_raw.replace(", ", ",").split(",") if l.strip()]
-            clients = [c for c in clients if any(rl in [l.strip().lower() for l in c.get("loaders", [])] for rl in req_loaders)]
+            clients = [c for c in clients if any(rl in [str(l or "").strip().lower() for l in c.get("loaders", [])] for rl in req_loaders)]
         if mcversion:
-            clients = [c for c in clients if any(mcversion in v.lower() for v in c.get("mc_versions", []))]
+            clients = [c for c in clients if any(mcversion in str(v or "").lower() for v in c.get("mc_versions", []))]
         if edition:
-            clients = [c for c in clients if edition in [e.strip().lower() for e in c.get("editions", [])]]
+            clients = [c for c in clients if edition in [str(e or "").strip().lower() for e in c.get("editions", [])]]
         if version:
             req_vers = [v.strip().lower() for v in version.replace(", ", ",").split(",") if v.strip()]
-            clients = [c for c in clients if any(rv in vv.lower() for rv in req_vers for vv in c.get("mc_versions", []))]
+            clients = [c for c in clients if any(rv in str(vv or "").lower() for rv in req_vers for vv in c.get("mc_versions", []))]
         if sort_by == "downloads":
-            clients = sorted(clients, key=lambda c: c.get("downloads", 0), reverse=True)
+            clients = sorted(clients, key=lambda c: c.get("downloads") or 0, reverse=True)
         elif sort_by == "views":
-            clients = sorted(clients, key=lambda c: c.get("views", 0), reverse=True)
+            clients = sorted(clients, key=lambda c: c.get("views") or 0, reverse=True)
         else:
-            clients = sorted(clients, key=lambda c: c.get("created_at", ""), reverse=True)
+            clients = sorted(clients, key=lambda c: str(c.get("created_at") or ""), reverse=True)
         clients = clients[:max_count]
         result = [{
             "id": c.get("client_id", c["id"]),
@@ -2145,9 +2145,9 @@ def api_v2_clients():
 @app.route("/api/v2/dashboard-data", methods=["GET"])
 def api_v2_dashboard_data():
     try:
-        token = request.args.get("token", "").strip()
+        token = request.headers.get("X-Token", request.args.get("token", "")).strip()
         accounts = load_json("accounts-data.json")
-        user = next((u for u in accounts.get("users", []) if u.get("api_token") == token), None)
+        user = next((u for u in accounts.get("users", []) if (u.get("api_token") or "").strip() == token), None)
         if not user:
             return jsonify({"success": False, "error": "Invalid token"}), 401
         mods_data = load_json("mods-data.json")
@@ -2157,8 +2157,11 @@ def api_v2_dashboard_data():
         total_downloads = sum(m.get("downloads", 0) for m in user_mods)
         views_today = sum(m.get("daily_stats", {}).get(today, {}).get("views", 0) for m in user_mods)
         downloads_today = sum(m.get("daily_stats", {}).get(today, {}).get("downloads", 0) for m in user_mods)
-        top_mods = sorted(user_mods, key=lambda m: m.get("views", 0), reverse=True)[:5]
+        top_mods = sorted(user_mods, key=lambda m: m.get("views") or 0, reverse=True)[:5]
+        hide_follow = request.headers.get("X-HideFollow", request.args.get("X-HideFollow", "")).strip().lower()
         show_follow = request.args.get("showfollow", "false").lower() in ("true", "1")
+        if hide_follow in ("none", "off", "false"):
+            show_follow = True
         followers_count = len(user.get("followers", []))
         following_count = len(user.get("following", []))
         resp = {
@@ -2177,8 +2180,10 @@ def api_v2_dashboard_data():
         if show_follow:
             follower_ids = user.get("followers", [])
             following_ids = user.get("following", [])
-            resp["FollowersList"] = [u2.get("username") for u2 in accounts["users"] if u2["id"] in follower_ids]
-            resp["FollowingList"] = [u2.get("username") for u2 in accounts["users"] if u2["id"] in following_ids]
+            if hide_follow not in ("followers", "both"):
+                resp["FollowersList"] = [u2.get("username") for u2 in accounts["users"] if u2["id"] in follower_ids]
+            if hide_follow not in ("following", "both"):
+                resp["FollowingList"] = [u2.get("username") for u2 in accounts["users"] if u2["id"] in following_ids]
         return jsonify(resp)
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -2199,8 +2204,7 @@ def api_v2_profile_edit():
         new_display = g("display_name") or g("DisplayName")
         new_avatar = g("avatar") or g("Avatar")
         new_banner = g("banner") or g("Banner")
-        hide_followers = g("hide_followers") or g("HideFollowers")
-        hide_following = g("hide_following") or g("HideFollowing")
+        hide_follow = request.headers.get("X-HideFollow", "").strip().lower()
         if new_pw:
             if len(new_pw) < 6:
                 return jsonify({"success": False, "error": "Password must be at least 6 characters"}), 400
@@ -2220,13 +2224,13 @@ def api_v2_profile_edit():
             user["avatar"] = new_avatar
         if new_banner:
             user["banner"] = new_banner
-        if hide_followers in ("true", "1", "on"):
+        if hide_follow in ("followers", "both"):
             user["hide_followers"] = True
-        elif hide_followers in ("false", "0", "off"):
+        elif hide_follow in ("none", "off", "false"):
             user["hide_followers"] = False
-        if hide_following in ("true", "1", "on"):
+        if hide_follow in ("following", "both"):
             user["hide_following"] = True
-        elif hide_following in ("false", "0", "off"):
+        elif hide_follow in ("none", "off", "false"):
             user["hide_following"] = False
         save_json("accounts-data.json", accounts)
         return jsonify({"success": True, "username": user["username"], "display_name": user.get("display_name")})
@@ -2237,7 +2241,7 @@ def api_v2_profile_edit():
 @app.route("/api/v3/edit", methods=["POST"])
 def api_v3_edit():
     try:
-        token = request.headers.get("X-Token", "")
+        token = request.headers.get("X-Token", "").strip()
         admin_user = _get_api_user(token)
         if not admin_user or not is_admin(admin_user):
             return jsonify({"success": False, "error": "Admin token required"}), 403
@@ -2278,7 +2282,7 @@ def api_v3_edit():
 @app.route("/api/v3/user", methods=["POST"])
 def api_v3_user():
     try:
-        token = request.headers.get("X-Token", "")
+        token = request.headers.get("X-Token", "").strip()
         admin_user = _get_api_user(token)
         if not admin_user or not is_admin(admin_user):
             return jsonify({"success": False, "error": "Admin token required"}), 403
