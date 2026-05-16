@@ -12,11 +12,7 @@
   color: #c0d0f0;
   white-space: nowrap;
 }
-
-.api-hero {
-  padding: 48px 0 32px;
-  text-align: center;
-}
+.api-hero { padding: 48px 0 32px; text-align: center; }
 .api-hero-title {
   font-size: clamp(26px, 5vw, 40px);
   font-weight: 900;
@@ -27,18 +23,16 @@
   margin-bottom: 10px;
 }
 .api-hero-sub { font-size: 14px; color: var(--text3); max-width: 480px; margin: 0 auto; line-height: 1.65; }
-
 .api-base-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 10px;
   padding: 14px 18px;
   margin-bottom: 36px;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 .api-base-label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; }
 .api-base-url-val {
@@ -46,13 +40,12 @@
   font-size: 13px;
   color: #7dd3fc;
   font-weight: 600;
-  background: rgba(125, 211, 252, 0.07);
+  background: rgba(125,211,252,0.07);
   border: 1px solid rgba(125,211,252,0.15);
   border-radius: 6px;
   padding: 3px 10px;
 }
 .api-base-note { margin-left: auto; font-size: 11px; color: var(--text3); }
-
 .api-page { padding-bottom: 80px; }
 .api-layout {
   display: grid;
@@ -61,7 +54,6 @@
   align-items: start;
 }
 @media(max-width: 900px) { .api-layout { grid-template-columns: 1fr; } .api-toc-col { display: none; } }
-
 .api-toc-col { position: sticky; top: 84px; }
 .api-toc-inner {
   background: rgba(255,255,255,0.025);
@@ -87,16 +79,13 @@
 .api-toc-link:hover { color: var(--text); background: rgba(255,255,255,0.03); }
 .api-toc-link.toc-active { color: #fff; border-left-color: var(--primary); font-weight: 600; background: rgba(250,80,80,0.06); }
 .api-toc-sub { padding-left: 28px; font-size: 11.5px; }
-
 .api-section { margin-bottom: 52px; }
 .api-section-head {
   display: flex; align-items: center; gap: 10px;
   margin-bottom: 20px; padding-bottom: 14px;
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
-.api-section-title {
-  font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -.01em;
-}
+.api-section-title { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
 .section-badge {
   font-size: 10px; font-weight: 800;
   padding: 3px 9px; border-radius: 999px;
@@ -104,7 +93,6 @@
 }
 .badge-auth { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
 .badge-admin { background: rgba(250,80,80,0.15); color: #ff6060; border: 1px solid rgba(250,80,80,0.25); }
-
 .api-auth-note {
   background: rgba(96,165,250,0.06);
   border: 1px solid rgba(96,165,250,0.18);
@@ -118,18 +106,16 @@
 .api-auth-note strong { color: #93c5fd; }
 .api-auth-note a { color: var(--primary); text-decoration: none; }
 .api-auth-note a:hover { text-decoration: underline; }
-
 .ep-card {
   background: rgba(255,255,255,0.025);
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 12px;
-  overflow: hidden;
   margin-bottom: 12px;
   transition: border-color .18s;
+  overflow: hidden;
 }
 .ep-card:hover { border-color: rgba(255,255,255,0.12); }
 .ep-card.is-open { border-color: rgba(255,255,255,0.12); }
-
 .ep-header {
   display: flex; align-items: center; gap: 12px;
   padding: 15px 18px;
@@ -137,7 +123,6 @@
   transition: background .15s;
 }
 .ep-header:hover { background: rgba(255,255,255,0.025); }
-
 .ep-method {
   font-size: 10px; font-weight: 900;
   padding: 4px 10px; border-radius: 6px;
@@ -147,7 +132,6 @@
 }
 .m-get  { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
 .m-post { background: rgba(96,165,250,0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); }
-
 .ep-path {
   font-family: 'Fira Mono', 'Consolas', monospace;
   font-size: 13px; font-weight: 600;
@@ -159,28 +143,20 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   min-width: 0;
 }
-.ep-chevron {
-  margin-left: auto; color: var(--text3);
-  transition: transform .25s ease; flex-shrink: 0;
-}
+.ep-chevron { margin-left: auto; color: var(--text3); transition: transform .25s ease; flex-shrink: 0; }
 .ep-card.is-open .ep-chevron { transform: rotate(180deg); }
-
 .ep-body-wrap {
   max-height: 0; overflow: hidden;
   transition: max-height .35s cubic-bezier(.4,0,.2,1);
 }
 .ep-card.is-open .ep-body-wrap { max-height: 4000px; transition: max-height .5s cubic-bezier(.4,0,.2,1); }
-.ep-body {
-  padding: 0 18px 20px;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  margin-top: 0;
+.ep-body { padding: 0 18px 20px; border-top: 1px solid rgba(255,255,255,0.06); }
+.param-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 16px 0 10px;
 }
-
-.param-table-wrap { overflow-x: auto; margin: 16px 0 10px; -webkit-overflow-scrolling: touch; }
-.param-table {
-  width: 100%; border-collapse: collapse; font-size: 12.5px;
-  min-width: 460px;
-}
+.param-table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 460px; }
 .param-table thead th {
   text-align: left; color: var(--text3); font-weight: 700;
   font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
@@ -195,7 +171,6 @@
 .p-type { color: var(--text3); font-size: 11px; font-family: 'Fira Mono', monospace; }
 .p-req  { color: #fb923c; font-size: 10px; font-weight: 700; }
 .p-opt  { color: var(--text3); font-size: 10px; }
-
 .api-code-block { margin: 10px 0 14px; }
 .api-code-label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .api-code-tag {
@@ -204,43 +179,59 @@
   padding: 3px 10px; border-radius: 999px;
 }
 .tag-success { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.22); }
-.tag-error   { background: rgba(250,80,80,0.12);  color: #ff6b6b; border: 1px solid rgba(250,80,80,0.22); }
+.tag-error   { background: rgba(250,80,80,0.12); color: #ff6b6b; border: 1px solid rgba(250,80,80,0.22); }
 .tag-request { background: rgba(96,165,250,0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.22); }
-
-.api-pre-wrap { position: relative; }
+.api-pre-wrap {
+  position: relative;
+}
+.api-pre-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 10px;
+}
 pre.api-pre {
   background: #0d1117;
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 10px;
-  padding: 16px 18px;
+  padding: 16px 52px 16px 18px;
   font-family: 'Fira Mono', 'Cascadia Code', 'Consolas', monospace;
   font-size: 12px;
   line-height: 1.75;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   white-space: pre;
+  word-break: normal;
+  word-wrap: normal;
+  min-width: max-content;
   color: #c9d1d9;
   margin: 0;
+  overflow: visible;
 }
 pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: inherit; background: none; border: none; padding: 0; }
 .api-copy-btn {
-  position: absolute; top: 8px; right: 8px;
-  padding: 4px 11px; font-size: 11px; font-weight: 700;
-  border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.05); color: var(--text2);
-  cursor: pointer; font-family: inherit;
-  transition: all .15s; white-space: nowrap;
-  z-index: 1;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 11px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(14,17,23,0.9);
+  color: var(--text2);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+  white-space: nowrap;
+  z-index: 2;
+  backdrop-filter: blur(4px);
 }
 .api-copy-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
 .api-copy-btn.copied { color: #34d399; border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.07); }
-
 .jk { color: #79b8ff; }
 .js { color: #9ecbff; }
 .jn { color: #f8c555; }
 .jb { color: #f47067; }
 .jc { color: #6b7280; font-style: italic; }
-
 .api-note-box {
   background: rgba(96,165,250,0.06);
   border: 1px solid rgba(96,165,250,0.18);
@@ -250,13 +241,12 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
   font-size: 12.5px; color: var(--text2);
   line-height: 1.65; margin: 12px 0;
 }
-
 @media(max-width: 540px) {
   .ep-header { flex-wrap: wrap; gap: 8px; }
   .ep-desc { order: 3; width: 100%; white-space: normal; }
   .ep-path { font-size: 12px; }
   .ep-body { padding: 0 12px 16px; }
-  pre.api-pre { font-size: 11px; padding: 12px 14px; }
+  pre.api-pre { font-size: 11px; padding: 12px 48px 12px 14px; }
 }
 </style>
 {% endblock %}
@@ -348,7 +338,9 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <span class="api-code-tag tag-request">Request</span>
               </div>
               <div class="api-pre-wrap">
-                <pre class="api-pre"><code>GET /api/v2/mods?tag=pvp&amp;loaders=Fabric&amp;max=5</code></pre>
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>GET /api/v2/mods?tag=pvp&amp;loaders=Fabric&amp;max=5</code></pre>
+                </div>
               </div>
             </div>
             <div class="api-code-block">
@@ -356,7 +348,8 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
               <div class="api-pre-wrap">
-                <pre class="api-pre"><code>{
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{
   <span class="jk">"success"</span>: <span class="jb">true</span>,
   <span class="jk">"count"</span>: <span class="jn">1</span>,
   <span class="jk">"mods"</span>: [
@@ -374,6 +367,7 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
     }
   ]
 }</code></pre>
+                </div>
                 <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
               </div>
             </div>
@@ -407,13 +401,15 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
               <div class="api-pre-wrap">
-                <pre class="api-pre"><code>{
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{
   <span class="jk">"success"</span>: <span class="jb">true</span>,
   <span class="jk">"count"</span>: <span class="jn">2</span>,
   <span class="jk">"clients"</span>: [
     { <span class="jk">"id"</span>: <span class="jn">1</span>, <span class="jk">"name"</span>: <span class="js">"Wurst Client"</span>, <span class="jk">"description"</span>: <span class="js">"..."</span> }
   ]
 }</code></pre>
+                </div>
                 <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
               </div>
             </div>
@@ -462,13 +458,15 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
               <div class="api-pre-wrap">
-                <pre class="api-pre"><code>{
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{
   <span class="jk">"success"</span>: <span class="jb">true</span>,
   <span class="jk">"id"</span>: <span class="jn">42</span>,
   <span class="jk">"url"</span>: <span class="js">"/mods/42/info"</span>,
   <span class="jk">"name"</span>: <span class="js">"My Mod"</span>,
   <span class="jk">"type"</span>: <span class="js">"mod"</span>
 }</code></pre>
+                </div>
                 <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
               </div>
             </div>
@@ -477,7 +475,9 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <span class="api-code-tag tag-error">&#10005; Error</span>
               </div>
               <div class="api-pre-wrap">
-                <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">false</span>, <span class="jk">"error"</span>: <span class="js">"X-Name is required"</span> }</code></pre>
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">false</span>, <span class="jk">"error"</span>: <span class="js">"X-Name is required"</span> }</code></pre>
+                </div>
                 <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
               </div>
             </div>
@@ -517,7 +517,9 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
               <div class="api-pre-wrap">
-                <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"id"</span>: <span class="jn">42</span>, <span class="jk">"name"</span>: <span class="js">"Updated Mod Name"</span> }</code></pre>
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"id"</span>: <span class="jn">42</span>, <span class="jk">"name"</span>: <span class="js">"Updated Mod Name"</span> }</code></pre>
+                </div>
                 <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
               </div>
             </div>
@@ -549,7 +551,9 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
               <div class="api-pre-wrap">
-                <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"deleted"</span>: <span class="jn">42</span> }</code></pre>
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"deleted"</span>: <span class="jn">42</span> }</code></pre>
+                </div>
                 <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
               </div>
             </div>
@@ -579,7 +583,8 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
               <div class="api-pre-wrap">
-                <pre class="api-pre"><code>{
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{
   <span class="jk">"success"</span>: <span class="jb">true</span>,
   <span class="jk">"username"</span>: <span class="js">"CoolPlayer"</span>,
   <span class="jk">"display_name"</span>: <span class="js">"Cool Player"</span>,
@@ -594,6 +599,7 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
     { <span class="jk">"id"</span>: <span class="jn">5</span>, <span class="jk">"name"</span>: <span class="js">"My Mod"</span>, <span class="jk">"views"</span>: <span class="jn">3200</span>, <span class="jk">"downloads"</span>: <span class="jn">240</span> }
   ]
 }</code></pre>
+                </div>
                 <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
               </div>
             </div>
@@ -631,11 +637,13 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
               <div class="api-pre-wrap">
-                <pre class="api-pre"><code>{
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{
   <span class="jk">"success"</span>: <span class="jb">true</span>,
   <span class="jk">"username"</span>: <span class="js">"NewName"</span>,
   <span class="jk">"display_name"</span>: <span class="js">"New Display Name"</span>
 }</code></pre>
+                </div>
                 <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
               </div>
             </div>
@@ -680,7 +688,9 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
               <div class="api-pre-wrap">
-                <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"id"</span>: <span class="jn">42</span>, <span class="jk">"name"</span>: <span class="js">"Updated Name"</span> }</code></pre>
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"id"</span>: <span class="jn">42</span>, <span class="jk">"name"</span>: <span class="js">"Updated Name"</span> }</code></pre>
+                </div>
                 <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
               </div>
             </div>
@@ -712,7 +722,9 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
               <div class="api-pre-wrap">
-                <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"action"</span>: <span class="js">"ban"</span>, <span class="jk">"user_id"</span>: <span class="js">"uuid"</span> }</code></pre>
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"action"</span>: <span class="js">"ban"</span>, <span class="jk">"user_id"</span>: <span class="js">"uuid"</span> }</code></pre>
+                </div>
                 <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
               </div>
             </div>
@@ -742,7 +754,8 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <span class="api-code-tag tag-success">&#10003; Response success</span>
               </div>
               <div class="api-pre-wrap">
-                <pre class="api-pre"><code>{
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{
   <span class="jk">"success"</span>: <span class="jb">true</span>,
   <span class="jk">"total_users"</span>: <span class="jn">1284</span>,
   <span class="jk">"total_mods"</span>: <span class="jn">342</span>,
@@ -750,6 +763,7 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
   <span class="jk">"total_views"</span>: <span class="jn">98421</span>,
   <span class="jk">"total_downloads"</span>: <span class="jn">24890</span>
 }</code></pre>
+                </div>
                 <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
               </div>
             </div>
@@ -790,7 +804,6 @@ function _copyPre(btn) {
   var sections = Array.from(links).map(function(l) {
     return document.querySelector(l.getAttribute('href'));
   }).filter(Boolean);
-
   function updateActive() {
     var scrollY = window.scrollY + 120;
     var active = sections[0];
