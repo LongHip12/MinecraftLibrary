@@ -5,36 +5,38 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
 document.getElementById('rateLimitForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  const val = parseInt(document.getElementById('rateLimitInput').value);
+  var val = parseInt(document.getElementById('rateLimitInput').value);
   if (!val || val < 1) return;
+  var btn = e.target.querySelector('button[type=submit]');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
   fetch('/api/admin/rate-limit', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({api_rate_limit: val})
   }).then(r => r.json()).then(d => {
+    btn.disabled = false;
+    btn.textContent = 'Save';
     if (d.success) {
-      const msg = document.getElementById('rateLimitMsg');
+      var msg = document.getElementById('rateLimitMsg');
       msg.style.display = 'inline';
-      setTimeout(() => { msg.style.display = 'none'; }, 2000);
+      setTimeout(function() { msg.style.display = 'none'; }, 2000);
     }
-  });
+  }).catch(function() { btn.disabled = false; btn.textContent = 'Save'; });
 });
 
 function downloadData() {
   var btn = document.getElementById('saveDataBtn');
   var msg = document.getElementById('saveDataMsg');
   btn.disabled = true;
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Preparing...';
   msg.style.display = 'inline';
-  var a = document.createElement('a');
-  a.href = '/api/admin/save-data';
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  window.location.href = '/api/admin/save-data';
   setTimeout(function() {
     btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Save Data';
     msg.style.display = 'none';
-  }, 3000);
+  }, 4000);
 }
 </script>
 {% endblock %}
@@ -195,7 +197,7 @@ function downloadData() {
     <form id="rateLimitForm" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
       <label style="font-size:13px;color:var(--text2);font-weight:600;">Max Requests per Minute</label>
       <input type="number" id="rateLimitInput" min="1" max="10000" value="{{ api_rate_limit }}" style="width:100px;padding:8px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;">
-      <button type="submit" style="padding:8px 18px;border-radius:8px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">Save</button>
+      <button type="submit" title="Save rate limit setting" style="padding:8px 18px;border-radius:8px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">Save</button>
       <span id="rateLimitMsg" style="font-size:12px;color:#34d399;display:none;">Saved!</span>
     </form>
   </div>
@@ -206,7 +208,7 @@ function downloadData() {
       Backup Data
     </div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      <button id="saveDataBtn" onclick="downloadData()" style="padding:8px 20px;border-radius:8px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;">
+      <button id="saveDataBtn" onclick="downloadData()" title="Download encrypted backup of all data files" style="padding:8px 20px;border-radius:8px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         Save Data
       </button>
