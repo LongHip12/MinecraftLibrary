@@ -1233,7 +1233,8 @@ def admin_dashboard():
         trending=sorted(mods_data["mods"],
                         key=lambda m: m.get("daily_stats", {}).get(today, {}).get("views", 0),
                         reverse=True)[:5],
-        api_rate_limit=settings.get("api_rate_limit", 60))
+        api_rate_limit=settings.get("api_rate_limit", 60),
+        today_str=today)
 
 
 @app.route("/error")
