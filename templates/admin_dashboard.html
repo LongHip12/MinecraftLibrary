@@ -1,240 +1,458 @@
 {% extends "base.html" %}
-{% block title %}Admin Dashboard — Lonely Hub{% endblock %}
-{% block extra_css %}
-<link rel="stylesheet" href="/static/css/dashboard.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  var form = document.getElementById('rateLimitForm');
-  if (form) {
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      var val = parseInt(document.getElementById('rateLimitInput').value);
-      if (!val || val < 1) return;
-      var btn = e.target.querySelector('button[type=submit]');
-      btn.disabled = true; btn.textContent = 'Saving...';
-      fetch('/api/admin/rate-limit', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({api_rate_limit: val})
-      }).then(function(r){return r.json();}).then(function(d){
-        btn.disabled = false; btn.textContent = 'Save';
-        if (d.success) {
-          var msg = document.getElementById('rateLimitMsg');
-          msg.style.display = 'inline';
-          setTimeout(function(){ msg.style.display = 'none'; }, 2000);
-        }
-      }).catch(function(){ btn.disabled = false; btn.textContent = 'Save'; });
-    });
-  }
+  {% block title %}Admin Dashboard — Lonely Hub{% endblock %}
+  {% block extra_css %}
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  {% endblock %}
+  {% block content %}
+  <div class="dash-wrap">
 
-  document.getElementById('saveDataBtn').addEventListener('click', downloadData);
-  document.getElementById('cloudBackupBtn').addEventListener('click', backupToCloud);
-  checkSupabaseConfig();
-  loadBackupFull();
-});
-});
+    <!-- ── STAT CARDS ── -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#1e3a5f;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-val">{{ total_users }}</div>
+          <div class="stat-label">Total Users</div>
+          <div class="stat-sub">{{ active_now }} active now</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#14532d;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-val">{{ total_mods }}</div>
+          <div class="stat-label">Total Mods</div>
+          <div class="stat-sub">{{ views_today }} views today</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#3b1a6e;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-val">{{ total_downloads }}</div>
+          <div class="stat-label">Downloads</div>
+          <div class="stat-sub">{{ downloads_today }} today</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#1c3a1e;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-val">{{ total_views }}</div>
+          <div class="stat-label">Total Views</div>
+          <div class="stat-sub">all time</div>
+        </div>
+      </div>
+    </div>
 
-var ICON_DL = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
-var ICON_CLOUD = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path></svg>';
+    <!-- ── CHART ── -->
+    <div class="dash-card" style="margin-bottom:18px;">
+      <div class="dash-card-header">
+        <span class="dash-card-title">Activity (Last 14 Days)</span>
+      </div>
+      <div style="height:220px;padding:16px 16px 8px;">
+        <canvas id="siteChart"></canvas>
+      </div>
+    </div>
 
-function downloadData() {
-  var btn = document.getElementById('saveDataBtn');
-  btn.disabled = true;
-  btn.innerHTML = ICON_DL + ' Downloading...';
-  window.location.href = '/api/admin/save-data';
-  setTimeout(function(){
-    btn.disabled = false;
-    btn.innerHTML = ICON_DL + ' Download Backup';
-    loadBackupFull();
-  }, 4000);
-}
+    <!-- ── TOP MODS & RECENT USERS ── -->
+    <div class="dash-two-col">
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <span class="dash-card-title">Top Mods by Views</span>
+        </div>
+        <div class="dash-list">
+          {% for m in top_mods %}
+          <div class="dash-list-row">
+            <div class="dash-list-main">
+              <a href="/mods/{{ m.id }}" class="dash-list-name">{{ m.name }}</a>
+              <div class="dash-list-meta">{{ m.views }} views · {{ m.downloads }} dl · ★ {{ "%.1f"|format(m.avg_rating) }}</div>
+            </div>
+            <div class="dash-list-tags">
+              {% for tag in m.tags[:2] %}<span class="tag-pill">{{ tag }}</span>{% endfor %}
+            </div>
+          </div>
+          {% else %}
+          <div class="dash-empty">No mods yet.</div>
+          {% endfor %}
+        </div>
+      </div>
 
-function backupToCloud() {
-  var btn = document.getElementById('cloudBackupBtn');
-  btn.disabled = true;
-  btn.innerHTML = ICON_CLOUD + ' Saving...';
-  fetch('/api/admin/backup-to-cloud', {method:'POST'})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      btn.disabled = false;
-      btn.innerHTML = ICON_CLOUD + ' Save to Cloud';
-      if (d.success) {
-        showBackupMsg('✓ Saved to Supabase!', '#22c55e');
-        loadBackupFull();
-      } else if (d.error && d.error.indexOf('not configured') !== -1) {
-        showBackupMsg('✗ Set SUPABASE_URL & SUPABASE_SERVICE_KEY env vars', '#f59e0b');
-      } else {
-        showBackupMsg('✗ Error: ' + d.error, '#ef4444');
-      }
-    })
-    .catch(function(){ btn.disabled = false; btn.innerHTML = ICON_CLOUD + ' Save to Cloud'; showBackupMsg('✗ Connection error', '#ef4444'); });
-}
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <span class="dash-card-title">Recent Users</span>
+        </div>
+        <div class="dash-list">
+          {% for u in recent_users %}
+          <div class="dash-list-row">
+            <div class="dash-list-main">
+              <span class="dash-list-name">{{ u.username }}</span>
+              <div class="dash-list-meta">Joined {{ u.created_at[:10] if u.created_at else '—' }}</div>
+            </div>
+            {% if u.role == 'admin' %}
+            <span class="role-badge admin">Admin</span>
+            {% else %}
+            <span class="role-badge user">User</span>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="dash-empty">No users yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
 
-function showBackupMsg(text, color) {
-  var el = document.getElementById('backupActionMsg');
-  el.textContent = text;
-  el.style.color = color;
-  el.style.display = 'inline';
-  setTimeout(function(){ el.style.display = 'none'; }, 3000);
-}
+    <!-- ── TRENDING TODAY & TOP TAGS ── -->
+    <div class="dash-two-col" style="margin-top:18px;">
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <span class="dash-card-title">Trending Today</span>
+        </div>
+        <div class="dash-list">
+          {% for m in trending %}
+          <div class="dash-list-row">
+            <div class="dash-list-main">
+              <a href="/mods/{{ m.id }}" class="dash-list-name">{{ m.name }}</a>
+              <div class="dash-list-meta">{{ m.daily_stats.get(today_str, {}).get('views', 0) if m.daily_stats else 0 }} views today</div>
+            </div>
+          </div>
+          {% else %}
+          <div class="dash-empty">No trending data.</div>
+          {% endfor %}
+        </div>
+      </div>
 
-function updateLastBackupStatus(b, notConfigured) {
-  var dot  = document.getElementById('lbsDot');
-  var time = document.getElementById('lbsTime');
-  var lbl  = document.getElementById('lbsLabel');
-  var idEl = document.getElementById('lbsId');
-  if (!dot) return;
-  if (notConfigured) {
-    dot.style.background = '#f59e0b';
-    time.textContent = 'Supabase not configured';
-    lbl.style.display = 'none';
-    idEl.textContent = '—';
-    return;
-  }
-  if (!b) {
-    dot.style.background = '#334155';
-    time.textContent = 'No backups yet';
-    lbl.style.display = 'none';
-    idEl.textContent = '—';
-    return;
-  }
-  var dt = new Date(b.created_at);
-  var isAuto = b.label === 'Auto';
-  dot.style.background = '#22c55e';
-  time.textContent = dt.toLocaleString();
-  lbl.style.display = 'inline';
-  lbl.textContent = b.label;
-  lbl.style.background = isAuto ? '#1e293b' : '#1e3a5f';
-  lbl.style.color      = isAuto ? '#94a3b8' : '#60a5fa';
-  idEl.textContent = b.id.slice(0, 8) + '…';
-  idEl.title = b.id;
-}
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <span class="dash-card-title">Top Tags</span>
+        </div>
+        <div style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:7px;">
+          {% for tag, count in top_tags %}
+          <span class="tag-pill">{{ tag }} <span style="opacity:.6">{{ count }}</span></span>
+          {% endfor %}
+          {% if not top_tags %}
+          <div class="dash-empty">No tags yet.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
 
-function checkSupabaseConfig() {
-  fetch('/api/admin/supabase-status')
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      var cloudBtn = document.getElementById('cloudBackupBtn');
-      var notice   = document.getElementById('supabaseSetupNotice');
-      if (!d.configured) {
-        updateLastBackupStatus(null, true);
-        if (cloudBtn) {
-          cloudBtn.disabled = true;
-          cloudBtn.style.opacity = '0.4';
-          cloudBtn.style.cursor = 'not-allowed';
-          cloudBtn.title = 'Set SUPABASE_URL and SUPABASE_SERVICE_KEY env vars first';
-        }
-        if (notice) notice.style.display = 'flex';
-        document.getElementById('bhTableBody').innerHTML =
-          '<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px;">Supabase not configured.</div>';
-      } else {
-        if (notice) notice.style.display = 'none';
-        loadBackupFull();
-      }
-    })
-    .catch(function(){ loadBackupFull(); });
-}
+    <!-- ── SETTINGS ── -->
+    <div class="dash-card" style="margin-top:18px;">
+      <div class="dash-card-header">
+        <span class="dash-card-title">Settings</span>
+      </div>
+      <div style="padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <label style="font-size:13px;color:var(--text2);">API Rate Limit (req/min):</label>
+        <form id="rateLimitForm" style="display:flex;align-items:center;gap:8px;">
+          <input type="number" id="rateLimitInput" value="{{ api_rate_limit }}" min="1" max="9999"
+            style="width:80px;background:var(--bg3);border:1px solid var(--border);color:var(--text1);border-radius:6px;padding:5px 8px;font-size:13px;">
+          <button type="submit" style="padding:5px 14px;background:#1e40af;color:#93c5fd;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;">Save</button>
+          <span id="rateLimitMsg" style="display:none;color:#4ade80;font-size:12px;">Saved!</span>
+        </form>
+      </div>
+    </div>
 
-function loadBackupFull() {
-  var list = document.getElementById('backupList');
-  if (!list) return;
-  list.innerHTML = '<div style="color:var(--text3);font-size:12px;">Loading...</div>';
-  fetch('/api/admin/backups')
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if (!d.success || !d.backups.length) {
-        list.innerHTML = '<div style="color:var(--text3);font-size:12px;">No backups yet.</div>';
-        updateLastBackupStatus(null);
-        return;
-      }
-      updateLastBackupStatus(d.backups[0]);
-      list.innerHTML = d.backups.map(function(b){
-        var dt = new Date(b.created_at);
-        var dtStr = dt.toLocaleString();
-        var label = b.label === 'Auto'
-          ? '<span style="font-size:10px;background:#334155;color:#94a3b8;border-radius:4px;padding:1px 6px;">Auto</span>'
-          : '<span style="font-size:10px;background:#1e3a5f;color:#60a5fa;border-radius:4px;padding:1px 6px;">Manual</span>';
-        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">'
-          + label
-          + '<span style="flex:1;color:var(--text2);">' + dtStr + '</span>'
-          + '<button class="bk-restore" data-id="' + b.id + '" data-label="' + dtStr + '" title="Restore this backup" style="padding:3px 10px;border-radius:6px;background:#0f4c81;color:#60a5fa;border:none;cursor:pointer;font-size:11px;font-family:inherit;">Restore</button>'
-          + '<button class="bk-delete" data-id="' + b.id + '" title="Delete this backup" style="padding:3px 8px;border-radius:6px;background:#450a0a;color:#f87171;border:none;cursor:pointer;font-size:11px;font-family:inherit;">✕</button>'
-          + '</div>';
-      }).join('');
-      list.querySelectorAll('.bk-restore').forEach(function(btn){
-        btn.addEventListener('click', function(){ restoreBackup(btn.dataset.id, btn.dataset.label); });
-      });
-      list.querySelectorAll('.bk-delete').forEach(function(btn){
-        btn.addEventListener('click', function(){ deleteBackup(btn.dataset.id, btn); });
-      });
-    })
-    .catch(function(){ list.innerHTML = '<div style="color:#f87171;font-size:12px;">Cannot connect to Supabase.</div>'; });
-}
+    <!-- ── BACKUP ── -->
+    <div class="dash-card" style="margin-top:18px;">
+      <div class="dash-card-header">
+        <span class="dash-card-title">Backup & Data</span>
+      </div>
+      <div style="padding:14px 16px;">
 
-  function restoreBackup(id, label) {
-    customConfirm('Restore backup from "' + label + '"?', 'Current data will be overwritten!').then(function(ok) {
-      if (!ok) return;
-      fetch('/api/admin/restore/' + id, {method:'POST'})
-        .then(function(r){return r.json();})
-        .then(function(d){
-          if (d.success) {
-            showBackupMsg('✓ Restored backup from ' + d.restored, '#22c55e');
-          } else {
-            showBackupMsg('✗ ' + d.error, '#ef4444');
-          }
-        })
-        .catch(function(){ showBackupMsg('✗ Connection error', '#ef4444'); });
-    });
-  }
+        <!-- Last backup status -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px;flex-wrap:wrap;">
+          <span style="color:var(--text3);">Last backup:</span>
+          <span id="lbsDot" style="width:8px;height:8px;border-radius:50%;background:#334155;display:inline-block;"></span>
+          <span id="lbsTime" style="color:var(--text2);">—</span>
+          <span id="lbsLabel" style="display:none;font-size:10px;border-radius:4px;padding:1px 7px;font-weight:600;"></span>
+          <span id="lbsId" style="color:#475569;font-family:monospace;font-size:11px;">—</span>
+        </div>
 
-const ctx = document.getElementById('siteChart').getContext('2d');
-new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels,
-    datasets: [
-      {
-        label: 'Views',
-        data: viewsData,
-        borderColor: '#60a5fa',
-        backgroundColor: makeGradient(ctx, 'rgba(96,165,250,0.3)', 'rgba(96,165,250,0.01)'),
-        borderWidth: 2.5, tension: 0.42, fill: true,
-        pointRadius: 3, pointBackgroundColor: '#60a5fa', pointHoverRadius: 5,
-      },
-      {
-        label: 'Downloads',
-        data: dlData,
-        borderColor: '#4ade80',
-        backgroundColor: makeGradient(ctx, 'rgba(74,222,128,0.2)', 'rgba(74,222,128,0.01)'),
-        borderWidth: 2.5, tension: 0.42, fill: true,
-        pointRadius: 3, pointBackgroundColor: '#4ade80', pointHoverRadius: 5,
-      }
-    ]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: { labels: { color: '#a0a0b0', font: { size: 12 }, boxWidth: 12, boxHeight: 12 } },
-      tooltip: {
-        backgroundColor: 'rgba(14,14,22,0.95)', borderColor: 'rgba(255,255,255,0.1)',
-        borderWidth: 1, titleColor: '#f0f0f5', bodyColor: '#a0a0b0', padding: 12,
-      }
-    },
-    scales: {
-      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#606070', font: { size: 11 } } },
-      y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#606070', font: { size: 11 }, precision: 0 }, beginAtZero: true }
-    }
-  }
-});
+        <!-- Supabase not configured notice -->
+        <div id="supabaseSetupNotice" style="display:none;align-items:center;gap:8px;background:#1c1004;border:1px solid #78350f;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#fbbf24;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          Supabase not configured. Set <code style="background:#2d1a00;padding:1px 5px;border-radius:3px;">SUPABASE_URL</code> and <code style="background:#2d1a00;padding:1px 5px;border-radius:3px;">SUPABASE_SERVICE_KEY</code> env vars.
+        </div>
+
+        <!-- Action buttons -->
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px;">
+          <button id="saveDataBtn" style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:#0f4c81;color:#60a5fa;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Download Backup
+          </button>
+          <button id="cloudBackupBtn" style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:#0f3460;color:#7dd3fc;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path></svg>
+            Save to Cloud
+          </button>
+          <span id="backupActionMsg" style="display:none;font-size:12px;font-weight:600;"></span>
+        </div>
+
+        <!-- Backup History section -->
+        <div style="border-top:1px solid var(--border);padding-top:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span style="font-size:13px;font-weight:600;color:var(--text1);">Backup History</span>
+            <button id="bhRefreshBtn" onclick="loadBackupFull()" style="padding:4px 12px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;">↻ Refresh</button>
+          </div>
+
+          <!-- Stats cards -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+            <div style="background:var(--bg3);border-radius:8px;padding:10px 14px;text-align:center;">
+              <div id="bhStatTotal" style="font-size:22px;font-weight:700;color:var(--text1);">—</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px;">Total</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:8px;padding:10px 14px;text-align:center;">
+              <div id="bhStatAuto" style="font-size:22px;font-weight:700;color:#94a3b8;">—</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px;">Auto</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:8px;padding:10px 14px;text-align:center;">
+              <div id="bhStatManual" style="font-size:22px;font-weight:700;color:#60a5fa;">—</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px;">Manual</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:8px;padding:10px 14px;text-align:center;">
+              <div id="bhStatLast" style="font-size:13px;font-weight:700;color:#4ade80;">—</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px;">Last Backup</div>
+            </div>
+          </div>
+
+          <!-- Charts row -->
+          <div style="display:grid;grid-template-columns:1fr 160px;gap:12px;margin-bottom:14px;">
+            <div style="background:var(--bg3);border-radius:8px;padding:10px;height:120px;">
+              <canvas id="bhBarChart"></canvas>
+            </div>
+            <div style="background:var(--bg3);border-radius:8px;padding:10px;height:120px;">
+              <canvas id="bhPieChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+            <input id="bhSearch" type="text" placeholder="Search by label or ID…" oninput="applyBhFilters()"
+              style="flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--border);color:var(--text1);border-radius:6px;padding:5px 10px;font-size:12px;">
+            <select id="bhType" onchange="applyBhFilters()"
+              style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:5px 8px;font-size:12px;">
+              <option value="">All types</option>
+              <option value="Auto">Auto</option>
+              <option value="Manual">Manual</option>
+            </select>
+            <input id="bhDateFrom" type="date" onchange="applyBhFilters()"
+              style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:5px 8px;font-size:12px;">
+            <input id="bhDateTo" type="date" onchange="applyBhFilters()"
+              style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:5px 8px;font-size:12px;">
+            <button onclick="clearBhFilters()"
+              style="padding:5px 10px;background:var(--bg3);color:var(--text3);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;">Clear</button>
+            <span id="bhFilterCount" style="font-size:11px;color:var(--text3);"></span>
+          </div>
+
+          <!-- Table -->
+          <div id="bhTableBody" style="max-height:300px;overflow-y:auto;border-radius:8px;border:1px solid var(--border);">
+            <div style="padding:24px;text-align:center;color:var(--text3);font-size:12px;">Loading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  {% endblock %}
+
+  {% block extra_js %}
+  <script>
+  var ICON_DL    = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
+  var ICON_CLOUD = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path></svg>';
 
   var bhAllBackups = [];
   var bhBarChart = null, bhPieChart = null;
 
+  function makeGradient(ctx, colorTop, colorBottom) {
+    var g = ctx.createLinearGradient(0, 0, 0, 200);
+    g.addColorStop(0, colorTop);
+    g.addColorStop(1, colorBottom);
+    return g;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Rate limit form
+    var form = document.getElementById('rateLimitForm');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var val = parseInt(document.getElementById('rateLimitInput').value);
+        if (!val || val < 1) return;
+        var btn = e.target.querySelector('button[type=submit]');
+        btn.disabled = true; btn.textContent = 'Saving...';
+        fetch('/api/admin/rate-limit', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({api_rate_limit: val})
+        }).then(function(r){ return r.json(); }).then(function(d){
+          btn.disabled = false; btn.textContent = 'Save';
+          if (d.success) {
+            var msg = document.getElementById('rateLimitMsg');
+            msg.style.display = 'inline';
+            setTimeout(function(){ msg.style.display = 'none'; }, 2000);
+          }
+        }).catch(function(){ btn.disabled = false; btn.textContent = 'Save'; });
+      });
+    }
+
+    document.getElementById('saveDataBtn').addEventListener('click', downloadData);
+    document.getElementById('cloudBackupBtn').addEventListener('click', backupToCloud);
+
+    // Site chart
+    var chartLabels = {{ chart_labels | tojson }};
+    var viewsData   = {{ chart_views | tojson }};
+    var dlData      = {{ chart_downloads | tojson }};
+    var siteCtx = document.getElementById('siteChart').getContext('2d');
+    new Chart(siteCtx, {
+      type: 'line',
+      data: {
+        labels: chartLabels,
+        datasets: [
+          {
+            label: 'Views',
+            data: viewsData,
+            borderColor: '#60a5fa',
+            backgroundColor: makeGradient(siteCtx, 'rgba(96,165,250,0.3)', 'rgba(96,165,250,0.01)'),
+            borderWidth: 2.5, tension: 0.42, fill: true,
+            pointRadius: 3, pointBackgroundColor: '#60a5fa', pointHoverRadius: 5,
+          },
+          {
+            label: 'Downloads',
+            data: dlData,
+            borderColor: '#4ade80',
+            backgroundColor: makeGradient(siteCtx, 'rgba(74,222,128,0.2)', 'rgba(74,222,128,0.01)'),
+            borderWidth: 2.5, tension: 0.42, fill: true,
+            pointRadius: 3, pointBackgroundColor: '#4ade80', pointHoverRadius: 5,
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: '#a0a0b0', font: { size: 12 }, boxWidth: 12, boxHeight: 12 } },
+          tooltip: {
+            backgroundColor: 'rgba(14,14,22,0.95)', borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1, titleColor: '#f0f0f5', bodyColor: '#a0a0b0', padding: 12,
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#606070', font: { size: 11 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#606070', font: { size: 11 }, precision: 0 }, beginAtZero: true }
+        }
+      }
+    });
+
+    checkSupabaseConfig();
+  });
+
+  function downloadData() {
+    var btn = document.getElementById('saveDataBtn');
+    btn.disabled = true;
+    btn.innerHTML = ICON_DL + ' Downloading...';
+    window.location.href = '/api/admin/save-data';
+    setTimeout(function(){
+      btn.disabled = false;
+      btn.innerHTML = ICON_DL + ' Download Backup';
+      loadBackupFull();
+    }, 4000);
+  }
+
+  function backupToCloud() {
+    var btn = document.getElementById('cloudBackupBtn');
+    btn.disabled = true;
+    btn.innerHTML = ICON_CLOUD + ' Saving...';
+    fetch('/api/admin/backup-to-cloud', {method:'POST'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        btn.disabled = false;
+        btn.innerHTML = ICON_CLOUD + ' Save to Cloud';
+        if (d.success) {
+          showBackupMsg('✓ Saved to Supabase!', '#22c55e');
+          loadBackupFull();
+        } else if (d.error && d.error.indexOf('not configured') !== -1) {
+          showBackupMsg('✗ Set SUPABASE_URL & SUPABASE_SERVICE_KEY env vars', '#f59e0b');
+        } else {
+          showBackupMsg('✗ Error: ' + d.error, '#ef4444');
+        }
+      })
+      .catch(function(){ btn.disabled = false; btn.innerHTML = ICON_CLOUD + ' Save to Cloud'; showBackupMsg('✗ Connection error', '#ef4444'); });
+  }
+
+  function showBackupMsg(text, color) {
+    var el = document.getElementById('backupActionMsg');
+    el.textContent = text;
+    el.style.color = color;
+    el.style.display = 'inline';
+    setTimeout(function(){ el.style.display = 'none'; }, 3000);
+  }
+
+  function updateLastBackupStatus(b, notConfigured) {
+    var dot  = document.getElementById('lbsDot');
+    var time = document.getElementById('lbsTime');
+    var lbl  = document.getElementById('lbsLabel');
+    var idEl = document.getElementById('lbsId');
+    if (!dot) return;
+    if (notConfigured) {
+      dot.style.background = '#f59e0b';
+      time.textContent = 'Supabase not configured';
+      lbl.style.display = 'none';
+      idEl.textContent = '—';
+      return;
+    }
+    if (!b) {
+      dot.style.background = '#334155';
+      time.textContent = 'No backups yet';
+      lbl.style.display = 'none';
+      idEl.textContent = '—';
+      return;
+    }
+    var dt = new Date(b.created_at);
+    var isAuto = b.label === 'Auto';
+    dot.style.background = '#22c55e';
+    time.textContent = dt.toLocaleString();
+    lbl.style.display = 'inline';
+    lbl.textContent = b.label;
+    lbl.style.background = isAuto ? '#1e293b' : '#1e3a5f';
+    lbl.style.color      = isAuto ? '#94a3b8' : '#60a5fa';
+    idEl.textContent = b.id.slice(0, 8) + '…';
+    idEl.title = b.id;
+  }
+
+  function checkSupabaseConfig() {
+    fetch('/api/admin/supabase-status')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var cloudBtn = document.getElementById('cloudBackupBtn');
+        var notice   = document.getElementById('supabaseSetupNotice');
+        if (!d.configured) {
+          updateLastBackupStatus(null, true);
+          if (cloudBtn) {
+            cloudBtn.disabled = true;
+            cloudBtn.style.opacity = '0.4';
+            cloudBtn.style.cursor = 'not-allowed';
+            cloudBtn.title = 'Set SUPABASE_URL and SUPABASE_SERVICE_KEY env vars first';
+          }
+          if (notice) notice.style.display = 'flex';
+          var tbody = document.getElementById('bhTableBody');
+          if (tbody) tbody.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px;">Supabase not configured.</div>';
+        } else {
+          if (notice) notice.style.display = 'none';
+          loadBackupFull();
+        }
+      })
+      .catch(function(){ loadBackupFull(); });
+  }
+
   function loadBackupFull() {
     var btn = document.getElementById('bhRefreshBtn');
-    if (btn) { btn.disabled = true; }
+    if (btn) btn.disabled = true;
     fetch('/api/admin/backups?limit=50')
       .then(function(r){ return r.json(); })
       .then(function(d){
@@ -260,7 +478,6 @@ new Chart(ctx, {
     if (backups.length) {
       var dt = new Date(backups[0].created_at);
       document.getElementById('bhStatLast').textContent = dt.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
-      // also update old status
       updateLastBackupStatus(backups[0]);
     } else {
       document.getElementById('bhStatLast').textContent = 'None yet';
@@ -269,7 +486,6 @@ new Chart(ctx, {
   }
 
   function renderBhCharts(backups) {
-    // Bar chart — backups per day last 30 days
     var days = 30, barLabels = [], autoData = [], manualData = [];
     for (var i = days - 1; i >= 0; i--) {
       var d = new Date(); d.setDate(d.getDate() - i);
@@ -299,10 +515,8 @@ new Chart(ctx, {
         }
       }
     });
-
-    // Donut chart
-    var auto = backups.filter(function(b){ return b.label === 'Auto'; }).length;
-    var manual = backups.length - auto;
+    var auto2 = backups.filter(function(b){ return b.label === 'Auto'; }).length;
+    var manual2 = backups.length - auto2;
     var pieCtx = document.getElementById('bhPieChart').getContext('2d');
     if (bhPieChart) bhPieChart.destroy();
     if (!backups.length) {
@@ -317,7 +531,7 @@ new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: ['Auto', 'Manual'],
-        datasets: [{ data: [auto, manual], backgroundColor: ['rgba(148,163,184,.55)', 'rgba(96,165,250,.75)'], borderWidth: 0 }]
+        datasets: [{ data: [auto2, manual2], backgroundColor: ['rgba(148,163,184,.55)', 'rgba(96,165,250,.75)'], borderWidth: 0 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false, cutout: '62%',
@@ -365,12 +579,12 @@ new Chart(ctx, {
       var badge = b.label === 'Auto'
         ? '<span style="font-size:10px;background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 7px;font-weight:600;">Auto</span>'
         : '<span style="font-size:10px;background:#1e3a5f;color:#60a5fa;border-radius:4px;padding:2px 7px;font-weight:600;">Manual</span>';
-      return '<div style="display:grid;grid-template-columns:80px 1fr 100px 90px;padding:9px 14px;border-bottom:1px solid #0f172a;font-size:12px;color:var(--text2);align-items:center;transition:background .12s;" onmouseover="this.style.background='#060b14'" onmouseout="this.style.background=''">'
+      return '<div style="display:grid;grid-template-columns:80px 1fr 100px 90px;padding:9px 14px;border-bottom:1px solid #0f172a;font-size:12px;color:var(--text2);align-items:center;" onmouseover="this.style.background=\'#060b14\'" onmouseout="this.style.background=\'\'">'
         + badge
         + '<span>' + dt + '</span>'
         + '<span style="color:#475569;font-family:monospace;font-size:11px;" title="' + b.id + '">' + b.id.slice(0,8) + '…</span>'
         + '<div style="display:flex;gap:5px;">'
-        + '<button class="bh-restore" data-id="' + b.id + '" data-time="' + dt.replace(/"/g,"&quot;") + '" style="padding:3px 9px;border-radius:5px;background:#0f4c81;color:#60a5fa;border:none;cursor:pointer;font-size:11px;font-family:inherit;">Restore</button>'
+        + '<button class="bh-restore" data-id="' + b.id + '" data-time="' + dt.replace(/"/g,'&quot;') + '" style="padding:3px 9px;border-radius:5px;background:#0f4c81;color:#60a5fa;border:none;cursor:pointer;font-size:11px;font-family:inherit;">Restore</button>'
         + '<button class="bh-delete" data-id="' + b.id + '" style="padding:3px 7px;border-radius:5px;background:#450a0a;color:#f87171;border:none;cursor:pointer;font-size:11px;font-family:inherit;">✕</button>'
         + '</div></div>';
     }).join('');
@@ -378,7 +592,7 @@ new Chart(ctx, {
       btn.addEventListener('click', function() {
         customConfirm('Restore backup from "' + btn.dataset.time + '"?', 'Current data will be overwritten!').then(function(ok) {
           if (!ok) return;
-          fetch('/api/admin/restore/' + btn.dataset.id, { method: 'POST' })
+          fetch('/api/admin/restore/' + btn.dataset.id, {method:'POST'})
             .then(function(r){ return r.json(); })
             .then(function(d){ showBackupMsg(d.success ? '✓ Restored successfully!' : '✗ ' + d.error, d.success ? '#22c55e' : '#ef4444'); })
             .catch(function(){ showBackupMsg('✗ Connection error', '#ef4444'); });
@@ -390,7 +604,7 @@ new Chart(ctx, {
         customConfirm('Delete this backup?', 'This action cannot be undone.').then(function(ok) {
           if (!ok) return;
           btn.disabled = true;
-          fetch('/api/admin/backup/' + btn.dataset.id, { method: 'DELETE' })
+          fetch('/api/admin/backup/' + btn.dataset.id, {method:'DELETE'})
             .then(function(r){ return r.json(); })
             .then(function(d){
               if (d.success) loadBackupFull();
@@ -400,5 +614,6 @@ new Chart(ctx, {
       });
     });
   }
-</script>
-{% endblock %}
+  </script>
+  {% endblock %}
+  
