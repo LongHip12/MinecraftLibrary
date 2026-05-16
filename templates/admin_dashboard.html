@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   document.getElementById('saveDataBtn').addEventListener('click', downloadData);
   document.getElementById('cloudBackupBtn').addEventListener('click', backupToCloud);
-  loadBackupList();
+  checkSupabaseConfig();
 });
 
 var ICON_DL = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
@@ -60,6 +60,8 @@ function backupToCloud() {
       if (d.success) {
         showBackupMsg('✓ Saved to Supabase!', '#22c55e');
         loadBackupList();
+      } else if (d.error && d.error.indexOf('not configured') !== -1) {
+        showBackupMsg('✗ Set SUPABASE_URL & SUPABASE_SERVICE_KEY env vars', '#f59e0b');
       } else {
         showBackupMsg('✗ Error: ' + d.error, '#ef4444');
       }
@@ -75,12 +77,19 @@ function showBackupMsg(text, color) {
   setTimeout(function(){ el.style.display = 'none'; }, 3000);
 }
 
-function updateLastBackupStatus(b) {
+function updateLastBackupStatus(b, notConfigured) {
   var dot  = document.getElementById('lbsDot');
   var time = document.getElementById('lbsTime');
   var lbl  = document.getElementById('lbsLabel');
   var idEl = document.getElementById('lbsId');
   if (!dot) return;
+  if (notConfigured) {
+    dot.style.background = '#f59e0b';
+    time.textContent = 'Supabase not configured';
+    lbl.style.display = 'none';
+    idEl.textContent = '—';
+    return;
+  }
   if (!b) {
     dot.style.background = '#334155';
     time.textContent = 'No backups yet';
@@ -98,6 +107,31 @@ function updateLastBackupStatus(b) {
   lbl.style.color      = isAuto ? '#94a3b8' : '#60a5fa';
   idEl.textContent = b.id.slice(0, 8) + '…';
   idEl.title = b.id;
+}
+
+function checkSupabaseConfig() {
+  fetch('/api/admin/supabase-status')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var cloudBtn = document.getElementById('cloudBackupBtn');
+      var notice   = document.getElementById('supabaseSetupNotice');
+      if (!d.configured) {
+        updateLastBackupStatus(null, true);
+        if (cloudBtn) {
+          cloudBtn.disabled = true;
+          cloudBtn.style.opacity = '0.4';
+          cloudBtn.style.cursor = 'not-allowed';
+          cloudBtn.title = 'Set SUPABASE_URL and SUPABASE_SERVICE_KEY env vars first';
+        }
+        if (notice) notice.style.display = 'flex';
+        document.getElementById('backupList').innerHTML =
+          '<div style="color:var(--text3);font-size:12px;">Supabase not configured — no backups available.</div>';
+      } else {
+        if (notice) notice.style.display = 'none';
+        loadBackupList();
+      }
+    })
+    .catch(function(){ loadBackupList(); });
 }
 
 function loadBackupList() {
@@ -329,6 +363,22 @@ function deleteBackup(id, btn) {
     <div class="dash-section-title">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
       Backup Data
+    </div>
+    <div id="supabaseSetupNotice" style="display:none;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:8px;background:#1c1008;border:1px solid #78350f;margin-bottom:12px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#f59e0b;margin-bottom:4px;">Supabase not configured — cloud backup is disabled</div>
+        <div style="font-size:11px;color:#92400e;line-height:1.6;">
+          Set these environment variables on your server, then restart the app:
+        </div>
+        <div style="margin-top:6px;display:flex;flex-direction:column;gap:3px;">
+          <code style="font-size:11px;background:#0f172a;color:#60a5fa;padding:3px 8px;border-radius:4px;display:inline-block;">SUPABASE_URL=https://yibketeferpkqmvzbqei.supabase.co</code>
+          <code style="font-size:11px;background:#0f172a;color:#60a5fa;padding:3px 8px;border-radius:4px;display:inline-block;">SUPABASE_SERVICE_KEY=your_service_role_key</code>
+        </div>
+        <div style="font-size:10px;color:#78350f;margin-top:6px;">
+          Get the service_role key from: Supabase Dashboard → Project Settings → API → service_role
+        </div>
+      </div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
       <button id="saveDataBtn" title="Download encrypted backup to your machine" style="padding:8px 16px;border-radius:8px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;">

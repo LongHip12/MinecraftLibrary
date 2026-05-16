@@ -2345,6 +2345,14 @@ def admin_backup_to_cloud():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route("/api/admin/supabase-status", methods=["GET"])
+def admin_supabase_status():
+    current_user = get_session_user(request)
+    if not current_user or not is_admin(current_user):
+        return jsonify({"success": False, "error": "Forbidden"}), 403
+    return jsonify({"configured": supabase_backup.is_configured()})
+
+
 @app.route("/api/admin/backups", methods=["GET"])
 def admin_list_backups():
     """List all backups from Supabase."""
