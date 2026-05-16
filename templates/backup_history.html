@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-  {% block title %}Lịch sử Backup — Lonely Hub{% endblock %}
+  {% block title %}Backup History — Lonely Hub{% endblock %}
   {% block extra_css %}
   <link rel="stylesheet" href="/static/css/dashboard.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -42,39 +42,39 @@
       <div>
         <div class="bh-title">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
-          Lịch sử Backup
+          Backup History
         </div>
-        <div class="bh-subtitle">Toàn bộ backup lưu trên Supabase</div>
+        <div class="bh-subtitle">All backups stored on Supabase</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
         <span class="bh-msg" id="bhMsg"></span>
         <button id="bhRefreshBtn" class="btn btn-secondary btn-sm" onclick="loadAll()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-          Làm mới
+          Refresh
         </button>
         <a href="/admin" class="btn btn-ghost btn-sm">← Admin</a>
       </div>
     </div>
 
     <div class="bh-stats">
-      <div class="bh-stat"><div class="bh-stat-val" id="bhTotal">—</div><div class="bh-stat-lbl">Tổng backup</div></div>
+      <div class="bh-stat"><div class="bh-stat-val" id="bhTotal">—</div><div class="bh-stat-lbl">Total Backups</div></div>
       <div class="bh-stat"><div class="bh-stat-val" id="bhAuto">—</div><div class="bh-stat-lbl">Auto</div></div>
       <div class="bh-stat"><div class="bh-stat-val" id="bhManual">—</div><div class="bh-stat-lbl">Manual</div></div>
-      <div class="bh-stat"><div class="bh-stat-val" id="bhLast">—</div><div class="bh-stat-lbl">Backup gần nhất</div></div>
+      <div class="bh-stat"><div class="bh-stat-val" id="bhLast">—</div><div class="bh-stat-lbl">Last Backup</div></div>
     </div>
 
     <div class="bh-chart-row">
       <div class="bh-card">
         <div class="bh-card-title">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-          Backup theo ngày (30 ngày qua)
+          Backups by Day (Last 30 Days)
         </div>
         <div class="bh-chart-wrap"><canvas id="bhTimeChart"></canvas></div>
       </div>
       <div class="bh-card">
         <div class="bh-card-title">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-          Tỉ lệ Auto / Manual
+          Auto / Manual Ratio
         </div>
         <div class="bh-chart-wrap"><canvas id="bhPieChart"></canvas></div>
       </div>
@@ -82,9 +82,9 @@
 
     <div class="bh-table-wrap" id="bhTableWrap">
       <div class="bh-table-head">
-        <span>Loại</span><span>Thời gian</span><span>ID</span><span>Thao tác</span>
+        <span>Type</span><span>Time</span><span>ID</span><span>Actions</span>
       </div>
-      <div id="bhTableBody"><div class="bh-empty">Đang tải...</div></div>
+      <div id="bhTableBody"><div class="bh-empty">Loading...</div></div>
     </div>
 
   </div>
@@ -101,12 +101,12 @@
       .then(function(r){ return r.json(); })
       .then(function(d) {
         document.getElementById('bhRefreshBtn').disabled = false;
-        if (!d.success) { showMsg('✗ ' + (d.error || 'Lỗi'), '#ef4444'); return; }
+        if (!d.success) { showMsg('✗ ' + (d.error || 'Error'), '#ef4444'); return; }
         renderAll(d.backups || []);
       })
       .catch(function(e) {
         document.getElementById('bhRefreshBtn').disabled = false;
-        showMsg('✗ Không thể kết nối', '#ef4444');
+        showMsg('✗ Cannot connect', '#ef4444');
       });
   }
 
@@ -118,7 +118,7 @@
     document.getElementById('bhManual').textContent = manualCount;
     if (backups.length) {
       var dt = new Date(backups[0].created_at);
-      document.getElementById('bhLast').textContent = dt.toLocaleDateString('vi-VN');
+      document.getElementById('bhLast').textContent = dt.toLocaleDateString('en-US');
     } else {
       document.getElementById('bhLast').textContent = '—';
     }
@@ -133,7 +133,7 @@
     for (var i = days - 1; i >= 0; i--) {
       var d = new Date(); d.setDate(d.getDate() - i);
       var key = d.toISOString().slice(0, 10);
-      labels.push(d.toLocaleDateString('vi-VN', {day:'2-digit',month:'2-digit'}));
+      labels.push(d.toLocaleDateString('en-US', {month:'short',day:'2-digit'}));
       var dayBackups = backups.filter(function(b){ return b.created_at.slice(0,10) === key; });
       autoData.push(dayBackups.filter(function(b){ return b.label === 'Auto'; }).length);
       manualData.push(dayBackups.filter(function(b){ return b.label !== 'Auto'; }).length);
@@ -164,7 +164,7 @@
     var ctx = document.getElementById('bhPieChart').getContext('2d');
     if (pieChart) pieChart.destroy();
     if (autoCount === 0 && manualCount === 0) {
-      pieChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Chưa có backup'], datasets: [{ data: [1], backgroundColor: ['#1e293b'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#64748b' } } } } });
+      pieChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['No backups'], datasets: [{ data: [1], backgroundColor: ['#1e293b'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#64748b' } } } } });
       return;
     }
     pieChart = new Chart(ctx, {
@@ -182,9 +182,9 @@
 
   function renderTable(backups) {
     var body = document.getElementById('bhTableBody');
-    if (!backups.length) { body.innerHTML = '<div class="bh-empty">Chưa có backup nào.</div>'; return; }
+    if (!backups.length) { body.innerHTML = '<div class="bh-empty">No backups yet.</div>'; return; }
     body.innerHTML = backups.map(function(b) {
-      var dt = new Date(b.created_at).toLocaleString('vi-VN');
+      var dt = new Date(b.created_at).toLocaleString('en-US');
       var badge = b.label === 'Auto'
         ? '<span class="bh-badge auto">Auto</span>'
         : '<span class="bh-badge manual">Manual</span>';
@@ -207,19 +207,19 @@
   }
 
   function doRestore(id, time) {
-    customConfirm('Restore backup lúc "' + time + '"?', 'Dữ liệu hiện tại sẽ bị ghi đè!').then(function(ok) {
+    customConfirm('Restore backup from "' + time + '"?', 'Current data will be overwritten!').then(function(ok) {
       if (!ok) return;
       fetch('/api/admin/restore/' + id, { method: 'POST' })
         .then(function(r){ return r.json(); })
         .then(function(d) {
-          if (d.success) showMsg('✓ Đã restore thành công!', '#22c55e');
+          if (d.success) showMsg('✓ Restored successfully!', '#22c55e');
           else showMsg('✗ ' + d.error, '#ef4444');
-        }).catch(function(){ showMsg('✗ Lỗi kết nối', '#ef4444'); });
+        }).catch(function(){ showMsg('✗ Connection error', '#ef4444'); });
     });
   }
 
   function doDelete(id, btn) {
-    customConfirm('Xoá backup này?', 'Hành động này không thể hoàn tác.').then(function(ok) {
+    customConfirm('Delete this backup?', 'This action cannot be undone.').then(function(ok) {
       if (!ok) return;
       btn.disabled = true;
       fetch('/api/admin/backup/' + id, { method: 'DELETE' })
