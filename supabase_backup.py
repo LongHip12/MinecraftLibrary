@@ -216,19 +216,11 @@ def startup_restore(data_dir):
     if not is_configured():
         return
     try:
-        accounts_path = os.path.join(data_dir, "accounts-data.json")
-        try:
-            with open(accounts_path, "r", encoding="utf-8") as f:
-                local = json.load(f)
-            has_users = bool(local.get("users"))
-        except Exception:
-            has_users = False
-        if not has_users:
-            print("[supabase_backup] No local users found — restoring from latest Supabase backup...")
-            row = restore_latest_backup(data_dir)
-            if row:
-                print(f"[supabase_backup] Startup restore complete from {row.get('created_at')}")
-            else:
-                print("[supabase_backup] No backup found in Supabase.")
+        print("[supabase_backup] Deploy detected — restoring latest backup from Supabase...")
+        row = restore_latest_backup(data_dir)
+        if row:
+            print(f"[supabase_backup] Startup restore complete from {row.get('created_at')}")
+        else:
+            print("[supabase_backup] No backup found in Supabase — starting fresh.")
     except Exception as e:
         print(f"[supabase_backup] Startup restore error: {e}")
