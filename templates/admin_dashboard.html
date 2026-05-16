@@ -75,6 +75,31 @@ function showBackupMsg(text, color) {
   setTimeout(function(){ el.style.display = 'none'; }, 3000);
 }
 
+function updateLastBackupStatus(b) {
+  var dot  = document.getElementById('lbsDot');
+  var time = document.getElementById('lbsTime');
+  var lbl  = document.getElementById('lbsLabel');
+  var idEl = document.getElementById('lbsId');
+  if (!dot) return;
+  if (!b) {
+    dot.style.background = '#334155';
+    time.textContent = 'No backups yet';
+    lbl.style.display = 'none';
+    idEl.textContent = '—';
+    return;
+  }
+  var dt = new Date(b.created_at);
+  var isAuto = b.label === 'Auto';
+  dot.style.background = '#22c55e';
+  time.textContent = dt.toLocaleString();
+  lbl.style.display = 'inline';
+  lbl.textContent = b.label;
+  lbl.style.background = isAuto ? '#1e293b' : '#1e3a5f';
+  lbl.style.color      = isAuto ? '#94a3b8' : '#60a5fa';
+  idEl.textContent = b.id.slice(0, 8) + '…';
+  idEl.title = b.id;
+}
+
 function loadBackupList() {
   var list = document.getElementById('backupList');
   if (!list) return;
@@ -84,8 +109,10 @@ function loadBackupList() {
     .then(function(d){
       if (!d.success || !d.backups.length) {
         list.innerHTML = '<div style="color:var(--text3);font-size:12px;">No backups yet.</div>';
+        updateLastBackupStatus(null);
         return;
       }
+      updateLastBackupStatus(d.backups[0]);
       list.innerHTML = d.backups.map(function(b){
         var dt = new Date(b.created_at);
         var dtStr = dt.toLocaleString();
@@ -313,6 +340,14 @@ function deleteBackup(id, btn) {
         Save to Cloud
       </button>
       <span id="backupActionMsg" style="font-size:12px;display:none;"></span>
+    </div>
+    <div id="lastBackupStatus" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:#0a0f1a;border:1px solid #1e293b;margin-bottom:10px;flex-wrap:wrap;">
+      <span id="lbsDot" style="width:8px;height:8px;border-radius:50%;background:#334155;flex-shrink:0;"></span>
+      <span style="font-size:11px;color:var(--text3);">Last backup:</span>
+      <span id="lbsTime" style="font-size:11px;color:var(--text2);font-weight:600;">—</span>
+      <span id="lbsLabel" style="font-size:10px;border-radius:4px;padding:1px 6px;display:none;"></span>
+      <span style="font-size:11px;color:var(--text3);">ID:</span>
+      <code id="lbsId" style="font-size:10px;color:#64748b;background:#0f172a;padding:2px 6px;border-radius:4px;letter-spacing:.5px;">—</code>
     </div>
     <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">
       ☁ Auto backup every 6 hours · Keeps last 50 snapshots
