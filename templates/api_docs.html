@@ -707,7 +707,7 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
         <div class="ep-header" onclick="_toggleEp(this)">
           <span class="ep-method m-post">POST</span>
           <span class="ep-path">/api/v3/user</span>
-          <span class="ep-desc">Manage users</span>
+          <span class="ep-desc">Manage users — ban, mute, verify, promote &amp; more</span>
           <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </div>
         <div class="ep-body-wrap">
@@ -717,22 +717,142 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
                 <thead><tr><th>Header</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
                 <tbody>
                   <tr><td class="p-name">X-Token</td><td class="p-type">string</td><td class="p-req">required</td><td>Admin API token</td></tr>
-                  <tr><td class="p-name">X-UserId</td><td class="p-type">string</td><td class="p-req">required</td><td>Target user ID</td></tr>
-                  <tr><td class="p-name">X-Action</td><td class="p-type">string</td><td class="p-req">required</td><td><code>ban</code>, <code>unban</code>, <code>promote</code>, <code>demote</code></td></tr>
+                  <tr><td class="p-name">X-UserId</td><td class="p-type">string</td><td class="p-req">required</td><td>Target user's ID (UUID)</td></tr>
+                  <tr><td class="p-name">X-Action</td><td class="p-type">string</td><td class="p-req">required</td><td>See action reference below</td></tr>
                 </tbody>
               </table>
             </div>
+
+            <div style="margin:20px 0 10px;">
+              <div style="font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Action Reference</div>
+              <div class="param-table-wrap">
+                <table class="param-table" style="min-width:420px;">
+                  <thead><tr><th>X-Action value</th><th>Effect</th></tr></thead>
+                  <tbody>
+                    <tr><td class="p-name" style="color:#f87171;">ban</td><td>Block user from logging in and accessing the site</td></tr>
+                    <tr><td class="p-name" style="color:#34d399;">unban</td><td>Lift an existing ban</td></tr>
+                    <tr><td class="p-name" style="color:#f59e0b;">mute</td><td>Prevent user from posting, commenting, or uploading</td></tr>
+                    <tr><td class="p-name" style="color:#34d399;">unmute</td><td>Lift an existing mute</td></tr>
+                    <tr><td class="p-name" style="color:#a78bfa;">verify</td><td>Grant the verified badge (&#10003;) to the user's profile</td></tr>
+                    <tr><td class="p-name" style="color:#6b7280;">unverify</td><td>Remove the verified badge from the user's profile</td></tr>
+                    <tr><td class="p-name" style="color:#60a5fa;">promote</td><td>Promote user to admin role</td></tr>
+                    <tr><td class="p-name" style="color:#6b7280;">demote</td><td>Remove admin role, revert to regular user</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div style="margin:24px 0 10px;font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;">Examples</div>
+
             <div class="api-code-block">
               <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Response success</span>
+                <span class="api-code-tag tag-request">&#9654; ban</span>
               </div>
               <div class="api-pre-wrap">
                 <div class="api-pre-scroll">
-                  <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"action"</span>: <span class="js">"ban"</span>, <span class="jk">"user_id"</span>: <span class="js">"uuid"</span> }</code></pre>
+                  <pre class="api-pre"><code><span class="jc">// Request headers</span>
+<span class="jk">X-Token</span>: your_admin_token
+<span class="jk">X-UserId</span>: <span class="js">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>
+<span class="jk">X-Action</span>: <span class="js">"ban"</span>
+
+<span class="jc">// Response</span>
+{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"action"</span>: <span class="js">"ban"</span>,
+  <span class="jk">"user_id"</span>: <span class="js">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>,
+  <span class="jk">"username"</span>: <span class="js">"BadPlayer99"</span>
+}</code></pre>
                 </div>
                 <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
               </div>
             </div>
+
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-request">&#9654; mute</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code><span class="jc">// Request headers</span>
+<span class="jk">X-Token</span>: your_admin_token
+<span class="jk">X-UserId</span>: <span class="js">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>
+<span class="jk">X-Action</span>: <span class="js">"mute"</span>
+
+<span class="jc">// Response</span>
+{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"action"</span>: <span class="js">"mute"</span>,
+  <span class="jk">"user_id"</span>: <span class="js">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>,
+  <span class="jk">"username"</span>: <span class="js">"SpammerUser"</span>
+}</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
+
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-request">&#9654; verify</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code><span class="jc">// Request headers</span>
+<span class="jk">X-Token</span>: your_admin_token
+<span class="jk">X-UserId</span>: <span class="js">"b9c8d7e6-f5a4-3210-bcde-fa0987654321"</span>
+<span class="jk">X-Action</span>: <span class="js">"verify"</span>
+
+<span class="jc">// Response</span>
+{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"action"</span>: <span class="js">"verify"</span>,
+  <span class="jk">"user_id"</span>: <span class="js">"b9c8d7e6-f5a4-3210-bcde-fa0987654321"</span>,
+  <span class="jk">"username"</span>: <span class="js">"TrustedCreator"</span>,
+  <span class="jk">"badge"</span>: <span class="js">"verified"</span>
+}</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
+
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-request">&#9654; promote</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code><span class="jc">// Request headers</span>
+<span class="jk">X-Token</span>: your_admin_token
+<span class="jk">X-UserId</span>: <span class="js">"c3d4e5f6-a7b8-9012-cdef-ab3456789012"</span>
+<span class="jk">X-Action</span>: <span class="js">"promote"</span>
+
+<span class="jc">// Response</span>
+{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"action"</span>: <span class="js">"promote"</span>,
+  <span class="jk">"user_id"</span>: <span class="js">"c3d4e5f6-a7b8-9012-cdef-ab3456789012"</span>,
+  <span class="jk">"username"</span>: <span class="js">"NewModerator"</span>,
+  <span class="jk">"role"</span>: <span class="js">"admin"</span>
+}</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
+
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-error">&#10005; Error (invalid action)</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{
+  <span class="jk">"success"</span>: <span class="jb">false</span>,
+  <span class="jk">"error"</span>: <span class="js">"Invalid action. Must be one of: ban, unban, mute, unmute, verify, unverify, promote, demote"</span>
+}</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
