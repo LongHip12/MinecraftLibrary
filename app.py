@@ -242,7 +242,8 @@ def check_ban():
         return None
     if user and is_banned(user):
         remaining = get_ban_remaining(user)
-        return render_template("error.html", user=None, error_type="ban", remaining=remaining), 403
+        ban_msg = "You+have+been+banned.+Ban+expires+in:+" + remaining if remaining else "You+have+been+banned+from+Lonely+Hub"
+        return redirect(f"/error?code=403&msg={ban_msg}")
 
 
 @app.route("/")
@@ -334,7 +335,7 @@ def mod_info(mod_id):
     mods_data = load_json("mods-data.json")
     mod = next((m for m in mods_data["mods"] if m["id"] == mod_id), None)
     if not mod:
-        return render_template("error.html", user=user, error_type="notfound", remaining=""), 404
+        return redirect(f"/error?code=404&msg=Page+not+found")
     mod["views"] = mod.get("views", 0) + 1
     track_daily(mod, "views")
     save_json("mods-data.json", mods_data)
@@ -369,7 +370,7 @@ def mod_download(mod_id):
     mod = next((m for m in mods_data["mods"] if m["id"] == mod_id), None)
     if not mod:
         user = get_session_user(request)
-        return render_template("error.html", user=user, error_type="notfound", remaining=""), 404
+        return redirect(f"/error?code=404&msg=Page+not+found")
     mod["downloads"] = mod.get("downloads", 0) + 1
     track_daily(mod, "downloads")
     save_json("mods-data.json", mods_data)
@@ -513,7 +514,7 @@ def user_profile(username):
     current_user = get_session_user(request)
     profile_user = get_user_by_username(username)
     if not profile_user:
-        return render_template("error.html", user=current_user, error_type="notfound", remaining=""), 404
+        return redirect(f"/error?code=404&msg=Page+not+found")
     mods_data = load_json("mods-data.json")
     user_mods = [m for m in mods_data["mods"] if m.get("uploader_id") == profile_user["id"]]
     for m in user_mods:
@@ -562,7 +563,7 @@ def user_upload(user_id):
     if not current_user:
         return redirect(url_for("login", next=request.url))
     if current_user["id"] != user_id and not is_admin(current_user):
-        return render_template("error.html", user=current_user, error_type="admin", remaining=""), 403
+        return redirect(f"/error?code=403&msg=Access+forbidden")
     if is_muted(current_user):
         return render_template("muted.html", user=current_user)
     if request.method == "POST":
@@ -636,10 +637,10 @@ def manager_upload(user_id):
     if not current_user:
         return redirect(url_for("login", next=request.url))
     if current_user["id"] != user_id and not is_admin(current_user):
-        return render_template("error.html", user=current_user, error_type="admin", remaining=""), 403
+        return redirect(f"/error?code=403&msg=Access+forbidden")
     target_user = get_user_by_id(user_id)
     if not target_user:
-        return render_template("error.html", user=current_user, error_type="notfound", remaining=""), 404
+        return redirect(f"/error?code=404&msg=Page+not+found")
     mods_data = load_json("mods-data.json")
     user_mods = [m for m in mods_data["mods"] if m.get("uploader_id") == user_id]
     for m in user_mods:
@@ -805,7 +806,7 @@ def client_info(mod_id):
     if not mod:
         mod = next((m for m in mods_data["mods"] if m["id"] == mod_id and m.get("type") == "client"), None)
     if not mod:
-        return render_template("error.html", user=user, error_type="notfound", remaining=""), 404
+        return redirect(f"/error?code=404&msg=Page+not+found")
     mod["views"] = mod.get("views", 0) + 1
     track_daily(mod, "views")
     save_json("mods-data.json", mods_data)
@@ -845,7 +846,7 @@ def admin_panel():
     if not current_user:
         return redirect(url_for("login", next=request.url))
     if not is_admin(current_user):
-        return render_template("error.html", user=current_user, error_type="admin", remaining=""), 403
+        return redirect(f"/error?code=403&msg=Access+forbidden")
     panel_type = request.args.get("type", "users")
     accounts = load_json("accounts-data.json")
     mods_data = load_json("mods-data.json")
@@ -861,7 +862,7 @@ def admin_panel():
 def admin_mute_route():
     current_user = get_session_user(request)
     if not current_user or not is_admin(current_user):
-        return render_template("error.html", user=current_user, error_type="admin", remaining=""), 403
+        return redirect(f"/error?code=403&msg=Access+forbidden")
     if request.method == "POST":
         uid = request.form.get("user_id", "")
         hours = int(request.form.get("hours", 1))
@@ -875,7 +876,7 @@ def admin_mute_route():
     uid = request.args.get("user", "")
     target = get_user_by_id(uid)
     if not target:
-        return render_template("error.html", user=current_user, error_type="notfound", remaining=""), 404
+        return redirect(f"/error?code=404&msg=Page+not+found")
     return render_template("admin_action.html", user=current_user, target=target, action="mute")
 
 
@@ -883,7 +884,7 @@ def admin_mute_route():
 def admin_ban_route():
     current_user = get_session_user(request)
     if not current_user or not is_admin(current_user):
-        return render_template("error.html", user=current_user, error_type="admin", remaining=""), 403
+        return redirect(f"/error?code=403&msg=Access+forbidden")
     if request.method == "POST":
         uid = request.form.get("user_id", "")
         hours = int(request.form.get("hours", 24))
@@ -897,7 +898,7 @@ def admin_ban_route():
     uid = request.args.get("user", "")
     target = get_user_by_id(uid)
     if not target:
-        return render_template("error.html", user=current_user, error_type="notfound", remaining=""), 404
+        return redirect(f"/error?code=404&msg=Page+not+found")
     return render_template("admin_action.html", user=current_user, target=target, action="ban")
 
 
@@ -905,7 +906,7 @@ def admin_ban_route():
 def admin_perm_route():
     current_user = get_session_user(request)
     if not current_user or not is_admin(current_user):
-        return render_template("error.html", user=current_user, error_type="admin", remaining=""), 403
+        return redirect(f"/error?code=403&msg=Access+forbidden")
     if request.method == "POST":
         uid = request.form.get("user_id", "")
         lifetime = request.form.get("lifetime") == "on"
@@ -925,7 +926,7 @@ def admin_perm_route():
     uid = request.args.get("user", "")
     target = get_user_by_id(uid)
     if not target:
-        return render_template("error.html", user=current_user, error_type="notfound", remaining=""), 404
+        return redirect(f"/error?code=404&msg=Page+not+found")
     return render_template("admin_action.html", user=current_user, target=target, action="perm")
 
 
@@ -933,7 +934,7 @@ def admin_perm_route():
 def admin_delete_route():
     current_user = get_session_user(request)
     if not current_user or not is_admin(current_user):
-        return render_template("error.html", user=current_user, error_type="admin", remaining=""), 403
+        return redirect(f"/error?code=403&msg=Access+forbidden")
     if request.method == "POST":
         uid = request.form.get("user_id", "")
         accounts = load_json("accounts-data.json")
@@ -949,7 +950,7 @@ def admin_delete_route():
     uid = request.args.get("user", "")
     target = get_user_by_id(uid)
     if not target:
-        return render_template("error.html", user=current_user, error_type="notfound", remaining=""), 404
+        return redirect(f"/error?code=404&msg=Page+not+found")
     return render_template("admin_action.html", user=current_user, target=target, action="delete")
 
 
@@ -957,7 +958,7 @@ def admin_delete_route():
 def admin_pages():
     current_user = get_session_user(request)
     if not current_user or not is_admin(current_user):
-        return render_template("error.html", user=current_user, error_type="admin", remaining=""), 403
+        return redirect(f"/error?code=403&msg=Access+forbidden")
     mods_data = load_json("mods-data.json")
     top_mods = sorted(mods_data["mods"], key=lambda m: m.get("views", 0), reverse=True)[:10]
     for m in top_mods:
@@ -1150,9 +1151,9 @@ def user_dashboard(username):
         return redirect(url_for("login", next=request.url))
     profile_user = get_user_by_username(username)
     if not profile_user:
-        return render_template("error.html", user=current_user, error_type="notfound", remaining=""), 404
+        return redirect(f"/error?code=404&msg=Page+not+found")
     if current_user["id"] != profile_user["id"] and not is_admin(current_user):
-        return render_template("error.html", user=current_user, error_type="admin", remaining=""), 403
+        return redirect(f"/error?code=403&msg=Access+forbidden")
     mods_data = load_json("mods-data.json")
     user_mods = [m for m in mods_data["mods"] if m.get("uploader_id") == profile_user["id"]]
     today = get_today_str()
@@ -1186,7 +1187,7 @@ def user_dashboard(username):
 def admin_dashboard():
     current_user = get_session_user(request)
     if not current_user or not is_admin(current_user):
-        return render_template("error.html", user=current_user, error_type="admin", remaining=""), 403
+        return redirect(f"/error?code=403&msg=Access+forbidden")
     accounts = load_json("accounts-data.json")
     mods_data = load_json("mods-data.json")
     sessions = load_json("sessions-data.json")
@@ -1222,22 +1223,20 @@ def admin_dashboard():
 
 @app.route("/error")
 def error_page():
-    error_type = request.args.get("type", "notfound")
-    remaining = request.args.get("remaining", "")
     user = get_session_user(request)
-    return render_template("error.html", user=user, error_type=error_type, remaining=remaining)
+    return render_template("error.html", user=user)
 
 
 @app.errorhandler(404)
 def not_found(e):
     user = get_session_user(request)
-    return render_template("error.html", user=user, error_type="notfound", remaining=""), 404
+    return redirect(f"/error?code=404&msg=Page+not+found")
 
 
 @app.errorhandler(403)
 def forbidden(e):
     user = get_session_user(request)
-    return render_template("error.html", user=user, error_type="admin", remaining=""), 403
+    return redirect(f"/error?code=403&msg=Access+forbidden")
 
 
 def load_forum():
@@ -1440,7 +1439,7 @@ def forum_post(post_id):
     forum = load_forum()
     post = next((p for p in forum["posts"] if p["id"] == post_id), None)
     if not post:
-        return render_template("error.html", user=user, error_type="notfound", remaining=""), 404
+        return redirect(f"/error?code=404&msg=Page+not+found")
     post["views"] = post.get("views", 0) + 1
     save_forum(forum)
     enrich_post(post)
@@ -1488,7 +1487,7 @@ def forum_add_reply(post_id, msg_id):
     forum = load_forum()
     post = next((p for p in forum["posts"] if p["id"] == post_id), None)
     if not post:
-        return render_template("error.html", user=user, error_type="notfound", remaining=""), 404
+        return redirect(f"/error?code=404&msg=Page+not+found")
     if post.get("locked") and not (user and is_admin(user)):
         return redirect(url_for("forum_post", post_id=post_id))
     msg = next((m for m in post.get("messages", []) if m["id"] == msg_id), None)
@@ -1544,7 +1543,7 @@ def forum_download_warn(file_id):
 
     if not att:
         user = get_session_user(request)
-        return render_template("error.html", user=user, error_type="notfound", remaining=""), 404
+        return redirect(f"/error?code=404&msg=Page+not+found")
 
     if redirect_flag == "true":
         return send_from_directory(FORUM_UPLOAD_DIR, att["stored_name"],
