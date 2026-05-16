@@ -602,22 +602,81 @@ def login():
 @app.route("/api/send-otp", methods=["POST"])
   def api_send_otp():
       data = request.get_json() or {}
-      email = data.get("email", "").strip().lower()
       purpose = data.get("purpose", "")
-      if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
-          return jsonify({"success": False, "error": "Invalid email address"})
-      if purpose not in ("register", "reset"):
+      email = ""
+      if purpose in ("register", "reset"):
+          email = data.get("email", "").strip().lower()
+          if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+              return jsonify({"success": False, "error": "Invalid email address"})
+          if purpose == "register":
+              if get_user_by_email(email):
+                  return jsonify({"success": False, "error": "Email already in use"})
+          elif purpose == "reset":
+              if not get_user_by_email(email):
+                  return jsonify({"success": False, "error": "No account with that email address"})
+      elif purpose in ("verify_email", "change_password"):
+          logged_user = get_session_user(request)
+          if not logged_user:
+              return jsonify({"success": False, "error": "Not logged in"})
+          email = logged_user.get("email", "").strip().lower()
+          if not email:
+              return jsonify({"success": False, "error": "No email linked to your account"})
+          if purpose == "change_password" and not logged_user.get("email_verified"):
+              return jsonify({"success": False, "error": "Email must be verified first"})
+      else:
           return jsonify({"success": False, "error": "Invalid purpose"})
-      if purpose == "register":
-          if get_user_by_email(email):
-              return jsonify({"success": False, "error": "Email already in use"})
-      elif purpose == "reset":
-          if not get_user_by_email(email):
-              return jsonify({"success": False, "error": "No account with that email address"})
+      purpose_texts = {
+          "register": "to complete your registration",
+          "reset": "to reset your password",
+          "verify_email": "to verify your email address",
+          "change_password": "to confirm your password change"
+      }
       otp = store_otp(email, purpose)
-      purpose_text = "to complete your registration" if purpose == "register" else "to reset your password"
-      send_email_html(email, "Lonely Hub — Verification Code", otp_email_html(otp, purpose_text))
+      send_email_html(email, "Lonely Hub — Verification Code", otp_email_html(otp, purpose_texts.get(purpose, "")))
       return jsonify({"success": True})
+
+
+@app.route("/api/account/add-email", methods=["POST"])
+def add_email():
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Not logged in"})
+    data = request.get_json() or {}
+    email = data.get("email", "").strip().lower()
+    if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+        return jsonify({"success": False, "error": "Invalid email address"})
+    accounts = load_json("accounts-data.json")
+    if any(u.get("email", "").lower() == email and u["id"] != user["id"] for u in accounts["users"]):
+        return jsonify({"success": False, "error": "Email already used by another account"})
+    target = next((u for u in accounts["users"] if u["id"] == user["id"]), None)
+    if not target:
+        return jsonify({"success": False, "error": "User not found"})
+    target["email"] = email
+    target["email_verified"] = False
+    save_json("accounts-data.json", accounts)
+    otp = store_otp(email, "verify_email")
+    send_email_html(email, "Lonely Hub — Verify Your Email", otp_email_html(otp, "to verify your email address"))
+    return jsonify({"success": True})
+
+
+@app.route("/api/account/verify-email", methods=["POST"])
+def verify_email_route():
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Not logged in"})
+    data = request.get_json() or {}
+    otp_code = data.get("otp_code", "").strip()
+    email = user.get("email", "").strip().lower()
+    if not email:
+        return jsonify({"success": False, "error": "No email linked to your account"})
+    if not verify_otp_code(email, otp_code, "verify_email"):
+        return jsonify({"success": False, "error": "Invalid or expired code"})
+    accounts = load_json("accounts-data.json")
+    target = next((u for u in accounts["users"] if u["id"] == user["id"]), None)
+    if target:
+        target["email_verified"] = True
+        save_json("accounts-data.json", accounts)
+    return jsonify({"success": True})
 
 
   @app.route("/register", methods=["GET", "POST"])
@@ -660,6 +719,7 @@ def login():
                       "username": username,
                       "display_name": username,
                       "email": email,
+                      "email_verified": True,
                       "password": generate_password_hash(password),
                       "tag": "user",
                       "avatar": "",
@@ -806,6 +866,7 @@ def logout():
               "username": username,
               "display_name": g_name or username,
               "email": g_email,
+              "email_verified": True,
               "password": generate_password_hash(secrets.token_hex(16)),
               "google_id": google_id,
               "tag": "user",
@@ -2070,12 +2131,19 @@ def change_password():
     current_pw = data.get("current_password", "")
     new_pw = data.get("new_password", "")
     confirm_pw = data.get("confirm_password", "")
+    otp_code = data.get("otp_code", "").strip()
     if not check_password_hash(user.get("password", ""), current_pw):
         return jsonify({"success": False, "error": "Current password is incorrect"}), 400
     if len(new_pw) < 6:
         return jsonify({"success": False, "error": "New password must be at least 6 characters"}), 400
     if new_pw != confirm_pw:
         return jsonify({"success": False, "error": "Passwords do not match"}), 400
+    if user.get("email_verified"):
+        email_for_otp = user.get("email", "").strip().lower()
+        if not otp_code:
+            return jsonify({"success": False, "error": "OTP verification required"}), 400
+        if not verify_otp_code(email_for_otp, otp_code, "change_password"):
+            return jsonify({"success": False, "error": "Invalid or expired verification code"}), 400
     accounts = load_json("accounts-data.json")
     acc = next((u for u in accounts.get("users", []) if u["id"] == user["id"]), None)
     if not acc:
