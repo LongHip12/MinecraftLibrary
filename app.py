@@ -14,7 +14,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import supabase_backup
 
 app = Flask(__name__)
-app.secret_key = secrets.token_hex(32)
+app.secret_key = os.environ.get("SESSION_SECRET") or secrets.token_hex(32)
 CORS(app)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
