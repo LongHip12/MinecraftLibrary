@@ -119,8 +119,13 @@
     <div style="display:flex;gap:6px;align-items:center;">
       <div style="position:relative;">
         <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" id="content-search" placeholder="Search name..." autocomplete="off" oninput="filterContent(this.value)"
-          style="padding:8px 12px 8px 32px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;width:200px;">
+        <input type="text" id="content-search" placeholder="Search name..." autocomplete="off" oninput="filterContent()"
+          style="padding:8px 12px 8px 32px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;width:180px;">
+      </div>
+      <div style="position:relative;">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+        <input type="text" id="uploader-search" placeholder="Filter by uploader..." autocomplete="off" oninput="filterContent()"
+          style="padding:8px 12px 8px 32px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;width:180px;">
       </div>
       <button id="tab-mods-btn" onclick="switchContentTab('mods')" class="btn btn-sm" style="font-size:13px;">Mods</button>
       <button id="tab-clients-btn" onclick="switchContentTab('clients')" class="btn btn-sm btn-ghost" style="font-size:13px;">Clients</button>
@@ -130,7 +135,7 @@
 
   <div id="tab-mods" class="admin-mods-grid">
     {% for mod in top_mods %}
-    <div class="admin-mod-row" data-name="{{ mod.name | lower }}">
+    <div class="admin-mod-row" data-name="{{ mod.name | lower }}" data-uploader="{{ mod.uploader_username | lower }}">
       <div class="admin-mod-info">
         <div class="admin-mod-name">{{ mod.name }}</div>
         <div class="admin-mod-stats">
@@ -152,7 +157,7 @@
 
   <div id="tab-clients" class="admin-mods-grid" style="display:none;">
     {% for cl in top_clients %}
-    <div class="admin-mod-row" data-name="{{ cl.name | lower }}">
+    <div class="admin-mod-row" data-name="{{ cl.name | lower }}" data-uploader="{{ cl.uploader_username | lower }}">
       <div class="admin-mod-info">
         <div class="admin-mod-name">{{ cl.name }}</div>
         <div class="admin-mod-stats">
@@ -213,15 +218,17 @@
 {% endblock %}
 {% block extra_js %}
 <script>
-function filterContent(q) {
-  var term = q.toLowerCase().trim();
+function filterContent() {
+  var nameTerm = (document.getElementById('content-search').value || '').toLowerCase().trim();
+  var uploaderTerm = (document.getElementById('uploader-search').value || '').toLowerCase().trim();
   var activeTab = document.getElementById('tab-mods').style.display === 'none' ? 'clients' : 'mods';
   var grid = document.getElementById('tab-' + activeTab);
   var rows = grid.querySelectorAll('.admin-mod-row');
   var visible = 0;
   rows.forEach(function(row) {
     var name = row.getAttribute('data-name') || '';
-    var show = !term || name.includes(term);
+    var uploader = row.getAttribute('data-uploader') || '';
+    var show = (!nameTerm || name.includes(nameTerm)) && (!uploaderTerm || uploader.includes(uploaderTerm));
     row.style.display = show ? '' : 'none';
     if (show) visible++;
   });
@@ -233,7 +240,6 @@ function switchContentTab(tab) {
   var clDiv = document.getElementById('tab-clients');
   var modBtn = document.getElementById('tab-mods-btn');
   var clBtn = document.getElementById('tab-clients-btn');
-  var q = document.getElementById('content-search') ? document.getElementById('content-search').value : '';
   if (tab === 'mods') {
     modDiv.style.display = '';
     clDiv.style.display = 'none';
@@ -245,7 +251,7 @@ function switchContentTab(tab) {
     clBtn.className = clBtn.className.replace(' btn-ghost', '');
     if (!modBtn.className.includes('btn-ghost')) modBtn.className += ' btn-ghost';
   }
-  filterContent(q);
+  filterContent();
 }
 
 function openAdminEditItem(id, type, name, desc, link, versions) {
