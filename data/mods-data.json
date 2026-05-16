@@ -24,7 +24,16 @@
       "downloads": 1520,
       "views": 3840,
       "ratings": [],
-      "created_at": "2026-01-01T00:00:00"
+      "created_at": "2026-01-01T00:00:00",
+      "type": "mod",
+      "tags": [
+        "optimization",
+        "fps",
+        "performance",
+        "shaders",
+        "render",
+        "graphics"
+      ]
     },
     {
       "id": 2,
@@ -55,7 +64,15 @@
           "views": 1,
           "downloads": 0
         }
-      }
+      },
+      "type": "mod",
+      "tags": [
+        "optimization",
+        "fps",
+        "performance",
+        "render",
+        "sodium"
+      ]
     },
     {
       "id": 3,
@@ -82,7 +99,15 @@
       "downloads": 750,
       "views": 1601,
       "ratings": [],
-      "created_at": "2026-01-15T00:00:00"
+      "created_at": "2026-01-15T00:00:00",
+      "type": "mod",
+      "tags": [
+        "map",
+        "minimap",
+        "navigation",
+        "exploration",
+        "utility"
+      ]
     }
   ],
   "next_id": 4
