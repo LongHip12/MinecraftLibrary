@@ -6,7 +6,12 @@ import uuid
 import secrets
 import mimetypes
 import requests
-from datetime import datetime, timedelta
+  import smtplib
+  import re
+  import urllib.parse
+  from email.mime.multipart import MIMEMultipart
+  from email.mime.text import MIMEText
+  from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, jsonify, make_response, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -24,6 +29,10 @@ FORUM_UPLOAD_DIR = os.path.join(BASE_DIR, "static", "forum_uploads")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 HCAPTCHA_SECRET = os.environ.get("SECRET", "")
 HCAPTCHA_SITE_KEY = os.environ.get("KEY", "")
+  APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
+  GMAIL_FROM = "lonelyhub12@gmail.com"
+  GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+  GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 MAX_FILE_SIZE = 10 * 1024 * 1024
 FORUM_MAX_FILE_SIZE = 50 * 1024 * 1024
 
@@ -122,7 +131,133 @@ def is_valid_device_token(request):
     return token in sessions.get("device_tokens", [])
 
 
-def verify_hcaptcha(token):
+def send_email_html(to, subject, html_body):
+      if not APP_PASSWORD:
+          return
+      msg = MIMEMultipart("alternative")
+      msg["Subject"] = subject
+      msg["From"] = GMAIL_FROM
+      msg["To"] = to
+      msg.attach(MIMEText(html_body, "html"))
+      try:
+          server = smtplib.SMTP("smtp.gmail.com", 587)
+          server.starttls()
+          server.login(GMAIL_FROM, APP_PASSWORD)
+          server.send_message(msg)
+          server.quit()
+      except Exception:
+          pass
+
+
+  def otp_email_html(otp, purpose_text):
+      return (
+          "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>"
+          "<body style=\"margin:0;padding:0;background:#0f0f1a;font-family:Arial,sans-serif;\">"
+          "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#0f0f1a;padding:40px 0;\">"
+          "<tr><td align=\"center\">"
+          "<table width=\"520\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.07);max-width:520px;width:100%;\">"
+          "<tr><td style=\"padding:36px 40px 24px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);\">"
+          "<img src=\"https://i.imgur.com/xY7M2iE.jpeg\" width=\"52\" height=\"52\" style=\"border-radius:12px;margin-bottom:14px;display:block;margin-left:auto;margin-right:auto;\">"
+          "<div style=\"color:#ffffff;font-size:20px;font-weight:700;\">Lonely Hub</div>"
+          "<div style=\"color:#606078;font-size:13px;margin-top:2px;\">Minecraft Library</div>"
+          "</td></tr>"
+          "<tr><td style=\"padding:32px 40px 28px;\">"
+          "<div style=\"color:#f0f0f8;font-size:17px;font-weight:600;margin-bottom:10px;\">Verification Code</div>"
+          f"<div style=\"color:#a0a0b8;font-size:14px;line-height:1.65;margin-bottom:28px;\">{purpose_text} &mdash; enter this code. It expires in <strong style=\"color:#f0f0f8;\">10 minutes</strong>.</div>"
+          "<div style=\"background:rgba(250,80,80,0.07);border:1.5px solid rgba(250,80,80,0.22);border-radius:14px;padding:26px 20px;text-align:center;margin-bottom:28px;\">"
+          f"<div style=\"color:#fa5050;font-size:38px;font-weight:800;letter-spacing:14px;\">{otp}</div>"
+          "</div>"
+          "<div style=\"color:#606070;font-size:12px;text-align:center;line-height:1.5;\">If you didn\'t request this, you can safely ignore this email.<br>Do not share this code with anyone.</div>"
+          "</td></tr>"
+          "<tr><td style=\"padding:18px 40px;border-top:1px solid rgba(255,255,255,0.05);text-align:center;\">"
+          "<div style=\"color:#404050;font-size:12px;\">&copy; 2026 Lonely Hub &middot; Minecraft Library</div>"
+          "</td></tr></table></td></tr></table></body></html>"
+      )
+
+
+  def welcome_email_html(username):
+      return (
+          "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>"
+          "<body style=\"margin:0;padding:0;background:#0f0f1a;font-family:Arial,sans-serif;\">"
+          "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#0f0f1a;padding:40px 0;\">"
+          "<tr><td align=\"center\">"
+          "<table width=\"520\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.07);max-width:520px;width:100%;\">"
+          "<tr><td style=\"padding:36px 40px 24px;text-align:center;background:linear-gradient(135deg,rgba(250,80,80,0.08),rgba(139,92,246,0.08));border-bottom:1px solid rgba(255,255,255,0.06);\">"
+          "<img src=\"https://i.imgur.com/xY7M2iE.jpeg\" width=\"64\" height=\"64\" style=\"border-radius:14px;margin-bottom:16px;display:block;margin-left:auto;margin-right:auto;border:2px solid rgba(250,80,80,0.25);\">"
+          "<div style=\"color:#ffffff;font-size:22px;font-weight:700;\">Welcome to Lonely Hub!</div>"
+          "<div style=\"color:#606078;font-size:13px;margin-top:4px;\">Minecraft Library</div>"
+          "</td></tr>"
+          "<tr><td style=\"padding:32px 40px 28px;\">"
+          f"<div style=\"color:#f0f0f8;font-size:17px;font-weight:600;margin-bottom:12px;\">Hey <span style=\"color:#fa5050;\">{username}</span>, great to have you!</div>"
+          "<div style=\"color:#a0a0b8;font-size:14px;line-height:1.7;margin-bottom:24px;\">"
+          "You\'ve just joined <strong style=\"color:#f0f0f8;\">Lonely Hub</strong> &mdash; the community-driven Minecraft mod library. Discover, upload, and share your favourite mods with thousands of players."
+          "</div>"
+          "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-bottom:28px;\">"
+          "<tr>"
+          "<td style=\"padding:14px 10px;background:rgba(250,80,80,0.06);border-radius:10px;text-align:center;vertical-align:top;width:30%;\">"
+          "<div style=\"font-size:22px;margin-bottom:6px;\">&#128230;</div>"
+          "<div style=\"color:#f0f0f8;font-size:12px;font-weight:600;\">Upload Mods</div>"
+          "<div style=\"color:#606070;font-size:11px;margin-top:2px;\">Share your creations</div>"
+          "</td><td style=\"width:5%;\"></td>"
+          "<td style=\"padding:14px 10px;background:rgba(139,92,246,0.06);border-radius:10px;text-align:center;vertical-align:top;width:30%;\">"
+          "<div style=\"font-size:22px;margin-bottom:6px;\">&#128269;</div>"
+          "<div style=\"color:#f0f0f8;font-size:12px;font-weight:600;\">Browse Library</div>"
+          "<div style=\"color:#606070;font-size:11px;margin-top:2px;\">Find new mods</div>"
+          "</td><td style=\"width:5%;\"></td>"
+          "<td style=\"padding:14px 10px;background:rgba(59,130,246,0.06);border-radius:10px;text-align:center;vertical-align:top;width:30%;\">"
+          "<div style=\"font-size:22px;margin-bottom:6px;\">&#128172;</div>"
+          "<div style=\"color:#f0f0f8;font-size:12px;font-weight:600;\">Forum</div>"
+          "<div style=\"color:#606070;font-size:11px;margin-top:2px;\">Join the community</div>"
+          "</td></tr></table>"
+          "<div style=\"text-align:center;\">"
+          "<a href=\"https://lonelyhub.replit.app\" style=\"display:inline-block;background:linear-gradient(135deg,#fa5050,#c0392b);color:#fff;font-weight:700;font-size:14px;padding:13px 32px;border-radius:10px;text-decoration:none;\">Get Started</a>"
+          "</div></td></tr>"
+          "<tr><td style=\"padding:18px 40px;border-top:1px solid rgba(255,255,255,0.05);text-align:center;\">"
+          "<div style=\"color:#404050;font-size:12px;\">&copy; 2026 Lonely Hub &middot; Minecraft Library</div>"
+          "</td></tr></table></td></tr></table></body></html>"
+      )
+
+
+  def generate_otp():
+      return str(secrets.randbelow(900000) + 100000)
+
+
+  def store_otp(email, purpose):
+      otp = generate_otp()
+      sessions = load_json("sessions-data.json")
+      sessions.setdefault("otps", {})[email] = {
+          "code": otp,
+          "purpose": purpose,
+          "expires": (datetime.now() + timedelta(minutes=10)).isoformat()
+      }
+      save_json("sessions-data.json", sessions)
+      return otp
+
+
+  def verify_otp_code(email, code, purpose):
+      sessions = load_json("sessions-data.json")
+      otps = sessions.get("otps", {})
+      entry = otps.get(email)
+      if not entry:
+          return False
+      if entry["purpose"] != purpose:
+          return False
+      if datetime.fromisoformat(entry["expires"]) < datetime.now():
+          return False
+      if entry["code"] != code:
+          return False
+      otps.pop(email)
+      sessions["otps"] = otps
+      save_json("sessions-data.json", sessions)
+      return True
+
+
+  def get_user_by_email(email):
+      accounts = load_json("accounts-data.json")
+      return next((u for u in accounts["users"] if u.get("email", "").lower() == email.lower()), None)
+
+
+  def verify_hcaptcha(token):
     if not token:
         return False
     try:
@@ -448,7 +583,7 @@ def login():
             error = "Please complete the captcha"
         else:
             accounts = load_json("accounts-data.json")
-            found = next((u for u in accounts["users"] if u["username"].lower() == username.lower()), None)
+            found = next((u for u in accounts["users"] if u["username"].lower() == username.lower() or u.get("email", "").lower() == username.lower()), None)
             if found and check_password_hash(found["password"], password):
                 token, expires = create_session(found["id"], remember)
                 device_token = issue_device_token()
@@ -464,57 +599,92 @@ def login():
     return render_template("login.html", user=None, error=error, next_url=next_url, hcaptcha_site_key=HCAPTCHA_SITE_KEY)
 
 
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    user = get_session_user(request)
-    if user:
-        return redirect(url_for("index"))
-    error = None
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "")
-        remember = request.form.get("remember") == "on"
-        captcha_token = request.form.get("h-captcha-response", "")
-        if not verify_hcaptcha(captcha_token):
-            error = "Please complete the captcha"
-        elif len(username) < 3 or len(username) > 20:
-            error = "Username must be 3-20 characters"
-        elif not username.replace("_", "").replace("-", "").isalnum():
-            error = "Username can only contain letters, numbers, - and _"
-        elif len(password) < 6:
-            error = "Password must be at least 6 characters"
-        else:
-            accounts = load_json("accounts-data.json")
-            if any(u["username"].lower() == username.lower() for u in accounts["users"]):
-                error = "Username already taken"
-            else:
-                new_id = str(uuid.uuid4())
-                accounts["users"].append({
-                    "id": new_id,
-                    "username": username,
-                    "display_name": username,
-                    "password": generate_password_hash(password),
-                    "tag": "user",
-                    "avatar": "",
-                    "banner": "",
-                    "description": "",
-                    "followers": [],
-                    "following": [],
-                    "created_at": datetime.now().isoformat(),
-                    "username_last_changed": None,
-                    "muted_until": None,
-                    "banned_until": None,
-                    "admin_until": None
-                })
-                save_json("accounts-data.json", accounts)
-                token, expires = create_session(new_id, remember)
-                next_url = request.args.get("next", url_for("index"))
-                resp = make_response(jsonify({"success": True, "redirect": next_url}))
-                resp.set_cookie("session_token", token, expires=expires, httponly=True, samesite="Lax")
-                return resp
-        return jsonify({"success": False, "error": error})
-    next_url = request.args.get("next", "")
-    return render_template("register.html", user=None, error=error, next_url=next_url, hcaptcha_site_key=HCAPTCHA_SITE_KEY)
+@app.route("/api/send-otp", methods=["POST"])
+  def api_send_otp():
+      data = request.get_json() or {}
+      email = data.get("email", "").strip().lower()
+      purpose = data.get("purpose", "")
+      if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+          return jsonify({"success": False, "error": "Invalid email address"})
+      if purpose not in ("register", "reset"):
+          return jsonify({"success": False, "error": "Invalid purpose"})
+      if purpose == "register":
+          if get_user_by_email(email):
+              return jsonify({"success": False, "error": "Email already in use"})
+      elif purpose == "reset":
+          if not get_user_by_email(email):
+              return jsonify({"success": False, "error": "No account with that email address"})
+      otp = store_otp(email, purpose)
+      purpose_text = "to complete your registration" if purpose == "register" else "to reset your password"
+      send_email_html(email, "Lonely Hub — Verification Code", otp_email_html(otp, purpose_text))
+      return jsonify({"success": True})
+
+
+  @app.route("/register", methods=["GET", "POST"])
+  def register():
+      user = get_session_user(request)
+      if user:
+          return redirect(url_for("index"))
+      error = None
+      if request.method == "POST":
+          username = request.form.get("username", "").strip()
+          email = request.form.get("email", "").strip().lower()
+          password = request.form.get("password", "")
+          remember = request.form.get("remember") == "on"
+          otp_code = request.form.get("otp_code", "").strip()
+          captcha_token = request.form.get("h-captcha-response", "")
+          if not verify_hcaptcha(captcha_token):
+              error = "Please complete the captcha"
+          elif len(username) < 3 or len(username) > 20:
+              error = "Username must be 3-20 characters"
+          elif not username.replace("_", "").replace("-", "").isalnum():
+              error = "Username can only contain letters, numbers, - and _"
+          elif not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+              error = "Invalid email address"
+          elif len(password) < 6:
+              error = "Password must be at least 6 characters"
+          elif not otp_code:
+              error = "Email verification code is required"
+          elif not verify_otp_code(email, otp_code, "register"):
+              error = "Invalid or expired verification code"
+          else:
+              accounts = load_json("accounts-data.json")
+              if any(u["username"].lower() == username.lower() for u in accounts["users"]):
+                  error = "Username already taken"
+              elif any(u.get("email", "").lower() == email for u in accounts["users"]):
+                  error = "Email already in use"
+              else:
+                  new_id = str(uuid.uuid4())
+                  accounts["users"].append({
+                      "id": new_id,
+                      "username": username,
+                      "display_name": username,
+                      "email": email,
+                      "password": generate_password_hash(password),
+                      "tag": "user",
+                      "avatar": "",
+                      "banner": "",
+                      "description": "",
+                      "followers": [],
+                      "following": [],
+                      "created_at": datetime.now().isoformat(),
+                      "username_last_changed": None,
+                      "muted_until": None,
+                      "banned_until": None,
+                      "admin_until": None
+                  })
+                  save_json("accounts-data.json", accounts)
+                  send_email_html(email, "Welcome to Lonely Hub!", welcome_email_html(username))
+                  token, expires = create_session(new_id, remember)
+                  device_token = issue_device_token()
+                  next_url = request.args.get("next", url_for("index"))
+                  resp = make_response(jsonify({"success": True, "redirect": next_url}))
+                  resp.set_cookie("session_token", token, expires=expires, httponly=True, samesite="Lax")
+                  resp.set_cookie("device_token", device_token, max_age=365 * 24 * 3600, httponly=True, secure=True, samesite="Lax")
+                  return resp
+          return jsonify({"success": False, "error": error})
+      next_url = request.args.get("next", "")
+      return render_template("register.html", user=None, error=error, next_url=next_url, hcaptcha_site_key=HCAPTCHA_SITE_KEY)
 
 
 @app.route("/logout")
@@ -527,6 +697,152 @@ def logout():
     resp = make_response(redirect(url_for("index")))
     resp.delete_cookie("session_token")
     return resp
+
+
+  @app.route("/forgot-password")
+  def forgot_password():
+      user = get_session_user(request)
+      if user:
+          return redirect(url_for("index"))
+      return render_template("forgot_password.html", user=None)
+
+
+  @app.route("/reset-password", methods=["GET", "POST"])
+  def reset_password():
+      user = get_session_user(request)
+      if user:
+          return redirect(url_for("index"))
+      if request.method == "POST":
+          email = request.form.get("email", "").strip().lower()
+          otp_code = request.form.get("otp_code", "").strip()
+          new_password = request.form.get("new_password", "")
+          if len(new_password) < 6:
+              return jsonify({"success": False, "error": "Password must be at least 6 characters"})
+          if not verify_otp_code(email, otp_code, "reset"):
+              return jsonify({"success": False, "error": "Invalid or expired verification code"})
+          accounts = load_json("accounts-data.json")
+          target = next((u for u in accounts["users"] if u.get("email", "").lower() == email), None)
+          if not target:
+              return jsonify({"success": False, "error": "Account not found"})
+          target["password"] = generate_password_hash(new_password)
+          save_json("accounts-data.json", accounts)
+          return jsonify({"success": True})
+      email = request.args.get("email", "")
+      return render_template("reset_password.html", user=None, email=email)
+
+
+  @app.route("/auth/google")
+  def google_login():
+      state = secrets.token_hex(16)
+      sessions = load_json("sessions-data.json")
+      sessions.setdefault("oauth_states", {})[state] = {
+          "expires": (datetime.now() + timedelta(minutes=10)).isoformat()
+      }
+      save_json("sessions-data.json", sessions)
+      redirect_uri = request.url_root.rstrip("/") + "/auth/google/callback"
+      params = urllib.parse.urlencode({
+          "client_id": GOOGLE_CLIENT_ID,
+          "redirect_uri": redirect_uri,
+          "response_type": "code",
+          "scope": "openid email profile",
+          "state": state,
+          "access_type": "offline",
+          "prompt": "select_account"
+      })
+      return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?{params}")
+
+
+  @app.route("/auth/google/callback")
+  def google_callback():
+      code = request.args.get("code")
+      state = request.args.get("state")
+      if not code or not state:
+          return redirect(url_for("login"))
+      sessions = load_json("sessions-data.json")
+      oauth_states = sessions.get("oauth_states", {})
+      state_entry = oauth_states.pop(state, None)
+      sessions["oauth_states"] = oauth_states
+      save_json("sessions-data.json", sessions)
+      if not state_entry:
+          return redirect(url_for("login"))
+      redirect_uri = request.url_root.rstrip("/") + "/auth/google/callback"
+      token_resp = requests.post("https://oauth2.googleapis.com/token", data={
+          "code": code,
+          "client_id": GOOGLE_CLIENT_ID,
+          "client_secret": GOOGLE_CLIENT_SECRET,
+          "redirect_uri": redirect_uri,
+          "grant_type": "authorization_code"
+      })
+      if not token_resp.ok:
+          return redirect(url_for("login"))
+      access_token = token_resp.json().get("access_token")
+      user_info_resp = requests.get(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          headers={"Authorization": f"Bearer {access_token}"}
+      )
+      if not user_info_resp.ok:
+          return redirect(url_for("login"))
+      ginfo = user_info_resp.json()
+      google_id = ginfo.get("sub")
+      g_email = ginfo.get("email", "")
+      g_name = ginfo.get("name", "")
+      accounts = load_json("accounts-data.json")
+      found_user = next((u for u in accounts["users"] if u.get("google_id") == google_id), None)
+      if not found_user and g_email:
+          found_user = next((u for u in accounts["users"] if u.get("email", "").lower() == g_email.lower()), None)
+          if found_user:
+              found_user["google_id"] = google_id
+              save_json("accounts-data.json", accounts)
+      if not found_user:
+          base_username = re.sub(r'[^a-zA-Z0-9_-]', '', g_name.replace(" ", "_"))[:16] or "user"
+          username = base_username
+          suffix = 1
+          while any(u["username"].lower() == username.lower() for u in accounts["users"]):
+              username = f"{base_username}{suffix}"
+              suffix += 1
+          new_id = str(uuid.uuid4())
+          found_user = {
+              "id": new_id,
+              "username": username,
+              "display_name": g_name or username,
+              "email": g_email,
+              "password": generate_password_hash(secrets.token_hex(16)),
+              "google_id": google_id,
+              "tag": "user",
+              "avatar": ginfo.get("picture", ""),
+              "banner": "",
+              "description": "",
+              "followers": [],
+              "following": [],
+              "created_at": datetime.now().isoformat(),
+              "username_last_changed": None,
+              "muted_until": None,
+              "banned_until": None,
+              "admin_until": None
+          }
+          accounts["users"].append(found_user)
+          save_json("accounts-data.json", accounts)
+          if g_email:
+              send_email_html(g_email, "Welcome to Lonely Hub!", welcome_email_html(username))
+      session_token, expires = create_session(found_user["id"], True)
+      device_token = issue_device_token()
+      resp = make_response(redirect(url_for("index")))
+      resp.set_cookie("session_token", session_token, expires=expires, httponly=True, secure=True, samesite="Lax")
+      resp.set_cookie("device_token", device_token, max_age=365 * 24 * 3600, httponly=True, secure=True, samesite="Lax")
+      return resp
+
+
+  @app.route("/api/account/unlink-google", methods=["POST"])
+  def unlink_google():
+      user = get_session_user(request)
+      if not user:
+          return jsonify({"success": False, "error": "Not logged in"})
+      accounts = load_json("accounts-data.json")
+      target = next((u for u in accounts["users"] if u["id"] == user["id"]), None)
+      if target:
+          target.pop("google_id", None)
+          save_json("accounts-data.json", accounts)
+      return jsonify({"success": True})
 
 
 @app.route("/upload")
