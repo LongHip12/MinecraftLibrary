@@ -9,6 +9,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, m
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+import supabase_backup
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
@@ -2322,8 +2323,65 @@ def admin_save_data():
                 zf.write(fpath, fname)
     buf.seek(0)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Also save to Supabase (non-blocking, best-effort)
+    try:
+        supabase_backup.save_backup(DATA_DIR, DEFAULT_DATA, label="Manual")
+    except Exception:
+        pass
     from flask import send_file
     return send_file(buf, mimetype="application/zip", as_attachment=True, download_name=f"data_backup_{ts}.zip")
+
+
+@app.route("/api/admin/backup-to-cloud", methods=["POST"])
+def admin_backup_to_cloud():
+    """Save backup to Supabase only (JSON response, no download)."""
+    current_user = get_session_user(request)
+    if not current_user or not is_admin(current_user):
+        return jsonify({"success": False, "error": "Forbidden"}), 403
+    try:
+        result = supabase_backup.save_backup(DATA_DIR, DEFAULT_DATA, label="Manual")
+        return jsonify({"success": True, "backup": result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/admin/backups", methods=["GET"])
+def admin_list_backups():
+    """List all backups from Supabase."""
+    current_user = get_session_user(request)
+    if not current_user or not is_admin(current_user):
+        return jsonify({"success": False, "error": "Forbidden"}), 403
+    try:
+        backups = supabase_backup.list_backups(limit=30)
+        return jsonify({"success": True, "backups": backups})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/admin/restore/<backup_id>", methods=["POST"])
+def admin_restore_backup(backup_id):
+    """Restore data from a Supabase backup."""
+    current_user = get_session_user(request)
+    if not current_user or not is_admin(current_user):
+        return jsonify({"success": False, "error": "Forbidden"}), 403
+    try:
+        row = supabase_backup.restore_backup(backup_id, DATA_DIR)
+        return jsonify({"success": True, "restored": row.get("created_at"), "label": row.get("label")})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/admin/backup/<backup_id>", methods=["DELETE"])
+def admin_delete_backup(backup_id):
+    """Delete a backup from Supabase."""
+    current_user = get_session_user(request)
+    if not current_user or not is_admin(current_user):
+        return jsonify({"success": False, "error": "Forbidden"}), 403
+    try:
+        supabase_backup.delete_backup(backup_id)
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/api/admin/rate-limit", methods=["POST"])
 def admin_set_rate_limit():
@@ -2350,6 +2408,9 @@ def api_docs():
     is_admin_user = is_admin(user) if user else False
     return render_template("api_docs.html", user=user, is_admin_user=is_admin_user, user_has_token=bool(acc and acc.get("api_token")) if acc else False)
 
+
+# Start Supabase auto-backup
+supabase_backup.start_auto_backup(DATA_DIR, DEFAULT_DATA)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 3000))
