@@ -127,6 +127,7 @@ function autoFillAndSubmitWithCredential(cred) {
   fd.append('username', cred.id);
   fd.append('password', cred.password);
   fd.append('remember', 'on');
+  fd.append('auto_login', '1');
   fetch('/login' + window.location.search, { method: 'POST', body: fd })
     .then(function(r) { return r.json(); })
     .then(function(data) {
