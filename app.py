@@ -104,6 +104,24 @@ def create_session(user_id, remember=False):
     return token, expires
 
 
+def issue_device_token():
+    token = secrets.token_hex(32)
+    sessions = load_json("sessions-data.json")
+    tokens = sessions.setdefault("device_tokens", [])
+    tokens.append(token)
+    sessions["device_tokens"] = tokens[-2000:]
+    save_json("sessions-data.json", sessions)
+    return token
+
+
+def is_valid_device_token(request):
+    token = request.cookies.get("device_token")
+    if not token:
+        return False
+    sessions = load_json("sessions-data.json")
+    return token in sessions.get("device_tokens", [])
+
+
 def verify_hcaptcha(token):
     if not token:
         return False
@@ -424,16 +442,19 @@ def login():
         password = request.form.get("password", "")
         remember = request.form.get("remember") == "on"
         captcha_token = request.form.get("h-captcha-response", "")
-        if not verify_hcaptcha(captcha_token):
+        trusted_device = is_valid_device_token(request)
+        if not trusted_device and not verify_hcaptcha(captcha_token):
             error = "Please complete the captcha"
         else:
             accounts = load_json("accounts-data.json")
             found = next((u for u in accounts["users"] if u["username"].lower() == username.lower()), None)
             if found and check_password_hash(found["password"], password):
                 token, expires = create_session(found["id"], remember)
+                device_token = issue_device_token()
                 next_url = request.args.get("next", url_for("index"))
                 resp = make_response(jsonify({"success": True, "redirect": next_url}))
                 resp.set_cookie("session_token", token, expires=expires, httponly=True, secure=True, samesite="Lax")
+                resp.set_cookie("device_token", device_token, max_age=365 * 24 * 3600, httponly=True, secure=True, samesite="Lax")
                 return resp
             else:
                 error = "Invalid username or password"
