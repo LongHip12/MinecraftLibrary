@@ -18,16 +18,37 @@
       </a>
       <a href="/api/v1/auth/admin?type=pages" class="admin-tab {% if panel_type == 'pages' %}active{% endif %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-        Top Pages
+        Manage Content
       </a>
     </div>
   </div>
 </div>
 <div class="container" style="padding-top:24px;padding-bottom:60px;">
+
   {% if panel_type == 'users' %}
-  <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;color:var(--text2);">Top 10 Users by Followers</h2>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+    <h2 style="font-size:18px;font-weight:700;color:var(--text2);margin:0;">User Manager</h2>
+    <form method="GET" action="/api/v1/auth/admin" style="display:flex;gap:8px;align-items:center;">
+      <input type="hidden" name="type" value="users">
+      <div style="position:relative;">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" name="search" value="{{ search_q }}" placeholder="Search username..." autocomplete="off"
+          style="padding:8px 12px 8px 32px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;width:220px;">
+      </div>
+      <button type="submit" style="padding:8px 16px;border-radius:8px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">Search</button>
+      {% if search_q %}
+      <a href="/api/v1/auth/admin?type=users" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border2);color:var(--text2);font-size:13px;text-decoration:none;">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+  {% if all_users %}
+  <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">
+    {{ all_users | length }} user{{ 's' if all_users | length != 1 else '' }} found
+    {% if search_q %} for "<strong>{{ search_q }}</strong>"{% endif %}
+  </div>
+  {% endif %}
   <div class="admin-users-grid">
-    {% for u in top_users %}
+    {% for u in all_users %}
     <div class="admin-user-row">
       <img src="{{ u.avatar if u.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="{{ u.display_name }}" class="admin-user-avatar">
       <div class="admin-user-info">
@@ -87,12 +108,21 @@
         </div>
       </div>
     </div>
+    {% else %}
+    <div style="text-align:center;padding:48px 0;color:var(--text3);font-size:14px;">No users found.</div>
     {% endfor %}
   </div>
 
   {% elif panel_type == 'pages' %}
-  <h2 style="font-size:18px;font-weight:700;margin-bottom:16px;color:var(--text2);">Top 10 Pages by Views</h2>
-  <div class="admin-mods-grid">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+    <h2 style="font-size:18px;font-weight:700;color:var(--text2);margin:0;">Content Manager</h2>
+    <div style="display:flex;gap:6px;">
+      <button id="tab-mods-btn" onclick="switchContentTab('mods')" class="btn btn-sm" style="font-size:13px;">Mods</button>
+      <button id="tab-clients-btn" onclick="switchContentTab('clients')" class="btn btn-sm btn-ghost" style="font-size:13px;">Clients</button>
+    </div>
+  </div>
+
+  <div id="tab-mods" class="admin-mods-grid">
     {% for mod in top_mods %}
     <div class="admin-mod-row">
       <div class="admin-mod-info">
@@ -103,14 +133,39 @@
       </div>
       <div class="admin-mod-actions">
         <a href="/mods/{{ mod.id }}/info" class="btn btn-ghost btn-sm">View</a>
-        <button class="btn btn-secondary btn-sm" onclick="openAdminEditMod({{ mod.id }}, '{{ mod.name | replace("'", "\\'") }}', `{{ mod.description | replace('`', '\\`') }}`, '{{ mod.download_link }}', '{{ mod.loaders | join(",") }}', '{{ mod.mc_versions | join(",") }}', '{{ mod.editions | join(",") }}')">Edit</button>
+        <button class="btn btn-secondary btn-sm" onclick="openAdminEditItem({{ mod.id }}, 'mod', '{{ mod.name | replace("'", "\\'") }}', `{{ mod.description | replace('`', '\\`') }}`, '{{ mod.download_link }}', '{{ mod.mc_versions | join(",") }}')">Edit</button>
         <form method="POST" action="/api/v1/auth/admin/pages/delete/{{ mod.id }}" style="display:inline;" data-confirm="Delete this mod permanently?">
           <button type="submit" class="btn btn-danger btn-sm">Delete</button>
         </form>
       </div>
     </div>
+    {% else %}
+    <div style="text-align:center;padding:48px 0;color:var(--text3);font-size:14px;">No mods found.</div>
     {% endfor %}
   </div>
+
+  <div id="tab-clients" class="admin-mods-grid" style="display:none;">
+    {% for cl in top_clients %}
+    <div class="admin-mod-row">
+      <div class="admin-mod-info">
+        <div class="admin-mod-name">{{ cl.name }}</div>
+        <div class="admin-mod-stats">
+          {{ cl.views }} views &nbsp;·&nbsp; {{ cl.downloads }} downloads &nbsp;·&nbsp; {{ cl.avg_rating }}/5 ⭐ &nbsp;·&nbsp; by @{{ cl.uploader_username }}
+        </div>
+      </div>
+      <div class="admin-mod-actions">
+        <a href="/clients/{{ cl.client_id if cl.client_id else cl.id }}/info" class="btn btn-ghost btn-sm">View</a>
+        <button class="btn btn-secondary btn-sm" onclick="openAdminEditItem({{ cl.id }}, 'client', '{{ cl.name | replace("'", "\\'") }}', `{{ cl.description | replace('`', '\\`') }}`, '{{ cl.download_link }}', '{{ cl.mc_versions | join(",") }}')">Edit</button>
+        <form method="POST" action="/api/v1/auth/admin/pages/delete/{{ cl.id }}" style="display:inline;" data-confirm="Delete this client permanently?">
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:48px 0;color:var(--text3);font-size:14px;">No clients found.</div>
+    {% endfor %}
+  </div>
+
   {% endif %}
 </div>
 </div>
@@ -118,13 +173,14 @@
 <div class="modal-overlay" id="admin-edit-modal">
   <div class="modal">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
-      <h2 class="modal-title" style="margin-bottom:0;">Edit Mod (Admin)</h2>
+      <h2 class="modal-title" style="margin-bottom:0;">Edit Item (Admin)</h2>
       <button onclick="document.getElementById('admin-edit-modal').classList.remove('open')" style="background:none;border:none;color:var(--text2);cursor:pointer;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
     <form id="admin-edit-form" style="display:flex;flex-direction:column;gap:16px;">
       <input type="hidden" id="admin-edit-id">
+      <input type="hidden" id="admin-edit-type">
       <div class="form-group">
         <label class="form-label">Name</label>
         <input type="text" name="name" id="admin-edit-name" class="input-field">
@@ -151,29 +207,49 @@
 {% endblock %}
 {% block extra_js %}
 <script>
-function openAdminEditMod(id, name, desc, link, loaders, versions, editions) {
+function switchContentTab(tab) {
+  var modDiv = document.getElementById('tab-mods');
+  var clDiv = document.getElementById('tab-clients');
+  var modBtn = document.getElementById('tab-mods-btn');
+  var clBtn = document.getElementById('tab-clients-btn');
+  if (tab === 'mods') {
+    modDiv.style.display = '';
+    clDiv.style.display = 'none';
+    modBtn.className = modBtn.className.replace(' btn-ghost', '');
+    if (!clBtn.className.includes('btn-ghost')) clBtn.className += ' btn-ghost';
+  } else {
+    modDiv.style.display = 'none';
+    clDiv.style.display = '';
+    clBtn.className = clBtn.className.replace(' btn-ghost', '');
+    if (!modBtn.className.includes('btn-ghost')) modBtn.className += ' btn-ghost';
+  }
+}
+
+function openAdminEditItem(id, type, name, desc, link, versions) {
   document.getElementById('admin-edit-id').value = id;
+  document.getElementById('admin-edit-type').value = type;
   document.getElementById('admin-edit-name').value = name;
   document.getElementById('admin-edit-desc').value = desc;
   document.getElementById('admin-edit-link').value = link;
   document.getElementById('admin-edit-versions').value = versions;
   document.getElementById('admin-edit-modal').classList.add('open');
 }
+
 document.getElementById('admin-edit-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const btn = e.target.querySelector('.btn-primary');
+  var btn = e.target.querySelector('.btn-primary');
   btn.disabled = true;
   btn.innerHTML = '<div class="spinner"></div>';
-  const id = document.getElementById('admin-edit-id').value;
-  const fd = new FormData(e.target);
+  var id = document.getElementById('admin-edit-id').value;
+  var fd = new FormData(e.target);
   try {
-    const resp = await fetch('/api/v1/auth/admin/pages/edit/' + id, { method: 'POST', body: fd });
+    var resp = await fetch('/api/v1/auth/admin/pages/edit/' + id, { method: 'POST', body: fd });
     if (resp.redirected || resp.ok) {
-      showToast('Mod updated!');
-      setTimeout(() => location.reload(), 800);
+      showToast('Updated!');
+      setTimeout(function() { location.reload(); }, 800);
     }
   } catch(err) {
-    showToast('Error updating mod', 'error');
+    showToast('Error updating', 'error');
     btn.disabled = false;
     btn.innerHTML = 'Save';
   }
@@ -181,23 +257,22 @@ document.getElementById('admin-edit-form').addEventListener('submit', async (e) 
 
 async function grantVerifiedBadge(userId, btn) {
   btn.disabled = true;
-  const origText = btn.lastChild && btn.lastChild.nodeType === 3 ? btn.lastChild.textContent : btn.textContent;
   try {
-    const fd = new FormData();
+    var fd = new FormData();
     fd.append('user_id', String(userId));
-    const resp = await fetch('/api/v1/auth/admin/verify', {
+    var resp = await fetch('/api/v1/auth/admin/verify', {
       method: 'POST',
       credentials: 'same-origin',
       body: fd
     });
-    let data;
+    var data;
     try { data = await resp.json(); } catch(e) {
       showToast('Server error: ' + resp.status, 'error');
       btn.disabled = false; return;
     }
     if (data.success) {
       showToast(data.verified ? 'Verified badge granted!' : 'Verified badge revoked!', 'success');
-      setTimeout(() => location.reload(), 1000);
+      setTimeout(function() { location.reload(); }, 1000);
     } else {
       showToast(data.error || 'Failed to update badge', 'error');
       btn.disabled = false;
