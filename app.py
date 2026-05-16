@@ -851,14 +851,21 @@ def admin_panel():
     if not is_admin(current_user):
         return redirect(f"/error?code=403&msg=Access+forbidden")
     panel_type = request.args.get("type", "users")
+    search_q = request.args.get("search", "").strip().lower()
     accounts = load_json("accounts-data.json")
     mods_data = load_json("mods-data.json")
-    top_users = sorted(accounts["users"], key=lambda u: len(u.get("followers", [])), reverse=True)[:10]
-    top_mods = sorted(mods_data["mods"], key=lambda m: m.get("views", 0), reverse=True)[:10]
+    all_users = sorted(accounts["users"], key=lambda u: len(u.get("followers", [])), reverse=True)
+    if search_q:
+        all_users = [u for u in all_users if search_q in u.get("username", "").lower() or search_q in u.get("display_name", "").lower()]
+    top_mods = sorted([m for m in mods_data["mods"] if m.get("type", "mod") == "mod"], key=lambda m: m.get("views", 0), reverse=True)[:20]
+    top_clients = sorted([m for m in mods_data["mods"] if m.get("type") == "client"], key=lambda m: m.get("views", 0), reverse=True)[:20]
     for m in top_mods:
         m["avg_rating"] = get_avg_rating(m)
+    for m in top_clients:
+        m["avg_rating"] = get_avg_rating(m)
     return render_template("admin.html", user=current_user, panel_type=panel_type,
-                           top_users=top_users, top_mods=top_mods)
+                           all_users=all_users, search_q=search_q,
+                           top_mods=top_mods, top_clients=top_clients)
 
 
 @app.route("/api/v1/auth/admin/mute", methods=["GET", "POST"])
