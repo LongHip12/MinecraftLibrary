@@ -114,21 +114,23 @@
   </div>
 
   {% elif panel_type == 'pages' %}
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
     <h2 style="font-size:18px;font-weight:700;color:var(--text2);margin:0;">Content Manager</h2>
-    <div style="display:flex;gap:6px;align-items:center;">
-      <div style="position:relative;">
-        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" id="content-search" placeholder="Search name..." autocomplete="off" oninput="filterContent()"
-          style="padding:8px 12px 8px 32px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;width:180px;">
-      </div>
-      <div style="position:relative;">
-        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-        <input type="text" id="uploader-search" placeholder="Filter by uploader..." autocomplete="off" oninput="filterContent()"
-          style="padding:8px 12px 8px 32px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;width:180px;">
-      </div>
+    <div style="display:flex;gap:6px;">
       <button id="tab-mods-btn" onclick="switchContentTab('mods')" class="btn btn-sm" style="font-size:13px;">Mods</button>
       <button id="tab-clients-btn" onclick="switchContentTab('clients')" class="btn btn-sm btn-ghost" style="font-size:13px;">Clients</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+    <div style="position:relative;">
+      <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" id="content-search" placeholder="Search name..." autocomplete="off" oninput="filterContent()"
+        style="padding:8px 12px 8px 32px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;width:200px;">
+    </div>
+    <div style="position:relative;">
+      <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+      <input type="text" id="uploader-search" placeholder="Filter by uploader..." autocomplete="off" oninput="filterContent()"
+        style="padding:8px 12px 8px 32px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;width:200px;">
     </div>
   </div>
   <div id="content-no-results" style="display:none;text-align:center;padding:40px 0;color:var(--text3);font-size:14px;">No results found.</div>
