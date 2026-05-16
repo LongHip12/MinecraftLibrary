@@ -170,31 +170,35 @@ function loadBackupList() {
     .catch(function(){ list.innerHTML = '<div style="color:#f87171;font-size:12px;">Cannot connect to Supabase.</div>'; });
 }
 
-function restoreBackup(id, label) {
-  if (!confirm('Restore backup from "' + label + '"? Current data will be overwritten!')) return;
-  fetch('/api/admin/restore/' + id, {method:'POST'})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if (d.success) {
-        showBackupMsg('✓ Restored backup from ' + d.restored, '#22c55e');
-      } else {
-        showBackupMsg('✗ ' + d.error, '#ef4444');
-      }
-    })
-    .catch(function(){ showBackupMsg('✗ Connection error', '#ef4444'); });
-}
+  function restoreBackup(id, label) {
+    customConfirm('Restore backup từ "' + label + '"?', 'Dữ liệu hiện tại sẽ bị ghi đè!').then(function(ok) {
+      if (!ok) return;
+      fetch('/api/admin/restore/' + id, {method:'POST'})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if (d.success) {
+            showBackupMsg('✓ Restored backup from ' + d.restored, '#22c55e');
+          } else {
+            showBackupMsg('✗ ' + d.error, '#ef4444');
+          }
+        })
+        .catch(function(){ showBackupMsg('✗ Connection error', '#ef4444'); });
+    });
+  }
 
 function deleteBackup(id, btn) {
-  if (!confirm('Delete this backup?')) return;
-  btn.disabled = true;
-  fetch('/api/admin/backup/' + id, {method:'DELETE'})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if (d.success) loadBackupList();
-      else { btn.disabled = false; showBackupMsg('✗ ' + d.error, '#ef4444'); }
-    })
-    .catch(function(){ btn.disabled = false; });
-}
+    customConfirm('Xoá backup này?', 'Hành động này không thể hoàn tác.').then(function(ok) {
+      if (!ok) return;
+      btn.disabled = true;
+      fetch('/api/admin/backup/' + id, {method:'DELETE'})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if (d.success) loadBackupList();
+          else { btn.disabled = false; showBackupMsg('✗ ' + d.error, '#ef4444'); }
+        })
+        .catch(function(){ btn.disabled = false; });
+    });
+  }
 </script>
 {% endblock %}
 {% block content %}
