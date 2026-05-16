@@ -2312,32 +2312,18 @@ def admin_save_data():
     if not current_user or not is_admin(current_user):
         return jsonify({"success": False, "error": "Forbidden"}), 403
     import pyzipper
-    import tempfile
-    data_files = [f for f in DEFAULT_DATA.keys()]
-    tmp_fd, tmp_path = tempfile.mkstemp(suffix=".zip")
-    os.close(tmp_fd)
-    with pyzipper.AESZipFile(tmp_path, "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES) as zf:
+    import io
+    buf = io.BytesIO()
+    with pyzipper.AESZipFile(buf, "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES) as zf:
         zf.setpassword(b"LongHip12")
-        for fname in data_files:
+        for fname in DEFAULT_DATA.keys():
             fpath = os.path.join(DATA_DIR, fname)
             if os.path.exists(fpath):
                 zf.write(fpath, fname)
+    buf.seek(0)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    zip_name = f"data_backup_{ts}.zip"
-    def generate():
-        with open(tmp_path, "rb") as f:
-            while True:
-                chunk = f.read(8192)
-                if not chunk:
-                    break
-                yield chunk
-        os.unlink(tmp_path)
-    from flask import stream_with_context, Response
-    return Response(
-        stream_with_context(generate()),
-        mimetype="application/zip",
-        headers={"Content-Disposition": f"attachment; filename={zip_name}"}
-    )
+    from flask import send_file
+    return send_file(buf, mimetype="application/zip", as_attachment=True, download_name=f"data_backup_{ts}.zip")
 
 @app.route("/api/admin/rate-limit", methods=["POST"])
 def admin_set_rate_limit():
