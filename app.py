@@ -442,7 +442,8 @@ def login():
         password = request.form.get("password", "")
         remember = request.form.get("remember") == "on"
         captcha_token = request.form.get("h-captcha-response", "")
-        trusted_device = is_valid_device_token(request)
+        auto_login = request.form.get("auto_login") == "1"
+        trusted_device = auto_login or is_valid_device_token(request)
         if not trusted_device and not verify_hcaptcha(captcha_token):
             error = "Please complete the captcha"
         else:
