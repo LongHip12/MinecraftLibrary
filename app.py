@@ -2043,36 +2043,47 @@ def api_v2_mods():
     try:
         mods_data = load_json("mods-data.json")
         mods = [m for m in mods_data["mods"] if m.get("type", "mod") == "mod"]
-        tag = request.args.get("tag", "").strip().lower()
-        search = request.args.get("search", "").strip().lower()
-        loaders_raw = request.args.get("loaders", "").strip().lower()
-        mcversion = request.args.get("mcversion", "").strip().lower()
-        version = request.args.get("version", "").strip().lower()
-        max_count = min(int(request.args.get("max", 20)), 100)
+        tag        = request.args.get("tag",       "").strip().lower()
+        search     = request.args.get("search",    "").strip().lower()
+        loaders_raw= request.args.get("loaders",   "").strip().lower()
+        mcversion  = request.args.get("mcversion", "").strip().lower()
+        edition    = request.args.get("edition",   "").strip().lower()
+        version    = request.args.get("version",   "").strip().lower()
+        sort_by    = request.args.get("sort",      "newest").strip().lower()
+        max_count  = min(int(request.args.get("max", 20)), 100)
         if tag:
-            mods = [m for m in mods if tag in [t.lower() for t in m.get("tags", [])]]
+            mods = [m for m in mods if tag in [t.strip().lower() for t in m.get("tags", [])]]
         if search:
             mods = [m for m in mods if search in m.get("name", "").lower() or search in m.get("description", "").lower()]
         if loaders_raw:
             req_loaders = [l.strip() for l in loaders_raw.replace(", ", ",").split(",") if l.strip()]
-            mods = [m for m in mods if any(rl in [l.lower() for l in m.get("loaders", [])] for rl in req_loaders)]
+            mods = [m for m in mods if any(rl in [l.strip().lower() for l in m.get("loaders", [])] for rl in req_loaders)]
         if mcversion:
-            mods = [m for m in mods if mcversion in [e.lower() for e in m.get("editions", [])]]
+            mods = [m for m in mods if any(mcversion in v.lower() for v in m.get("mc_versions", []))]
+        if edition:
+            mods = [m for m in mods if edition in [e.strip().lower() for e in m.get("editions", [])]]
         if version:
-            req_vers = [v.strip() for v in version.replace(", ", ",").split(",") if v.strip()]
-            mods = [m for m in mods if any(rv in m.get("mc_versions", []) for rv in req_vers)]
+            req_vers = [v.strip().lower() for v in version.replace(", ", ",").split(",") if v.strip()]
+            mods = [m for m in mods if any(rv in vv.lower() for rv in req_vers for vv in m.get("mc_versions", []))]
+        if sort_by == "downloads":
+            mods = sorted(mods, key=lambda m: m.get("downloads", 0), reverse=True)
+        elif sort_by == "views":
+            mods = sorted(mods, key=lambda m: m.get("views", 0), reverse=True)
+        else:
+            mods = sorted(mods, key=lambda m: m.get("created_at", ""), reverse=True)
         mods = mods[:max_count]
         result = [{
             "id": m["id"],
             "name": m.get("name", ""),
             "description": m.get("description", ""),
-            "MinecraftVersion": m.get("editions", []),
-            "Version": m.get("mc_versions", []),
+            "Edition": m.get("editions", []),
+            "MinecraftVersion": m.get("mc_versions", []),
             "Tags": m.get("tags", []),
             "Loaders": m.get("loaders", []),
             "Download": m.get("download_link", ""),
             "views": m.get("views", 0),
             "downloads": m.get("downloads", 0),
+            "created_at": m.get("created_at", ""),
         } for m in mods]
         return jsonify({"success": True, "mods": result, "count": len(result)})
     except Exception as e:
@@ -2083,32 +2094,48 @@ def api_v2_mods():
 def api_v2_clients():
     try:
         mods_data = load_json("mods-data.json")
-        clients = [m for m in mods_data["mods"] if m.get("type") == "client"]
-        tag = request.args.get("tag", "").strip().lower()
-        search = request.args.get("search", "").strip().lower()
-        mcversion = request.args.get("mcversion", "").strip().lower()
-        version = request.args.get("version", "").strip().lower()
-        max_count = min(int(request.args.get("max", 20)), 100)
+        clients   = [m for m in mods_data["mods"] if m.get("type") == "client"]
+        tag        = request.args.get("tag",       "").strip().lower()
+        search     = request.args.get("search",    "").strip().lower()
+        loaders_raw= request.args.get("loaders",   "").strip().lower()
+        mcversion  = request.args.get("mcversion", "").strip().lower()
+        edition    = request.args.get("edition",   "").strip().lower()
+        version    = request.args.get("version",   "").strip().lower()
+        sort_by    = request.args.get("sort",      "newest").strip().lower()
+        max_count  = min(int(request.args.get("max", 20)), 100)
         if tag:
-            clients = [c for c in clients if tag in [t.lower() for t in c.get("tags", [])]]
+            clients = [c for c in clients if tag in [t.strip().lower() for t in c.get("tags", [])]]
         if search:
             clients = [c for c in clients if search in c.get("name", "").lower() or search in c.get("description", "").lower()]
+        if loaders_raw:
+            req_loaders = [l.strip() for l in loaders_raw.replace(", ", ",").split(",") if l.strip()]
+            clients = [c for c in clients if any(rl in [l.strip().lower() for l in c.get("loaders", [])] for rl in req_loaders)]
         if mcversion:
-            clients = [c for c in clients if mcversion in [e.lower() for e in c.get("editions", [])]]
+            clients = [c for c in clients if any(mcversion in v.lower() for v in c.get("mc_versions", []))]
+        if edition:
+            clients = [c for c in clients if edition in [e.strip().lower() for e in c.get("editions", [])]]
         if version:
-            req_vers = [v.strip() for v in version.replace(", ", ",").split(",") if v.strip()]
-            clients = [c for c in clients if any(rv in c.get("mc_versions", []) for rv in req_vers)]
+            req_vers = [v.strip().lower() for v in version.replace(", ", ",").split(",") if v.strip()]
+            clients = [c for c in clients if any(rv in vv.lower() for rv in req_vers for vv in c.get("mc_versions", []))]
+        if sort_by == "downloads":
+            clients = sorted(clients, key=lambda c: c.get("downloads", 0), reverse=True)
+        elif sort_by == "views":
+            clients = sorted(clients, key=lambda c: c.get("views", 0), reverse=True)
+        else:
+            clients = sorted(clients, key=lambda c: c.get("created_at", ""), reverse=True)
         clients = clients[:max_count]
         result = [{
             "id": c.get("client_id", c["id"]),
             "name": c.get("name", ""),
             "description": c.get("description", ""),
-            "MinecraftVersion": c.get("editions", []),
-            "Version": c.get("mc_versions", []),
+            "Edition": c.get("editions", []),
+            "MinecraftVersion": c.get("mc_versions", []),
             "Tags": c.get("tags", []),
+            "Loaders": c.get("loaders", []),
             "Download": c.get("download_link", ""),
             "views": c.get("views", 0),
             "downloads": c.get("downloads", 0),
+            "created_at": c.get("created_at", ""),
         } for c in clients]
         return jsonify({"success": True, "clients": result, "count": len(result)})
     except Exception as e:
