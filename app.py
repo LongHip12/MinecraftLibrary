@@ -2346,14 +2346,14 @@ def admin_backup_to_cloud():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 @app.route("/admin/backup-history")
-  def admin_backup_history():
-      current_user = get_session_user(request)
-      if not current_user or not is_admin(current_user):
-          return redirect("/login")
-      return render_template("backup_history.html", user=current_user)
+def admin_backup_history():
+    current_user = get_session_user(request)
+    if not current_user or not is_admin(current_user):
+        return redirect("/login")
+    return render_template("backup_history.html", user=current_user)
 
 
-  @app.route("/api/admin/supabase-status", methods=["GET"])
+@app.route("/api/admin/supabase-status", methods=["GET"])
 def admin_supabase_status():
     current_user = get_session_user(request)
     if not current_user or not is_admin(current_user):
