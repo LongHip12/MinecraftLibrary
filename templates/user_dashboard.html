@@ -185,23 +185,147 @@
         <a href="/auth/google" class="btn btn-ghost btn-sm">Connect</a>
         {% endif %}
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:14px 18px;flex-wrap:wrap;gap:10px;">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <div style="width:36px;height:36px;border-radius:8px;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fa5050" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:8px;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fa5050" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            </div>
+            <div>
+              <div style="font-weight:600;font-size:14px;color:var(--text);">Email</div>
+              {% if profile.email %}
+              <div style="font-size:12px;color:{% if profile.email_verified %}var(--green){% else %}#f59e0b{% endif %};">
+                {{ profile.email }}{% if not profile.email_verified %} · Unverified{% endif %}
+              </div>
+              {% else %}
+              <div style="font-size:12px;color:var(--text3);">No email linked</div>
+              {% endif %}
+            </div>
           </div>
-          <div>
-            <div style="font-weight:600;font-size:14px;color:var(--text);">Email</div>
+          <div style="display:flex;align-items:center;gap:8px;">
             {% if profile.email %}
-            <div style="font-size:12px;color:var(--green);">{{ profile.email }}</div>
+              {% if profile.email_verified %}
+              <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#4ade80;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);padding:4px 10px;border-radius:6px;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Verified
+              </span>
+              {% else %}
+              <button onclick="emailVerifyPanel()" id="email-verify-btn" class="btn btn-ghost btn-sm" style="color:#f59e0b;border-color:rgba(245,158,11,0.35);">Verify Email</button>
+              {% endif %}
             {% else %}
-            <div style="font-size:12px;color:var(--text3);">No email linked</div>
+            <button onclick="emailAddPanel()" id="email-add-btn" class="btn btn-ghost btn-sm">Add Email</button>
             {% endif %}
           </div>
         </div>
-        {% if profile.email %}
-        <span style="font-size:12px;color:var(--text3);background:var(--bg3);padding:4px 10px;border-radius:6px;">Verified</span>
+
+        <div id="email-add-panel" style="display:none;border-top:1px solid var(--border2);padding:16px 18px;">
+          <div style="font-size:13px;color:var(--text3);margin-bottom:12px;">Enter your email address. We'll send a verification code.</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+            <input id="add-email-input" type="email" placeholder="your@email.com"
+              style="flex:1;min-width:220px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 14px;font-size:13px;color:var(--text);outline:none;box-sizing:border-box;">
+            <button onclick="submitAddEmail()" id="add-email-btn" class="btn btn-primary btn-sm" style="white-space:nowrap;">Send Code</button>
+          </div>
+          <div id="add-email-err" style="font-size:12px;color:#fa5050;display:none;margin-bottom:10px;"></div>
+          <div id="email-otp-panel" style="display:none;">
+            <div style="font-size:13px;color:var(--text3);margin-bottom:12px;">Enter the 6-digit code sent to your email.</div>
+            <div class="otp-boxes" id="email-otp-boxes">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;">
+              <button onclick="submitVerifyEmail()" id="verify-email-btn" class="btn btn-primary btn-sm">Verify</button>
+              <button onclick="resendEmailOtp('verify_email')" id="email-resend-btn" class="btn btn-ghost btn-sm" disabled style="color:var(--text3);">
+                Resend (<span id="email-countdown">60</span>s)
+              </button>
+            </div>
+            <div id="verify-email-err" style="font-size:12px;color:#fa5050;display:none;margin-top:8px;"></div>
+          </div>
+        </div>
+
+        {% if profile.email and not profile.email_verified %}
+        <div id="email-verify-panel" style="display:none;border-top:1px solid var(--border2);padding:16px 18px;">
+          <div style="font-size:13px;color:var(--text3);margin-bottom:12px;">We'll send a 6-digit code to <strong style="color:var(--text);">{{ profile.email }}</strong>.</div>
+          <button onclick="sendVerifyOtp()" id="send-verify-otp-btn" class="btn btn-primary btn-sm" style="margin-bottom:14px;">Send Code</button>
+          <div id="ev-otp-panel" style="display:none;">
+            <div class="otp-boxes" id="ev-otp-boxes">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;">
+              <button onclick="submitEVOtp()" id="ev-verify-btn" class="btn btn-primary btn-sm">Verify</button>
+              <button onclick="resendEmailOtp('verify_email', true)" id="ev-resend-btn" class="btn btn-ghost btn-sm" disabled style="color:var(--text3);">
+                Resend (<span id="ev-countdown">60</span>s)
+              </button>
+            </div>
+            <div id="ev-err" style="font-size:12px;color:#fa5050;display:none;margin-top:8px;"></div>
+          </div>
+        </div>
         {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-section" style="margin-top:24px;">
+    <div class="dash-section-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+      Change Password
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:20px;">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:420px;">
+        <div>
+          <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;font-weight:500;">Current Password</label>
+          <input id="cpw-current" type="password" placeholder="••••••••"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 14px;font-size:13px;color:var(--text);outline:none;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;font-weight:500;">New Password</label>
+          <input id="cpw-new" type="password" placeholder="At least 6 characters"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 14px;font-size:13px;color:var(--text);outline:none;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;font-weight:500;">Confirm New Password</label>
+          <input id="cpw-confirm" type="password" placeholder="Repeat new password"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 14px;font-size:13px;color:var(--text);outline:none;box-sizing:border-box;">
+        </div>
+        {% if profile.email_verified %}
+        <div id="cpw-otp-section">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:0;">
+              <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;font-weight:500;">Verification Code</label>
+              <div style="font-size:12px;color:var(--text3);">We'll send a code to <strong style="color:var(--text);">{{ profile.email }}</strong></div>
+            </div>
+            <button onclick="sendCpwOtp()" id="cpw-send-otp-btn" class="btn btn-ghost btn-sm" style="white-space:nowrap;flex-shrink:0;align-self:flex-end;">Send Code</button>
+          </div>
+          <div id="cpw-otp-panel" style="display:none;">
+            <div class="otp-boxes" id="cpw-otp-boxes">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+            </div>
+            <div style="margin-top:8px;">
+              <button onclick="resendCpwOtp()" id="cpw-resend-btn" class="btn btn-ghost btn-sm" disabled style="color:var(--text3);font-size:12px;">
+                Resend (<span id="cpw-countdown">60</span>s)
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        <div id="cpw-err" style="font-size:12px;color:#fa5050;display:none;"></div>
+        <div>
+          <button onclick="submitChangePassword()" id="cpw-submit-btn" class="btn btn-primary btn-sm">Change Password</button>
+        </div>
       </div>
     </div>
   </div>
@@ -377,6 +501,28 @@
   color: var(--text3);
   margin-top: 2px;
 }
+.otp-boxes {
+  display: flex;
+  gap: 8px;
+}
+.otp-box {
+  width: 40px;
+  height: 46px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--bg3);
+  border: 1.5px solid var(--border2);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s;
+  caret-color: transparent;
+}
+.otp-box:focus {
+  border-color: var(--primary, #fa5050);
+  background: rgba(250,80,80,0.04);
+}
 </style>
 
 <script>
@@ -494,6 +640,240 @@ new Chart(dlCtx, {
     }
   }
 });
+
+// ── OTP boxes helper ─────────────────────────────────────
+function initOtpBoxes(containerId) {
+  var boxes = document.querySelectorAll('#' + containerId + ' .otp-box');
+  boxes.forEach(function(box, i) {
+    box.addEventListener('input', function() {
+      box.value = box.value.replace(/[^0-9]/g, '').slice(-1);
+      if (box.value && i < boxes.length - 1) boxes[i + 1].focus();
+    });
+    box.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' && !box.value && i > 0) boxes[i - 1].focus();
+    });
+    box.addEventListener('paste', function(e) {
+      e.preventDefault();
+      var txt = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+      boxes.forEach(function(b, j) { b.value = txt[j] || ''; });
+      var last = Math.min(txt.length, boxes.length) - 1;
+      if (last >= 0) boxes[last].focus();
+    });
+  });
+}
+function getOtpValue(containerId) {
+  return Array.from(document.querySelectorAll('#' + containerId + ' .otp-box')).map(function(b) { return b.value; }).join('');
+}
+function clearOtpBoxes(containerId) {
+  document.querySelectorAll('#' + containerId + ' .otp-box').forEach(function(b) { b.value = ''; });
+}
+function startCountdown(spanId, btnId, seconds, onDone) {
+  var span = document.getElementById(spanId);
+  var btn = document.getElementById(btnId);
+  if (btn) btn.disabled = true;
+  var left = seconds || 60;
+  if (span) span.textContent = left;
+  var t = setInterval(function() {
+    left--;
+    if (span) span.textContent = left;
+    if (left <= 0) {
+      clearInterval(t);
+      if (btn) { btn.disabled = false; btn.style.color = ''; }
+      if (onDone) onDone();
+    }
+  }, 1000);
+}
+
+// ── Add Email panel ───────────────────────────────────────
+window.emailAddPanel = function() {
+  var p = document.getElementById('email-add-panel');
+  var btn = document.getElementById('email-add-btn');
+  if (!p) return;
+  var open = p.style.display !== 'none';
+  p.style.display = open ? 'none' : 'block';
+  if (!open) {
+    initOtpBoxes('email-otp-boxes');
+    if (btn) btn.textContent = 'Cancel';
+  } else {
+    if (btn) btn.textContent = 'Add Email';
+  }
+};
+window.submitAddEmail = async function() {
+  var email = (document.getElementById('add-email-input') || {}).value || '';
+  var errEl = document.getElementById('add-email-err');
+  var btn = document.getElementById('add-email-btn');
+  if (!email) { if (errEl) { errEl.textContent = 'Enter an email address'; errEl.style.display = 'block'; } return; }
+  if (btn) btn.disabled = true;
+  try {
+    var r = await fetch('/api/account/add-email', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email: email}) });
+    var d = await r.json();
+    if (d.success) {
+      if (errEl) errEl.style.display = 'none';
+      document.getElementById('email-otp-panel').style.display = 'block';
+      startCountdown('email-countdown', 'email-resend-btn', 60);
+      document.querySelector('#email-otp-boxes .otp-box').focus();
+    } else {
+      if (errEl) { errEl.textContent = d.error || 'Failed'; errEl.style.display = 'block'; }
+    }
+  } catch(e) { if (errEl) { errEl.textContent = 'Network error'; errEl.style.display = 'block'; } }
+  if (btn) btn.disabled = false;
+};
+window.submitVerifyEmail = async function() {
+  var code = getOtpValue('email-otp-boxes');
+  var errEl = document.getElementById('verify-email-err');
+  var btn = document.getElementById('verify-email-btn');
+  if (code.length < 6) { if (errEl) { errEl.textContent = 'Enter all 6 digits'; errEl.style.display = 'block'; } return; }
+  if (btn) btn.disabled = true;
+  try {
+    var r = await fetch('/api/account/verify-email', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({otp_code: code}) });
+    var d = await r.json();
+    if (d.success) {
+      if (typeof showToast === 'function') showToast('Email verified!', 'success');
+      setTimeout(function() { location.reload(); }, 900);
+    } else {
+      if (errEl) { errEl.textContent = d.error || 'Invalid code'; errEl.style.display = 'block'; }
+      clearOtpBoxes('email-otp-boxes');
+      document.querySelector('#email-otp-boxes .otp-box').focus();
+    }
+  } catch(e) { if (errEl) { errEl.textContent = 'Network error'; errEl.style.display = 'block'; } }
+  if (btn) btn.disabled = false;
+};
+
+// ── Verify existing email panel ───────────────────────────
+window.emailVerifyPanel = function() {
+  var p = document.getElementById('email-verify-panel');
+  var btn = document.getElementById('email-verify-btn');
+  if (!p) return;
+  var open = p.style.display !== 'none';
+  p.style.display = open ? 'none' : 'block';
+  if (!open) {
+    initOtpBoxes('ev-otp-boxes');
+    if (btn) btn.textContent = 'Cancel';
+  } else {
+    if (btn) btn.textContent = 'Verify Email';
+  }
+};
+window.sendVerifyOtp = async function() {
+  var btn = document.getElementById('send-verify-otp-btn');
+  if (btn) btn.disabled = true;
+  try {
+    var r = await fetch('/api/send-otp', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({purpose: 'verify_email'}) });
+    var d = await r.json();
+    if (d.success) {
+      document.getElementById('ev-otp-panel').style.display = 'block';
+      if (btn) btn.style.display = 'none';
+      startCountdown('ev-countdown', 'ev-resend-btn', 60);
+      document.querySelector('#ev-otp-boxes .otp-box').focus();
+    } else {
+      if (typeof showToast === 'function') showToast(d.error || 'Failed to send code', 'error');
+      if (btn) btn.disabled = false;
+    }
+  } catch(e) { if (typeof showToast === 'function') showToast('Network error', 'error'); if (btn) btn.disabled = false; }
+};
+window.submitEVOtp = async function() {
+  var code = getOtpValue('ev-otp-boxes');
+  var errEl = document.getElementById('ev-err');
+  var btn = document.getElementById('ev-verify-btn');
+  if (code.length < 6) { if (errEl) { errEl.textContent = 'Enter all 6 digits'; errEl.style.display = 'block'; } return; }
+  if (btn) btn.disabled = true;
+  try {
+    var r = await fetch('/api/account/verify-email', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({otp_code: code}) });
+    var d = await r.json();
+    if (d.success) {
+      if (typeof showToast === 'function') showToast('Email verified!', 'success');
+      setTimeout(function() { location.reload(); }, 900);
+    } else {
+      if (errEl) { errEl.textContent = d.error || 'Invalid code'; errEl.style.display = 'block'; }
+      clearOtpBoxes('ev-otp-boxes');
+      document.querySelector('#ev-otp-boxes .otp-box').focus();
+    }
+  } catch(e) { if (errEl) { errEl.textContent = 'Network error'; errEl.style.display = 'block'; } }
+  if (btn) btn.disabled = false;
+};
+window.resendEmailOtp = async function(purpose, isEv) {
+  var payload = purpose === 'verify_email' && !isEv
+    ? JSON.stringify({purpose: purpose, email: (document.getElementById('add-email-input') || {}).value || ''})
+    : JSON.stringify({purpose: purpose});
+  try {
+    var r = await fetch('/api/send-otp', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: payload });
+    var d = await r.json();
+    if (d.success) {
+      if (typeof showToast === 'function') showToast('Code resent!', 'success');
+      if (isEv) startCountdown('ev-countdown', 'ev-resend-btn', 60);
+      else startCountdown('email-countdown', 'email-resend-btn', 60);
+    } else { if (typeof showToast === 'function') showToast(d.error || 'Failed', 'error'); }
+  } catch(e) { if (typeof showToast === 'function') showToast('Network error', 'error'); }
+};
+
+// ── Change Password ───────────────────────────────────────
+window.sendCpwOtp = async function() {
+  var btn = document.getElementById('cpw-send-otp-btn');
+  if (btn) btn.disabled = true;
+  try {
+    var r = await fetch('/api/send-otp', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({purpose: 'change_password'}) });
+    var d = await r.json();
+    if (d.success) {
+      var panel = document.getElementById('cpw-otp-panel');
+      if (panel) panel.style.display = 'block';
+      if (btn) { btn.textContent = 'Resend (<span id="cpw-countdown">60</span>s)'; btn.disabled = true; }
+      startCountdown('cpw-countdown', 'cpw-send-otp-btn', 60);
+      initOtpBoxes('cpw-otp-boxes');
+      document.querySelector('#cpw-otp-boxes .otp-box').focus();
+    } else {
+      if (typeof showToast === 'function') showToast(d.error || 'Failed to send code', 'error');
+      if (btn) btn.disabled = false;
+    }
+  } catch(e) { if (typeof showToast === 'function') showToast('Network error', 'error'); if (btn) btn.disabled = false; }
+};
+window.resendCpwOtp = async function() {
+  try {
+    var r = await fetch('/api/send-otp', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({purpose: 'change_password'}) });
+    var d = await r.json();
+    if (d.success) {
+      if (typeof showToast === 'function') showToast('Code resent!', 'success');
+      startCountdown('cpw-countdown', 'cpw-resend-btn', 60);
+      clearOtpBoxes('cpw-otp-boxes');
+    } else { if (typeof showToast === 'function') showToast(d.error || 'Failed', 'error'); }
+  } catch(e) { if (typeof showToast === 'function') showToast('Network error', 'error'); }
+};
+window.submitChangePassword = async function() {
+  var current = (document.getElementById('cpw-current') || {}).value || '';
+  var newPw = (document.getElementById('cpw-new') || {}).value || '';
+  var confirm = (document.getElementById('cpw-confirm') || {}).value || '';
+  var errEl = document.getElementById('cpw-err');
+  var btn = document.getElementById('cpw-submit-btn');
+  var otpPanel = document.getElementById('cpw-otp-panel');
+  var otpCode = otpPanel && otpPanel.style.display !== 'none' ? getOtpValue('cpw-otp-boxes') : '';
+  var hasOtpSection = !!document.getElementById('cpw-otp-section');
+  if (!current || !newPw || !confirm) {
+    if (errEl) { errEl.textContent = 'Fill in all fields'; errEl.style.display = 'block'; } return;
+  }
+  if (hasOtpSection && (!otpPanel || otpPanel.style.display === 'none')) {
+    if (errEl) { errEl.textContent = 'Send and enter the verification code first'; errEl.style.display = 'block'; } return;
+  }
+  if (hasOtpSection && otpCode.length < 6) {
+    if (errEl) { errEl.textContent = 'Enter all 6 digits of the verification code'; errEl.style.display = 'block'; } return;
+  }
+  if (btn) btn.disabled = true;
+  if (errEl) errEl.style.display = 'none';
+  var body = { current_password: current, new_password: newPw, confirm_password: confirm };
+  if (otpCode) body.otp_code = otpCode;
+  try {
+    var r = await fetch('/api/change-password', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+    var d = await r.json();
+    if (d.success) {
+      if (typeof showToast === 'function') showToast('Password changed!', 'success');
+      document.getElementById('cpw-current').value = '';
+      document.getElementById('cpw-new').value = '';
+      document.getElementById('cpw-confirm').value = '';
+      clearOtpBoxes('cpw-otp-boxes');
+      if (otpPanel) otpPanel.style.display = 'none';
+    } else {
+      if (errEl) { errEl.textContent = d.error || 'Failed'; errEl.style.display = 'block'; }
+    }
+  } catch(e) { if (errEl) { errEl.textContent = 'Network error'; errEl.style.display = 'block'; } }
+  if (btn) btn.disabled = false;
+};
 
 // ── Linked accounts ──────────────────────────────────────
 window.unlinkGoogle = async function() {
