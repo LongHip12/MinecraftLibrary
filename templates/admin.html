@@ -114,17 +114,23 @@
   </div>
 
   {% elif panel_type == 'pages' %}
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
     <h2 style="font-size:18px;font-weight:700;color:var(--text2);margin:0;">Content Manager</h2>
-    <div style="display:flex;gap:6px;">
+    <div style="display:flex;gap:6px;align-items:center;">
+      <div style="position:relative;">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="content-search" placeholder="Search name..." autocomplete="off" oninput="filterContent(this.value)"
+          style="padding:8px 12px 8px 32px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;width:200px;">
+      </div>
       <button id="tab-mods-btn" onclick="switchContentTab('mods')" class="btn btn-sm" style="font-size:13px;">Mods</button>
       <button id="tab-clients-btn" onclick="switchContentTab('clients')" class="btn btn-sm btn-ghost" style="font-size:13px;">Clients</button>
     </div>
   </div>
+  <div id="content-no-results" style="display:none;text-align:center;padding:40px 0;color:var(--text3);font-size:14px;">No results found.</div>
 
   <div id="tab-mods" class="admin-mods-grid">
     {% for mod in top_mods %}
-    <div class="admin-mod-row">
+    <div class="admin-mod-row" data-name="{{ mod.name | lower }}">
       <div class="admin-mod-info">
         <div class="admin-mod-name">{{ mod.name }}</div>
         <div class="admin-mod-stats">
@@ -146,7 +152,7 @@
 
   <div id="tab-clients" class="admin-mods-grid" style="display:none;">
     {% for cl in top_clients %}
-    <div class="admin-mod-row">
+    <div class="admin-mod-row" data-name="{{ cl.name | lower }}">
       <div class="admin-mod-info">
         <div class="admin-mod-name">{{ cl.name }}</div>
         <div class="admin-mod-stats">
@@ -207,11 +213,27 @@
 {% endblock %}
 {% block extra_js %}
 <script>
+function filterContent(q) {
+  var term = q.toLowerCase().trim();
+  var activeTab = document.getElementById('tab-mods').style.display === 'none' ? 'clients' : 'mods';
+  var grid = document.getElementById('tab-' + activeTab);
+  var rows = grid.querySelectorAll('.admin-mod-row');
+  var visible = 0;
+  rows.forEach(function(row) {
+    var name = row.getAttribute('data-name') || '';
+    var show = !term || name.includes(term);
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('content-no-results').style.display = (visible === 0 && rows.length > 0) ? '' : 'none';
+}
+
 function switchContentTab(tab) {
   var modDiv = document.getElementById('tab-mods');
   var clDiv = document.getElementById('tab-clients');
   var modBtn = document.getElementById('tab-mods-btn');
   var clBtn = document.getElementById('tab-clients-btn');
+  var q = document.getElementById('content-search') ? document.getElementById('content-search').value : '';
   if (tab === 'mods') {
     modDiv.style.display = '';
     clDiv.style.display = 'none';
@@ -223,6 +245,7 @@ function switchContentTab(tab) {
     clBtn.className = clBtn.className.replace(' btn-ghost', '');
     if (!modBtn.className.includes('btn-ghost')) modBtn.className += ' btn-ghost';
   }
+  filterContent(q);
 }
 
 function openAdminEditItem(id, type, name, desc, link, versions) {
