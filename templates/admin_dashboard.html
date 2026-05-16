@@ -71,7 +71,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
         Top Mods (All Time)
       </div>
-      <div style="overflow-x:auto;">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
       <table class="dash-table" style="min-width:360px;">
         <thead><tr><th>#</th><th>Mod</th><th>Views</th><th>DL</th><th>Rating</th></tr></thead>
         <tbody>
@@ -94,7 +94,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
         Newest Users
       </div>
-      <div style="overflow-x:auto;">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
       {% for u in recent_users %}
       <div class="user-row" style="min-width:260px;">
         <img src="{{ u.avatar if u.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="user-row-avatar" alt="{{ u.display_name }}">
