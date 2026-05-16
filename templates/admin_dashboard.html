@@ -2,7 +2,24 @@
 {% block title %}Admin Dashboard — Lonely Hub{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/dashboard.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+document.getElementById('rateLimitForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const val = parseInt(document.getElementById('rateLimitInput').value);
+  if (!val || val < 1) return;
+  fetch('/api/admin/rate-limit', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({api_rate_limit: val})
+  }).then(r => r.json()).then(d => {
+    if (d.success) {
+      const msg = document.getElementById('rateLimitMsg');
+      msg.style.display = 'inline';
+      setTimeout(() => { msg.style.display = 'none'; }, 2000);
+    }
+  });
+});
+</script>
 {% endblock %}
 {% block content %}
 <div class="dashboard-page">
@@ -151,6 +168,19 @@
       <div style="color:var(--text3);font-size:13px;padding:20px;text-align:center;">No tags yet</div>
       {% endif %}
     </div>
+  </div>
+
+  <div class="dash-section" style="margin-top:24px;">
+    <div class="dash-section-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      API Rate Limit
+    </div>
+    <form id="rateLimitForm" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <label style="font-size:13px;color:var(--text2);font-weight:600;">Max Requests per Minute</label>
+      <input type="number" id="rateLimitInput" min="1" max="10000" value="{{ api_rate_limit }}" style="width:100px;padding:8px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;">
+      <button type="submit" style="padding:8px 18px;border-radius:8px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">Save</button>
+      <span id="rateLimitMsg" style="font-size:12px;color:#34d399;display:none;">Saved!</span>
+    </form>
   </div>
 
 </div>
