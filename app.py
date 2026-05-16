@@ -16,9 +16,11 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, m
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 import supabase_backup
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_prefix=1)
 app.secret_key = os.environ.get("SESSION_SECRET") or secrets.token_hex(32)
 CORS(app)
 
@@ -33,6 +35,7 @@ APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
 GMAIL_FROM = "lonelyhub12@gmail.com"
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "")
 MAX_FILE_SIZE = 10 * 1024 * 1024
 FORUM_MAX_FILE_SIZE = 50 * 1024 * 1024
 
@@ -133,7 +136,7 @@ def is_valid_device_token(request):
 
 def send_email_html(to, subject, html_body):
     if not APP_PASSWORD:
-        return
+        return False
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = GMAIL_FROM
@@ -145,8 +148,9 @@ def send_email_html(to, subject, html_body):
         server.login(GMAIL_FROM, APP_PASSWORD)
         server.send_message(msg)
         server.quit()
+        return True
     except Exception:
-        pass
+        return False
 
 
 def otp_email_html(otp, purpose_text):
@@ -632,7 +636,9 @@ def api_send_otp():
         "change_password": "to confirm your password change"
     }
     otp = store_otp(email, purpose)
-    send_email_html(email, "Lonely Hub — Verification Code", otp_email_html(otp, purpose_texts.get(purpose, "")))
+    sent = send_email_html(email, "Lonely Hub — Verification Code", otp_email_html(otp, purpose_texts.get(purpose, "")))
+    if not sent:
+        return jsonify({"success": False, "error": "Failed to send email. Please check that your email address is correct and try again."})
     return jsonify({"success": True})
 
 
@@ -655,7 +661,9 @@ def add_email():
     target["email_verified"] = False
     save_json("accounts-data.json", accounts)
     otp = store_otp(email, "verify_email")
-    send_email_html(email, "Lonely Hub — Verify Your Email", otp_email_html(otp, "to verify your email address"))
+    sent = send_email_html(email, "Lonely Hub — Verify Your Email", otp_email_html(otp, "to verify your email address"))
+    if not sent:
+        return jsonify({"success": False, "error": "Failed to send verification email. Please check your email address."})
     return jsonify({"success": True})
 
 
@@ -799,7 +807,7 @@ def google_login():
         "expires": (datetime.now() + timedelta(minutes=10)).isoformat()
     }
     save_json("sessions-data.json", sessions)
-    redirect_uri = request.url_root.rstrip("/") + "/auth/google/callback"
+    redirect_uri = GOOGLE_REDIRECT_URI or (request.url_root.rstrip("/") + "/auth/google/callback")
     params = urllib.parse.urlencode({
         "client_id": GOOGLE_CLIENT_ID,
         "redirect_uri": redirect_uri,
@@ -825,7 +833,7 @@ def google_callback():
     save_json("sessions-data.json", sessions)
     if not state_entry:
         return redirect(url_for("login"))
-    redirect_uri = request.url_root.rstrip("/") + "/auth/google/callback"
+    redirect_uri = GOOGLE_REDIRECT_URI or (request.url_root.rstrip("/") + "/auth/google/callback")
     token_resp = requests.post("https://oauth2.googleapis.com/token", data={
         "code": code,
         "client_id": GOOGLE_CLIENT_ID,
