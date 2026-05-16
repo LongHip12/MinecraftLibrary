@@ -157,11 +157,11 @@
 <div class="container">
 <div class="upload-page">
   <div class="upload-type-toggle" id="upload-type-toggle">
-    <button type="button" class="upload-type-btn active" id="type-btn-mod" onclick="setUploadType('mod')">
+    <button type="button" title="Upload a Mod" class="upload-type-btn active" id="type-btn-mod" onclick="setUploadType('mod')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
       Mod
     </button>
-    <button type="button" class="upload-type-btn" id="type-btn-client" onclick="setUploadType('client')">
+    <button type="button" title="Upload a Client" class="upload-type-btn" id="type-btn-client" onclick="setUploadType('client')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><polyline points="8 21 12 17 16 21"></polyline><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="14" y2="12"></line></svg>
       Client
     </button>
@@ -231,7 +231,7 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
         <span>Cancel</span>
       </a>
-      <button type="submit" class="btn btn-primary" id="submit-btn">
+      <button type="submit" title="Publish this mod or client" class="btn btn-primary" id="submit-btn">
         <span id="submit-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></span>
         <span id="submit-label">Publish Mod</span>
       </button>
@@ -259,8 +259,8 @@
       <span style="font-size:12px;color:var(--text3);">Drag to crop · Scroll to zoom</span>
     </div>
     <div class="cropper-btns">
-      <button class="btn btn-ghost btn-sm" onclick="skipCrop()">Skip</button>
-      <button class="btn btn-primary btn-sm" onclick="saveCrop()">
+      <button title="Skip cropping and use original image" class="btn btn-ghost btn-sm" onclick="skipCrop()">Skip</button>
+      <button title="Apply crop and save" class="btn btn-primary btn-sm" onclick="saveCrop()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
         Save Crop
       </button>
@@ -392,8 +392,8 @@ function renderQueue() {
       `<img src="${src}" alt="Image ${idx+1}">` +
       (idx === 0 ? `<div class="img-queue-badge">Banner</div>` : '') +
       `<div class="img-queue-btns">
-        <button type="button" class="img-queue-btn" onclick="openCropper(${idx})">✂ Crop</button>
-        <button type="button" class="img-queue-btn remove-btn" onclick="removeImg(${idx})">✕</button>
+        <button type="button" title="Crop this image" class="img-queue-btn" onclick="openCropper(${idx})">✂ Crop</button>
+        <button type="button" title="Remove this image" class="img-queue-btn remove-btn" onclick="removeImg(${idx})">✕</button>
       </div>`;
     q.appendChild(div);
   });

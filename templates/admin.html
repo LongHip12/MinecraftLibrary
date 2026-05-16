@@ -35,7 +35,7 @@
         <input type="text" name="search" value="{{ search_q }}" placeholder="Search username..." autocomplete="off"
           style="padding:8px 12px 8px 32px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;width:220px;">
       </div>
-      <button type="submit" style="padding:8px 16px;border-radius:8px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">Search</button>
+      <button type="submit" title="Search users" style="padding:8px 16px;border-radius:8px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">Search</button>
       {% if search_q %}
       <a href="/api/v1/auth/admin?type=users" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border2);color:var(--text2);font-size:13px;text-decoration:none;">Clear</a>
       {% endif %}
@@ -187,7 +187,7 @@
   <div class="modal">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
       <h2 class="modal-title" style="margin-bottom:0;">Edit Item (Admin)</h2>
-      <button onclick="document.getElementById('admin-edit-modal').classList.remove('open')" style="background:none;border:none;color:var(--text2);cursor:pointer;">
+      <button onclick="document.getElementById('admin-edit-modal').classList.remove('open')" title="Close dialog" style="background:none;border:none;color:var(--text2);cursor:pointer;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>

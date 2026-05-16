@@ -180,11 +180,11 @@
       <img src="{{ img }}" alt="{{ mod.name }}">
     </div>
     {% endfor %}
-    <button class="slider-nav-btn slider-prev" onclick="sliderMove(-1)">&#8249;</button>
-    <button class="slider-nav-btn slider-next" onclick="sliderMove(1)">&#8250;</button>
+    <button class="slider-nav-btn slider-prev" title="Previous image" onclick="sliderMove(-1)">&#8249;</button>
+    <button class="slider-nav-btn slider-next" title="Next image" onclick="sliderMove(1)">&#8250;</button>
     <div class="slider-dots">
       {% for img in all_images %}
-      <button class="slider-dot {% if loop.first %}active{% endif %}" onclick="sliderGo({{ loop.index0 }})"></button>
+      <button title="Go to this image" class="slider-dot {% if loop.first %}active{% endif %}" onclick="sliderGo({{ loop.index0 }})"></button>
       {% endfor %}
     </div>
   </div>
@@ -242,7 +242,7 @@
       Download Mod
     </a>
     {% if user %}
-    <button class="btn btn-secondary bookmark-btn" id="bookmark-btn" onclick="toggleBookmark({{ mod.id }})" data-bookmarked="{{ 'true' if is_bookmarked else 'false' }}">
+    <button class="btn btn-secondary bookmark-btn" title="Save or unsave this mod" id="bookmark-btn" onclick="toggleBookmark({{ mod.id }})" data-bookmarked="{{ 'true' if is_bookmarked else 'false' }}">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="{{ 'currentColor' if is_bookmarked else 'none' }}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="bookmark-icon"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
       <span id="bookmark-label">{{ 'Saved' if is_bookmarked else 'Save Mod' }}</span>
     </button>
@@ -326,14 +326,14 @@
       <div style="margin-bottom:12px;font-size:14px;color:var(--text2);">Select your rating:</div>
       <div class="stars-container" id="stars-container">
         {% for i in range(1, 6) %}
-        <button class="star-btn" data-star="{{ i }}" onclick="selectStar({{ i }})">
+        <button class="star-btn" title="Rate {{ i }} star{{ "s" if i > 1 else "" }}" data-star="{{ i }}" onclick="selectStar({{ i }})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
         </button>
         {% endfor %}
       </div>
       <div id="rating-send-row" style="display:none;margin-top:16px;align-items:center;gap:12px;flex-wrap:wrap;">
         <span id="rating-label" style="font-size:14px;color:var(--text2);"></span>
-        <button class="btn btn-primary btn-sm" onclick="submitRating()">
+        <button title="Submit your rating" class="btn btn-primary btn-sm" onclick="submitRating()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
           Submit Rating
         </button>
@@ -356,7 +356,7 @@
         <div class="comment-reply-bar" id="comment-reply-bar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
           Replying to <strong id="comment-reply-name"></strong>
-          <button class="comment-reply-x" onclick="cancelCommentReply()">×</button>
+          <button title="Cancel reply" class="comment-reply-x" onclick="cancelCommentReply()">×</button>
         </div>
         <textarea id="comment-input" class="input-field comment-textarea" placeholder="Share your thoughts about this mod..." rows="2" maxlength="1000"></textarea>
         <input type="hidden" id="comment-reply-to-id" value="">
@@ -368,7 +368,7 @@
             <input type="file" id="comment-image-input" accept="image/*" style="display:none" onchange="previewCommentImg(this)">
           </label>
           <span id="comment-img-preview-name" style="font-size:11px;color:var(--text3);"></span>
-          <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="submitComment()">
+          <button title="Post your comment" class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="submitComment()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             Post Comment
           </button>
@@ -422,7 +422,7 @@
             </div>
             {% if user %}
             <div class="cmt-msg-actions">
-              <button class="cmt-reply-action-btn" onclick="triggerCommentReply('{{ c.id }}','{{ c.display_name | replace("'","") }}')" type="button">
+              <button title="Reply to this comment" class="cmt-reply-action-btn" onclick="triggerCommentReply('{{ c.id }}','{{ c.display_name | replace("'","") }}')" type="button">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                 Reply
               </button>
@@ -437,7 +437,7 @@
             {% endfor %}
             {% if ns.replies %}
             <div class="cmt-replies-wrap">
-              <button class="cmt-toggle-btn" onclick="toggleCmtReplies('cmt-rep-{{ c.id }}', this)">
+              <button title="Show or hide replies" class="cmt-toggle-btn" onclick="toggleCmtReplies('cmt-rep-{{ c.id }}', this)">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 <span>{{ ns.replies|length }} {{ 'reply' if ns.replies|length == 1 else 'replies' }}</span>
               </button>

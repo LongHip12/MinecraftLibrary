@@ -85,11 +85,11 @@
       </div>
     </div>
     <div class="manager-mod-actions">
-      <button class="btn btn-secondary btn-sm" onclick="openEditMod({{ mod.id }}, '{{ mod.name | replace("'", "\\'") }}', `{{ mod.description | replace('`', '\\`') }}`, '{{ mod.download_link }}', '{{ mod.loaders | join(",") }}', '{{ mod.mc_versions | join(",") }}', '{{ mod.editions | join(",") }}', '{{ mod.tags | join(",") if mod.tags else "" }}', '{{ mod.banner or "" }}')">
+      <button class="btn btn-secondary btn-sm" title="Edit this mod" onclick="openEditMod({{ mod.id }}, '{{ mod.name | replace("'", "\\'") }}', `{{ mod.description | replace('`', '\\`') }}`, '{{ mod.download_link }}', '{{ mod.loaders | join(",") }}', '{{ mod.mc_versions | join(",") }}', '{{ mod.editions | join(",") }}', '{{ mod.tags | join(",") if mod.tags else "" }}', '{{ mod.banner or "" }}')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         Edit
       </button>
-      <button class="btn btn-danger btn-sm" onclick="deleteMod({{ mod.id }})">
+      <button class="btn btn-danger btn-sm" title="Delete this mod" onclick="deleteMod({{ mod.id }})">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
         Delete
       </button>
@@ -120,7 +120,7 @@
   <div class="modal" style="max-height:90vh;overflow-y:auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;position:sticky;top:0;background:var(--bg2);padding:4px 0 16px;z-index:2;border-bottom:1px solid var(--border2);">
       <h2 class="modal-title" style="margin-bottom:0;">Edit Mod</h2>
-      <button onclick="closeEditMod()" style="background:none;border:none;color:var(--text2);cursor:pointer;">
+      <button onclick="closeEditMod()" title="Close dialog" style="background:none;border:none;color:var(--text2);cursor:pointer;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
@@ -188,8 +188,8 @@
         <input type="file" id="edit-more-files-input" name="extra_images" multiple accept="image/*" style="display:none" onchange="_onEditMoreImages(this)">
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end;">
-        <button type="button" onclick="closeEditMod()" class="btn btn-ghost">Cancel</button>
-        <button type="submit" class="btn btn-primary" id="edit-save-btn">
+        <button type="button" onclick="closeEditMod()" title="Discard changes" class="btn btn-ghost">Cancel</button>
+        <button type="submit" title="Save mod changes" class="btn btn-primary" id="edit-save-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           Save Changes
         </button>

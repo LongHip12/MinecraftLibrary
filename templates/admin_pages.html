@@ -37,7 +37,7 @@
       <div class="admin-mod-actions">
         <a href="/mods/{{ mod.id }}/info" class="btn btn-ghost btn-sm">View</a>
         <form method="POST" action="/api/v1/auth/admin/pages/delete/{{ mod.id }}" style="display:inline;" data-confirm="Delete this mod permanently?">
-          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          <button type="submit" title="Permanently delete this item" class="btn btn-danger btn-sm">Delete</button>
         </form>
       </div>
     </div>

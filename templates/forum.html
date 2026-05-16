@@ -70,7 +70,7 @@
             <input class="forum-search-input" type="text" name="search" data-i18n-placeholder="forum.search" placeholder="Search threads…" value="{{ search }}">
           </div>
           <div class="fsort-dd" id="fsort-dd">
-            <button class="fsort-btn" type="button" onclick="toggleFsort()">
+            <button title="Sort options" class="fsort-btn" type="button" onclick="toggleFsort()">
               <span id="fsort-label">{% if sort=='most_replies' %}Most Replies{% elif sort=='most_views' %}Most Views{% else %}Latest{% endif %}</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </button>
@@ -103,7 +103,7 @@
 
       <!-- Mobile category dropdown (hidden on desktop) -->
       <div class="mobile-cat-bar mobile-cat-dropdown-wrap">
-        <button class="mobile-cat-dropdown-btn" type="button" onclick="_toggleMobileCatDd()" id="mobile-cat-dd-btn">
+        <button title="Select category" class="mobile-cat-dropdown-btn" type="button" onclick="_toggleMobileCatDd()" id="mobile-cat-dd-btn">
           <span>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:5px;"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
             {% if category %}{{ category }}{% else %}All Categories{% endif %}

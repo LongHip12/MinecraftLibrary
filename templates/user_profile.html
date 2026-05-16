@@ -39,11 +39,11 @@
       </div>
       <div class="user-actions-row">
         {% if is_own %}
-        <button class="btn btn-secondary" onclick="openEditModal()">
+        <button title="Edit your profile" class="btn btn-secondary" onclick="openEditModal()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
           Edit Profile
         </button>
-        <button class="btn btn-ghost" onclick="openPasswordModal()">
+        <button title="Change your password" class="btn btn-ghost" onclick="openPasswordModal()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
           Change Password
         </button>
@@ -56,7 +56,7 @@
           Upload Mod
         </a>
         {% elif user %}
-        <button class="btn {% if is_following %}btn-secondary{% else %}btn-primary{% endif %}" id="follow-btn" onclick="toggleFollow('{{ profile.id }}')">
+        <button title="Follow or unfollow this user" class="btn {% if is_following %}btn-secondary{% else %}btn-primary{% endif %}" id="follow-btn" onclick="toggleFollow('{{ profile.id }}')">
           {% if is_following %}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="23" y1="11" x2="17" y2="11"></line></svg>
           Unfollow
@@ -70,11 +70,11 @@
     </div>
     <div class="user-follow-stats">
       {% if not profile.hide_followers or is_own %}
-      <button class="follow-stat-btn" onclick="openFollowModal('followers', '{{ profile.id }}')">
+      <button title="View followers" class="follow-stat-btn" onclick="openFollowModal('followers', '{{ profile.id }}')">
         <div class="follow-stat-value" id="followers-count">{{ profile.followers | length }}</div>
         <div class="follow-stat-label">Followers</div>
       </button>
-      <button class="follow-stat-btn" onclick="openFollowModal('following', '{{ profile.id }}')">
+      <button title="View following" class="follow-stat-btn" onclick="openFollowModal('following', '{{ profile.id }}')">
         <div class="follow-stat-value">{{ profile.following | length }}</div>
         <div class="follow-stat-label">Following</div>
       </button>
@@ -142,7 +142,7 @@
   <div class="modal" style="max-width:440px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
       <h2 class="modal-title" style="margin-bottom:0;" id="follow-modal-title">Followers</h2>
-      <button onclick="closeFollowModal()" style="background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;">
+      <button title="Close" onclick="closeFollowModal()" style="background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
@@ -160,7 +160,7 @@
   <div class="modal" style="max-width:420px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
       <h2 class="modal-title" style="margin-bottom:0;">Change Password</h2>
-      <button onclick="closePasswordModal()" style="background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;">
+      <button title="Close" onclick="closePasswordModal()" style="background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
@@ -177,8 +177,8 @@
       <input type="password" id="pw-confirm" class="input-field" placeholder="Repeat new password" autocomplete="new-password">
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
-      <button type="button" onclick="closePasswordModal()" class="btn btn-ghost">Cancel</button>
-      <button type="button" id="pw-save-btn" class="btn btn-primary" onclick="submitChangePassword()">
+      <button type="button" title="Discard password change" onclick="closePasswordModal()" class="btn btn-ghost">Cancel</button>
+      <button type="button" title="Save new password" id="pw-save-btn" class="btn btn-primary" onclick="submitChangePassword()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
         Save Password
       </button>
@@ -190,7 +190,7 @@
   <div class="modal">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
       <h2 class="modal-title" style="margin-bottom:0;">Edit Profile</h2>
-      <button onclick="closeEditModal()" style="background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;">
+      <button title="Close" onclick="closeEditModal()" style="background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
@@ -242,8 +242,8 @@
         <span style="font-size:11px;color:var(--text3);margin-left:26px;">Others won't see your follower/following counts</span>
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
-        <button type="button" onclick="closeEditModal()" class="btn btn-ghost">Cancel</button>
-        <button type="submit" class="btn btn-primary">
+        <button type="button" title="Discard profile changes" onclick="closeEditModal()" class="btn btn-ghost">Cancel</button>
+        <button type="submit" title="Save profile changes" class="btn btn-primary">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           Save Changes
         </button>
