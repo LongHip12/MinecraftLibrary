@@ -101,7 +101,8 @@
         Your Top Mods
       </div>
       {% if top_mods %}
-      <table class="dash-table">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table class="dash-table" style="min-width:320px;">
         <thead><tr><th>#</th><th>Mod</th><th>Views</th><th>DL</th></tr></thead>
         <tbody>
         {% for m in top_mods %}
@@ -114,6 +115,7 @@
         {% endfor %}
         </tbody>
       </table>
+      </div>
       {% else %}
       <div style="text-align:center;color:var(--text3);padding:32px;font-size:14px;">
         No mods yet. <a href="/upload" style="color:var(--primary);">Upload now</a>
