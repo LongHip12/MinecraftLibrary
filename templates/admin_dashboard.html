@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('saveDataBtn').addEventListener('click', downloadData);
   document.getElementById('cloudBackupBtn').addEventListener('click', backupToCloud);
   checkSupabaseConfig();
+  loadBackupFull();
+});
 });
 
 var ICON_DL = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
@@ -44,7 +46,7 @@ function downloadData() {
   setTimeout(function(){
     btn.disabled = false;
     btn.innerHTML = ICON_DL + ' Download Backup';
-    loadBackupList();
+    loadBackupFull();
   }, 4000);
 }
 
@@ -59,7 +61,7 @@ function backupToCloud() {
       btn.innerHTML = ICON_CLOUD + ' Save to Cloud';
       if (d.success) {
         showBackupMsg('✓ Saved to Supabase!', '#22c55e');
-        loadBackupList();
+        loadBackupFull();
       } else if (d.error && d.error.indexOf('not configured') !== -1) {
         showBackupMsg('✗ Set SUPABASE_URL & SUPABASE_SERVICE_KEY env vars', '#f59e0b');
       } else {
@@ -124,17 +126,17 @@ function checkSupabaseConfig() {
           cloudBtn.title = 'Set SUPABASE_URL and SUPABASE_SERVICE_KEY env vars first';
         }
         if (notice) notice.style.display = 'flex';
-        document.getElementById('backupList').innerHTML =
-          '<div style="color:var(--text3);font-size:12px;">Supabase not configured — no backups available.</div>';
+        document.getElementById('bhTableBody').innerHTML =
+          '<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px;">Supabase not configured.</div>';
       } else {
         if (notice) notice.style.display = 'none';
-        loadBackupList();
+        loadBackupFull();
       }
     })
-    .catch(function(){ loadBackupList(); });
+    .catch(function(){ loadBackupFull(); });
 }
 
-function loadBackupList() {
+function loadBackupFull() {
   var list = document.getElementById('backupList');
   if (!list) return;
   list.innerHTML = '<div style="color:var(--text3);font-size:12px;">Loading...</div>';
@@ -186,248 +188,6 @@ function loadBackupList() {
     });
   }
 
-function deleteBackup(id, btn) {
-    customConfirm('Delete this backup?', 'This action cannot be undone.').then(function(ok) {
-      if (!ok) return;
-      btn.disabled = true;
-      fetch('/api/admin/backup/' + id, {method:'DELETE'})
-        .then(function(r){return r.json();})
-        .then(function(d){
-          if (d.success) loadBackupList();
-          else { btn.disabled = false; showBackupMsg('✗ ' + d.error, '#ef4444'); }
-        })
-        .catch(function(){ btn.disabled = false; });
-    });
-  }
-</script>
-{% endblock %}
-{% block content %}
-<div class="dashboard-page">
-<div class="container">
-
-  <div class="dashboard-header">
-    <div>
-      <div class="dashboard-title">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:8px;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-        Admin Dashboard
-      </div>
-      <div class="dashboard-subtitle">Full statistics for Lonely Hub</div>
-    </div>
-    <a href="/api/v1/auth/admin" class="btn btn-secondary btn-sm">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-      User Manager
-    </a>
-  </div>
-
-  <div class="dash-stats-grid">
-    <div class="dash-stat-card views">
-      <div class="dash-stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></div>
-      <div class="dash-stat-value" data-count="{{ total_views }}">0</div>
-      <div class="dash-stat-label">Total Views</div>
-    </div>
-    <div class="dash-stat-card downloads">
-      <div class="dash-stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></div>
-      <div class="dash-stat-value" data-count="{{ total_downloads }}">0</div>
-      <div class="dash-stat-label">Total Downloads</div>
-    </div>
-    <div class="dash-stat-card views-today">
-      <div class="dash-stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
-      <div class="dash-stat-value" data-count="{{ views_today }}">0</div>
-      <div class="dash-stat-label">Views Today</div>
-    </div>
-    <div class="dash-stat-card downloads-today">
-      <div class="dash-stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
-      <div class="dash-stat-value" data-count="{{ downloads_today }}">0</div>
-      <div class="dash-stat-label">Downloads Today</div>
-    </div>
-    <div class="dash-stat-card mods">
-      <div class="dash-stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></div>
-      <div class="dash-stat-value" data-count="{{ total_mods }}">0</div>
-      <div class="dash-stat-label">Total Mods</div>
-    </div>
-    <div class="dash-stat-card active">
-      <div class="dash-stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
-      <div class="dash-stat-value" data-count="{{ active_now }}">0</div>
-      <div class="dash-stat-label">Active Users</div>
-    </div>
-  </div>
-
-  <div class="dash-section">
-    <div class="dash-section-title">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-      Views & Downloads — Last 14 days
-    </div>
-    <div class="chart-wrap">
-      <canvas id="siteChart"></canvas>
-    </div>
-  </div>
-
-  <div class="dash-grid-2">
-    <div class="dash-section" style="margin-bottom:0;">
-      <div class="dash-section-title">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-        Top Mods (All Time)
-      </div>
-      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-      <table class="dash-table" style="min-width:360px;">
-        <thead><tr><th>#</th><th>Mod</th><th>Views</th><th>DL</th><th>Rating</th></tr></thead>
-        <tbody>
-        {% for m in top_mods %}
-        <tr>
-          <td><span class="dash-rank {% if loop.index == 1 %}top1{% elif loop.index == 2 %}top2{% elif loop.index == 3 %}top3{% endif %}">{{ loop.index }}</span></td>
-          <td><a href="/mods/{{ m.id }}/info" class="mod-name" style="color:var(--text);text-decoration:none;">{{ m.name }}</a></td>
-          <td><span class="num">{{ m.views }}</span></td>
-          <td><span class="num" style="color:var(--green);">{{ m.downloads }}</span></td>
-          <td><span style="color:var(--yellow);font-weight:700;font-size:12px;">★ {{ m.avg_rating }}</span></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-      </div>
-    </div>
-
-    <div class="dash-section" style="margin-bottom:0;">
-      <div class="dash-section-title">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-        Newest Users
-      </div>
-      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-      {% for u in recent_users %}
-      <div class="user-row" style="min-width:260px;">
-        <img src="{{ u.avatar if u.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="user-row-avatar" alt="{{ u.display_name }}">
-        <div style="min-width:0;flex:1;overflow:hidden;">
-          <div class="user-row-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><a href="/users/{{ u.username }}" style="color:var(--text);text-decoration:none;">{{ u.display_name }}</a></div>
-          <div class="user-row-time">@{{ u.username }}</div>
-        </div>
-        <div class="user-row-tag" style="flex-shrink:0;">
-          <span class="tag tag-{{ u.tag if u.tag else 'user' }}">{{ u.tag if u.tag else 'user' }}</span>
-        </div>
-      </div>
-      {% endfor %}
-      </div>
-    </div>
-  </div>
-
-  <div style="margin-top:24px;" class="dash-grid-2">
-    <div class="dash-section" style="margin-bottom:0;">
-      <div class="dash-section-title">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-        Hot Today
-      </div>
-      {% if trending %}
-      <table class="dash-table">
-        <thead><tr><th>Mod</th><th>Today's Views</th></tr></thead>
-        <tbody>
-        {% for m in trending %}
-        <tr>
-          <td><a href="/mods/{{ m.id }}/info" style="color:var(--text);text-decoration:none;font-weight:600;">{{ m.name }}</a></td>
-          <td><span class="num" style="color:var(--yellow);">{{ m.get('daily_stats', {}).values() | list | selectattr('views') | list | length }}</span></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-      {% else %}
-      <div style="color:var(--text3);font-size:13px;padding:20px;text-align:center;">No views today yet</div>
-      {% endif %}
-    </div>
-
-    <div class="dash-section" style="margin-bottom:0;">
-      <div class="dash-section-title">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-        Top Tags
-      </div>
-      {% if top_tags %}
-      <div class="tag-cloud">
-        {% for tag, count in top_tags %}
-        <a href="/mods?tag={{ tag }}" class="tag-pill">
-          #{{ tag }} <span class="tag-count">{{ count }}</span>
-        </a>
-        {% endfor %}
-      </div>
-      {% else %}
-      <div style="color:var(--text3);font-size:13px;padding:20px;text-align:center;">No tags yet</div>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="dash-section" style="margin-top:24px;">
-    <div class="dash-section-title">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-      API Rate Limit
-    </div>
-    <form id="rateLimitForm" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      <label style="font-size:13px;color:var(--text2);font-weight:600;">Max Requests per Minute</label>
-      <input type="number" id="rateLimitInput" min="1" max="10000" value="{{ api_rate_limit }}" style="width:100px;padding:8px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;">
-      <button type="submit" title="Save rate limit setting" style="padding:8px 18px;border-radius:8px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">Save</button>
-      <span id="rateLimitMsg" style="font-size:12px;color:#34d399;display:none;">Saved!</span>
-    </form>
-  </div>
-
-  <div class="dash-section" style="margin-top:24px;">
-    <div class="dash-section-title">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-      Backup Data
-    </div>
-    <div id="supabaseSetupNotice" style="display:none;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:8px;background:#1c1008;border:1px solid #78350f;margin-bottom:12px;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-      <div>
-        <div style="font-size:12px;font-weight:700;color:#f59e0b;margin-bottom:4px;">Supabase not configured — cloud backup is disabled</div>
-        <div style="font-size:11px;color:#92400e;line-height:1.6;">
-          Set these environment variables on your server, then restart the app:
-        </div>
-        <div style="margin-top:6px;display:flex;flex-direction:column;gap:3px;">
-          <code style="font-size:11px;background:#0f172a;color:#60a5fa;padding:3px 8px;border-radius:4px;display:inline-block;">SUPABASE_URL=https://yibketeferpkqmvzbqei.supabase.co</code>
-          <code style="font-size:11px;background:#0f172a;color:#60a5fa;padding:3px 8px;border-radius:4px;display:inline-block;">SUPABASE_SERVICE_KEY=your_service_role_key</code>
-        </div>
-        <div style="font-size:10px;color:#78350f;margin-top:6px;">
-          Get the service_role key from: Supabase Dashboard → Project Settings → API → service_role
-        </div>
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-      <button id="saveDataBtn" title="Download encrypted backup to your machine" style="padding:8px 16px;border-radius:8px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-        Download Backup
-      </button>
-      <button id="cloudBackupBtn" title="Save backup to Supabase now" style="padding:8px 16px;border-radius:8px;background:#0f172a;color:#60a5fa;border:1px solid #1e3a5f;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path></svg>
-        Save to Cloud
-      </button>
-      <span id="backupActionMsg" style="font-size:12px;display:none;"></span>
-        <a href="/admin/backup-history" class="btn btn-ghost btn-sm" style="font-size:12px;margin-left:4px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
-          History
-        </a>
-      </div>
-    <div id="lastBackupStatus" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:#0a0f1a;border:1px solid #1e293b;margin-bottom:10px;flex-wrap:wrap;">
-      <span id="lbsDot" style="width:8px;height:8px;border-radius:50%;background:#334155;flex-shrink:0;"></span>
-      <span style="font-size:11px;color:var(--text3);">Last backup:</span>
-      <span id="lbsTime" style="font-size:11px;color:var(--text2);font-weight:600;">—</span>
-      <span id="lbsLabel" style="font-size:10px;border-radius:4px;padding:1px 6px;display:none;"></span>
-      <span style="font-size:11px;color:var(--text3);">ID:</span>
-      <code id="lbsId" style="font-size:10px;color:#64748b;background:#0f172a;padding:2px 6px;border-radius:4px;letter-spacing:.5px;">—</code>
-    </div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">
-      ☁ Auto backup every 6 hours · Keeps last 50 snapshots
-    </div>
-    <div id="backupList" style="max-height:220px;overflow-y:auto;">
-      <div style="color:var(--text3);font-size:12px;">Loading...</div>
-    </div>
-  </div>
-
-</div>
-</div>
-<script>
-const labels = {{ chart_labels | tojson }};
-const viewsData = {{ chart_views | tojson }};
-const dlData = {{ chart_downloads | tojson }};
-
-function makeGradient(ctx, c1, c2) {
-  const g = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
-  g.addColorStop(0, c1); g.addColorStop(1, c2);
-  return g;
-}
-
 const ctx = document.getElementById('siteChart').getContext('2d');
 new Chart(ctx, {
   type: 'line',
@@ -468,5 +228,177 @@ new Chart(ctx, {
     }
   }
 });
+
+  var bhAllBackups = [];
+  var bhBarChart = null, bhPieChart = null;
+
+  function loadBackupFull() {
+    var btn = document.getElementById('bhRefreshBtn');
+    if (btn) { btn.disabled = true; }
+    fetch('/api/admin/backups?limit=50')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (btn) btn.disabled = false;
+        if (!d.success) { showBackupMsg('✗ ' + (d.error || 'Error'), '#ef4444'); return; }
+        bhAllBackups = d.backups || [];
+        renderBhStats(bhAllBackups);
+        renderBhCharts(bhAllBackups);
+        applyBhFilters();
+      })
+      .catch(function(){
+        if (btn) btn.disabled = false;
+        showBackupMsg('✗ Connection error', '#ef4444');
+      });
+  }
+
+  function renderBhStats(backups) {
+    var auto = backups.filter(function(b){ return b.label === 'Auto'; }).length;
+    var manual = backups.length - auto;
+    document.getElementById('bhStatTotal').textContent = backups.length;
+    document.getElementById('bhStatAuto').textContent = auto;
+    document.getElementById('bhStatManual').textContent = manual;
+    if (backups.length) {
+      var dt = new Date(backups[0].created_at);
+      document.getElementById('bhStatLast').textContent = dt.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+      // also update old status
+      updateLastBackupStatus(backups[0]);
+    } else {
+      document.getElementById('bhStatLast').textContent = 'None yet';
+      updateLastBackupStatus(null);
+    }
+  }
+
+  function renderBhCharts(backups) {
+    // Bar chart — backups per day last 30 days
+    var days = 30, barLabels = [], autoData = [], manualData = [];
+    for (var i = days - 1; i >= 0; i--) {
+      var d = new Date(); d.setDate(d.getDate() - i);
+      var key = d.toISOString().slice(0, 10);
+      barLabels.push(d.toLocaleDateString('en-US', {month:'short',day:'numeric'}));
+      var day = backups.filter(function(b){ return b.created_at.slice(0,10) === key; });
+      autoData.push(day.filter(function(b){ return b.label === 'Auto'; }).length);
+      manualData.push(day.filter(function(b){ return b.label !== 'Auto'; }).length);
+    }
+    var barCtx = document.getElementById('bhBarChart').getContext('2d');
+    if (bhBarChart) bhBarChart.destroy();
+    bhBarChart = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: barLabels,
+        datasets: [
+          { label: 'Auto', data: autoData, backgroundColor: 'rgba(148,163,184,.5)', borderRadius: 3 },
+          { label: 'Manual', data: manualData, backgroundColor: 'rgba(96,165,250,.7)', borderRadius: 3 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#64748b', font: { size: 10 }, boxWidth: 10, boxHeight: 10 } } },
+        scales: {
+          x: { stacked: true, ticks: { color: '#475569', font: { size: 9 }, maxTicksLimit: 8 }, grid: { color: 'rgba(255,255,255,.03)' } },
+          y: { stacked: true, ticks: { color: '#475569', font: { size: 10 }, stepSize: 1, precision: 0 }, grid: { color: 'rgba(255,255,255,.03)' }, beginAtZero: true }
+        }
+      }
+    });
+
+    // Donut chart
+    var auto = backups.filter(function(b){ return b.label === 'Auto'; }).length;
+    var manual = backups.length - auto;
+    var pieCtx = document.getElementById('bhPieChart').getContext('2d');
+    if (bhPieChart) bhPieChart.destroy();
+    if (!backups.length) {
+      bhPieChart = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: { labels: ['No backups'], datasets: [{ data: [1], backgroundColor: ['#1e293b'], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { labels: { color: '#475569', font: { size: 10 } } } } }
+      });
+      return;
+    }
+    bhPieChart = new Chart(pieCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Auto', 'Manual'],
+        datasets: [{ data: [auto, manual], backgroundColor: ['rgba(148,163,184,.55)', 'rgba(96,165,250,.75)'], borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '62%',
+        plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 }, padding: 10, boxWidth: 10, boxHeight: 10 } } }
+      }
+    });
+  }
+
+  function applyBhFilters() {
+    var search = (document.getElementById('bhSearch').value || '').trim().toLowerCase();
+    var type   = document.getElementById('bhType').value;
+    var from   = document.getElementById('bhDateFrom').value;
+    var to     = document.getElementById('bhDateTo').value;
+    var filtered = bhAllBackups.filter(function(b) {
+      if (type && b.label !== type) return false;
+      if (from && b.created_at.slice(0,10) < from) return false;
+      if (to   && b.created_at.slice(0,10) > to)   return false;
+      if (search && b.label.toLowerCase().indexOf(search) === -1 && b.id.toLowerCase().indexOf(search) === -1) return false;
+      return true;
+    });
+    var countEl = document.getElementById('bhFilterCount');
+    if (countEl) {
+      countEl.textContent = (filtered.length < bhAllBackups.length)
+        ? 'Showing ' + filtered.length + ' of ' + bhAllBackups.length : '';
+    }
+    renderBhTable(filtered);
+  }
+
+  function clearBhFilters() {
+    document.getElementById('bhSearch').value = '';
+    document.getElementById('bhType').value = '';
+    document.getElementById('bhDateFrom').value = '';
+    document.getElementById('bhDateTo').value = '';
+    applyBhFilters();
+  }
+
+  function renderBhTable(backups) {
+    var body = document.getElementById('bhTableBody');
+    if (!backups.length) {
+      body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px;">No backups match your filters.</div>';
+      return;
+    }
+    body.innerHTML = backups.map(function(b) {
+      var dt = new Date(b.created_at).toLocaleString('en-US', {month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      var badge = b.label === 'Auto'
+        ? '<span style="font-size:10px;background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 7px;font-weight:600;">Auto</span>'
+        : '<span style="font-size:10px;background:#1e3a5f;color:#60a5fa;border-radius:4px;padding:2px 7px;font-weight:600;">Manual</span>';
+      return '<div style="display:grid;grid-template-columns:80px 1fr 100px 90px;padding:9px 14px;border-bottom:1px solid #0f172a;font-size:12px;color:var(--text2);align-items:center;transition:background .12s;" onmouseover="this.style.background='#060b14'" onmouseout="this.style.background=''">'
+        + badge
+        + '<span>' + dt + '</span>'
+        + '<span style="color:#475569;font-family:monospace;font-size:11px;" title="' + b.id + '">' + b.id.slice(0,8) + '…</span>'
+        + '<div style="display:flex;gap:5px;">'
+        + '<button class="bh-restore" data-id="' + b.id + '" data-time="' + dt.replace(/"/g,"&quot;") + '" style="padding:3px 9px;border-radius:5px;background:#0f4c81;color:#60a5fa;border:none;cursor:pointer;font-size:11px;font-family:inherit;">Restore</button>'
+        + '<button class="bh-delete" data-id="' + b.id + '" style="padding:3px 7px;border-radius:5px;background:#450a0a;color:#f87171;border:none;cursor:pointer;font-size:11px;font-family:inherit;">✕</button>'
+        + '</div></div>';
+    }).join('');
+    body.querySelectorAll('.bh-restore').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        customConfirm('Restore backup from "' + btn.dataset.time + '"?', 'Current data will be overwritten!').then(function(ok) {
+          if (!ok) return;
+          fetch('/api/admin/restore/' + btn.dataset.id, { method: 'POST' })
+            .then(function(r){ return r.json(); })
+            .then(function(d){ showBackupMsg(d.success ? '✓ Restored successfully!' : '✗ ' + d.error, d.success ? '#22c55e' : '#ef4444'); })
+            .catch(function(){ showBackupMsg('✗ Connection error', '#ef4444'); });
+        });
+      });
+    });
+    body.querySelectorAll('.bh-delete').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        customConfirm('Delete this backup?', 'This action cannot be undone.').then(function(ok) {
+          if (!ok) return;
+          btn.disabled = true;
+          fetch('/api/admin/backup/' + btn.dataset.id, { method: 'DELETE' })
+            .then(function(r){ return r.json(); })
+            .then(function(d){
+              if (d.success) loadBackupFull();
+              else { btn.disabled = false; showBackupMsg('✗ ' + d.error, '#ef4444'); }
+            }).catch(function(){ btn.disabled = false; });
+        });
+      });
+    });
+  }
 </script>
 {% endblock %}
