@@ -13,16 +13,6 @@
     </div>
     <h1 class="auth-title">Welcome back</h1>
     <p class="auth-sub">Sign in to your account to continue</p>
-
-    <div id="biometric-banner" style="display:none;margin-bottom:16px;">
-      <button type="button" id="biometric-btn" onclick="loginWithBiometric()"
-        style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 18px;background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.25);border-radius:10px;color:#60a5fa;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 0 0 8 11a4 4 0 1 1 8 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0 0 15.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 0 0 8 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path></svg>
-        Sign in with Biometrics / Saved Credentials
-      </button>
-      <div style="text-align:center;margin:10px 0;font-size:12px;color:var(--text3);">— or sign in with password —</div>
-    </div>
-
     <form class="auth-form" id="login-form">
       <div class="auth-error" id="auth-error" style="display:none;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -44,7 +34,7 @@
       <div class="remember-row">
         <label class="remember-label">
           <label class="toggle-switch">
-            <input type="checkbox" name="remember" id="remember">
+            <input type="checkbox" name="remember" id="remember" checked>
             <span class="toggle-slider"></span>
           </label>
           <span>Remember me for 30 days</span>
@@ -115,67 +105,57 @@ function togglePw(inputId, btn) {
   }
 }
 
-function doLoginRequest(username, password, remember, captchaToken) {
-  var fd = new FormData();
-  fd.append('username', username);
-  fd.append('password', password);
-  if (remember) fd.append('remember', 'on');
-  if (captchaToken) fd.append('h-captcha-response', captchaToken);
-  return fetch('/login' + window.location.search, { method: 'POST', body: fd })
-    .then(function(r){ return r.json(); });
-}
-
-function loginWithBiometric() {
-  var btn = document.getElementById('biometric-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Authenticating...';
-
-  if (window.PasswordCredential && navigator.credentials) {
-    navigator.credentials.get({ password: true, mediation: 'required' })
-      .then(function(cred) {
-        if (!cred) { btn.disabled = false; btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 0 0 8 11a4 4 0 1 1 8 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0 0 15.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 0 0 8 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path></svg> Sign in with Biometrics / Saved Credentials'; return; }
-        doLoginRequest(cred.id, cred.password, true, '')
-          .then(function(data) {
-            if (data.success) {
-              document.getElementById('success-overlay').classList.add('show');
-              setTimeout(function(){ window.location.href = data.redirect || '/'; }, 2000);
-            } else {
-              btn.disabled = false;
-              btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 0 0 8 11a4 4 0 1 1 8 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0 0 15.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 0 0 8 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path></svg> Sign in with Biometrics / Saved Credentials';
-              var errEl = document.getElementById('auth-error');
-              errEl.querySelector('span').textContent = data.error || 'Biometric login failed';
-              errEl.style.display = 'flex';
-            }
-          }).catch(function() { btn.disabled = false; btn.innerHTML = 'Sign in with Biometrics / Saved Credentials'; });
-      })
-      .catch(function() { btn.disabled = false; btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 0 0 8 11a4 4 0 1 1 8 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0 0 15.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 0 0 8 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path></svg> Sign in with Biometrics / Saved Credentials'; });
-  } else {
-    btn.disabled = false;
-    var errEl = document.getElementById('auth-error');
-    errEl.querySelector('span').textContent = 'Biometric login not supported in this browser.';
-    errEl.style.display = 'flex';
-  }
-}
-
-function checkBiometricAvailable() {
-  if (window.PasswordCredential && navigator.credentials) {
-    navigator.credentials.get({ password: true, mediation: 'silent' })
-      .then(function(cred) {
-        if (cred) {
-          document.getElementById('biometric-banner').style.display = 'block';
-        }
-      })
-      .catch(function() {});
-    document.getElementById('biometric-banner').style.display = 'block';
-  }
-}
-
-function saveCredentialsAfterLogin(username, password) {
+function saveCredentials(username, password) {
   if (!window.PasswordCredential || !navigator.credentials) return;
   try {
     var cred = new PasswordCredential({ id: username, password: password, name: username });
     navigator.credentials.store(cred);
   } catch(e) {}
+}
+
+function autoFillAndSubmitWithCredential(cred) {
+  var unField = document.getElementById('login-username');
+  var pwField = document.getElementById('login-pw');
+  if (unField) unField.value = cred.id;
+  if (pwField) pwField.value = cred.password;
+  var btn = document.querySelector('.auth-submit-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Signing in...';
+  }
+  var fd = new FormData();
+  fd.append('username', cred.id);
+  fd.append('password', cred.password);
+  fd.append('remember', 'on');
+  fetch('/login' + window.location.search, { method: 'POST', body: fd })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        saveCredentials(cred.id, cred.password);
+        document.getElementById('success-overlay').classList.add('show');
+        setTimeout(function() { window.location.href = data.redirect || '/'; }, 2000);
+      } else {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg> <span>Sign In</span>';
+        }
+        var errEl = document.getElementById('auth-error');
+        errEl.querySelector('span').textContent = data.error || 'Saved login failed — please sign in manually.';
+        errEl.style.display = 'flex';
+      }
+    })
+    .catch(function() {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span>Sign In</span>'; }
+    });
+}
+
+function tryAutoLogin() {
+  if (!window.PasswordCredential || !navigator.credentials) return;
+  navigator.credentials.get({ password: true, mediation: 'optional' })
+    .then(function(cred) {
+      if (cred) autoFillAndSubmitWithCredential(cred);
+    })
+    .catch(function() {});
 }
 
 document.getElementById('login-form').addEventListener('submit', async function(e) {
@@ -191,15 +171,15 @@ document.getElementById('login-form').addEventListener('submit', async function(
     var resp = await fetch('/login' + window.location.search, { method: 'POST', body: fd });
     var data = await resp.json();
     if (data.success) {
-      saveCredentialsAfterLogin(username, password);
+      saveCredentials(username, password);
       document.getElementById('success-overlay').classList.add('show');
-      setTimeout(function(){ window.location.href = data.redirect || '/'; }, 2000);
+      setTimeout(function() { window.location.href = data.redirect || '/'; }, 2000);
     } else {
       errEl.querySelector('span').textContent = data.error || 'Invalid credentials';
       errEl.style.display = 'flex';
       btn.disabled = false;
       btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg> <span>Sign In</span>';
-      if (window.__i18n) window.__i18n.applyLang(localStorage.getItem('lh_lang')||'en');
+      if (window.__i18n) window.__i18n.applyLang(localStorage.getItem('lh_lang') || 'en');
       if (window.hcaptcha) window.hcaptcha.reset();
     }
   } catch(err) {
@@ -210,6 +190,6 @@ document.getElementById('login-form').addEventListener('submit', async function(
   }
 });
 
-checkBiometricAvailable();
+tryAutoLogin();
 </script>
 {% endblock %}
