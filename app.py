@@ -2345,7 +2345,15 @@ def admin_backup_to_cloud():
         return jsonify({"success": True, "backup": result})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
-@app.route("/api/admin/supabase-status", methods=["GET"])
+@app.route("/admin/backup-history")
+  def admin_backup_history():
+      current_user = get_session_user(request)
+      if not current_user or not is_admin(current_user):
+          return redirect("/login")
+      return render_template("backup_history.html", user=current_user)
+
+
+  @app.route("/api/admin/supabase-status", methods=["GET"])
 def admin_supabase_status():
     current_user = get_session_user(request)
     if not current_user or not is_admin(current_user):
@@ -2360,7 +2368,8 @@ def admin_list_backups():
     if not current_user or not is_admin(current_user):
         return jsonify({"success": False, "error": "Forbidden"}), 403
     try:
-        backups = supabase_backup.list_backups(limit=30)
+        limit = min(int(request.args.get("limit", 30)), 50)
+        backups = supabase_backup.list_backups(limit=limit)
         return jsonify({"success": True, "backups": backups})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
