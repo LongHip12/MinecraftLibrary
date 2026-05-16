@@ -278,9 +278,6 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
     <div class="api-toc-inner">
       <div class="api-toc-title">Contents</div>
       <a class="api-toc-link" href="#auth">Authentication</a>
-      <a class="api-toc-link" href="#public">Public API</a>
-      <a class="api-toc-link api-toc-sub" href="#v2-mods">Browse Mods</a>
-      <a class="api-toc-link api-toc-sub" href="#v2-clients">Browse Clients</a>
       <a class="api-toc-link" href="#user-api">User API</a>
       <a class="api-toc-link api-toc-sub" href="#v2-upload">Upload</a>
       <a class="api-toc-link api-toc-sub" href="#v2-edit">Edit</a>
@@ -311,118 +308,6 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
       </div>
     </section>
 
-    <section class="api-section" id="public">
-      <div class="api-section-head">
-        <div class="api-section-title">Public API</div>
-      </div>
-
-      <div class="ep-card" id="v2-mods">
-        <div class="ep-header" onclick="_toggleEp(this)">
-          <span class="ep-method m-get">GET</span>
-          <span class="ep-path">/api/v2/mods</span>
-          <span class="ep-desc">Browse and search mods</span>
-          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </div>
-        <div class="ep-body-wrap">
-          <div class="ep-body">
-            <div class="param-table-wrap">
-              <table class="param-table">
-                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-                <tbody>
-                  <tr><td class="p-name">search</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Search by name or description</td></tr>
-                  <tr><td class="p-name">tag</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Filter by tag (e.g. <code>pvp</code>, <code>survival</code>)</td></tr>
-                  <tr><td class="p-name">loaders</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Filter by loader, comma-separated (e.g. <code>Fabric,Forge</code>)</td></tr>
-                  <tr><td class="p-name">mcversion</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Edition: <code>Java</code>, <code>Bedrock</code>, or <code>All</code></td></tr>
-                  <tr><td class="p-name">version</td><td class="p-type">string</td><td class="p-opt">optional</td><td>MC version (e.g. <code>1.20.1</code>)</td></tr>
-                  <tr><td class="p-name">max</td><td class="p-type">integer</td><td class="p-opt">optional</td><td>Max results (default 20, max 100)</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="api-code-block">
-              <div class="api-code-label-row">
-                <span class="api-code-tag tag-request">Request</span>
-              </div>
-              <div class="api-pre-wrap">
-                <div class="api-pre-scroll">
-                  <pre class="api-pre"><code>GET /api/v2/mods?tag=pvp&amp;loaders=Fabric&amp;max=5</code></pre>
-                </div>
-              </div>
-            </div>
-            <div class="api-code-block">
-              <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Response success</span>
-              </div>
-              <div class="api-pre-wrap">
-                <div class="api-pre-scroll">
-                  <pre class="api-pre"><code>{
-  <span class="jk">"success"</span>: <span class="jb">true</span>,
-  <span class="jk">"count"</span>: <span class="jn">1</span>,
-  <span class="jk">"mods"</span>: [
-    {
-      <span class="jk">"id"</span>: <span class="jn">3</span>,
-      <span class="jk">"name"</span>: <span class="js">"PvP Master"</span>,
-      <span class="jk">"description"</span>: <span class="js">"Enhance your PvP experience"</span>,
-      <span class="jk">"MinecraftVersion"</span>: [<span class="js">"Java"</span>],
-      <span class="jk">"Version"</span>: [<span class="js">"1.20.1"</span>],
-      <span class="jk">"Tags"</span>: [<span class="js">"pvp"</span>, <span class="js">"combat"</span>],
-      <span class="jk">"Loaders"</span>: [<span class="js">"Fabric"</span>],
-      <span class="jk">"Download"</span>: <span class="js">"https://example.com/mod.jar"</span>,
-      <span class="jk">"views"</span>: <span class="jn">1024</span>,
-      <span class="jk">"downloads"</span>: <span class="jn">382</span>
-    }
-  ]
-}</code></pre>
-                </div>
-                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="ep-card" id="v2-clients">
-        <div class="ep-header" onclick="_toggleEp(this)">
-          <span class="ep-method m-get">GET</span>
-          <span class="ep-path">/api/v2/clients</span>
-          <span class="ep-desc">Browse and search clients</span>
-          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </div>
-        <div class="ep-body-wrap">
-          <div class="ep-body">
-            <div class="param-table-wrap">
-              <table class="param-table">
-                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-                <tbody>
-                  <tr><td class="p-name">search</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Search by name or description</td></tr>
-                  <tr><td class="p-name">tag</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Filter by tag</td></tr>
-                  <tr><td class="p-name">mcversion</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Filter by edition</td></tr>
-                  <tr><td class="p-name">version</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Filter by MC version</td></tr>
-                  <tr><td class="p-name">max</td><td class="p-type">integer</td><td class="p-opt">optional</td><td>Max results (default 20, max 100)</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="api-code-block">
-              <div class="api-code-label-row">
-                <span class="api-code-tag tag-success">&#10003; Response success</span>
-              </div>
-              <div class="api-pre-wrap">
-                <div class="api-pre-scroll">
-                  <pre class="api-pre"><code>{
-  <span class="jk">"success"</span>: <span class="jb">true</span>,
-  <span class="jk">"count"</span>: <span class="jn">2</span>,
-  <span class="jk">"clients"</span>: [
-    { <span class="jk">"id"</span>: <span class="jn">1</span>, <span class="jk">"name"</span>: <span class="js">"Wurst Client"</span>, <span class="jk">"description"</span>: <span class="js">"..."</span> }
-  ]
-}</code></pre>
-                </div>
-                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <section class="api-section" id="user-api">
       <div class="api-section-head">
         <div class="api-section-title">User API</div>
@@ -430,6 +315,9 @@ pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: 
       </div>
       <div class="api-auth-note" style="margin-bottom:20px;">
         All User API endpoints require the header <code>X-Token: your_api_token</code>.
+      </div>
+      <div class="api-note-box" style="margin-bottom:20px;">
+        All API endpoints are rate limited. The current limit is configurable by admins from the Admin Dashboard. When the limit is exceeded, the API returns HTTP <code>429</code> with <code>retry_after: 60</code>.
       </div>
 
       <div class="ep-card" id="v2-upload">
