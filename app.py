@@ -433,7 +433,7 @@ def login():
                 token, expires = create_session(found["id"], remember)
                 next_url = request.args.get("next", url_for("index"))
                 resp = make_response(jsonify({"success": True, "redirect": next_url}))
-                resp.set_cookie("session_token", token, expires=expires, httponly=True, samesite="Lax")
+                resp.set_cookie("session_token", token, expires=expires, httponly=True, secure=True, samesite="Lax")
                 return resp
             else:
                 error = "Invalid username or password"
