@@ -54,6 +54,9 @@
   align-items: start;
 }
 @media(max-width: 900px) { .api-layout { grid-template-columns: 1fr; } .api-toc-col { display: none; } }
+.api-layout > main { min-width: 0; overflow-x: hidden; }
+.api-layout > main > * { max-width: 100%; }
+.api-page { overflow-x: hidden; }
 .api-toc-col { position: sticky; top: 84px; }
 .api-toc-inner {
   background: rgba(255,255,255,0.025);
@@ -113,6 +116,7 @@
   margin-bottom: 12px;
   transition: border-color .18s;
   overflow: hidden;
+  min-width: 0;
 }
 .ep-card:hover { border-color: rgba(255,255,255,0.12); }
 .ep-card.is-open { border-color: rgba(255,255,255,0.12); }
@@ -150,11 +154,12 @@
   transition: max-height .35s cubic-bezier(.4,0,.2,1);
 }
 .ep-card.is-open .ep-body-wrap { max-height: 4000px; transition: max-height .5s cubic-bezier(.4,0,.2,1); }
-.ep-body { padding: 0 18px 20px; border-top: 1px solid rgba(255,255,255,0.06); }
+.ep-body { padding: 0 18px 20px; border-top: 1px solid rgba(255,255,255,0.06); overflow: hidden; }
 .param-table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   margin: 16px 0 10px;
+  max-width: 100%;
 }
 .param-table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 460px; }
 .param-table thead th {
