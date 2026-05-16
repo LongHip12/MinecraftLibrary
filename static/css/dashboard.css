@@ -97,6 +97,7 @@
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 24px;
+  min-width: 0;
 }
 
 .dash-section-title {
