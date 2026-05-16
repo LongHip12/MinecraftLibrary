@@ -6,12 +6,12 @@ import uuid
 import secrets
 import mimetypes
 import requests
-  import smtplib
-  import re
-  import urllib.parse
-  from email.mime.multipart import MIMEMultipart
-  from email.mime.text import MIMEText
-  from datetime import datetime, timedelta
+import smtplib
+import re
+import urllib.parse
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, jsonify, make_response, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
