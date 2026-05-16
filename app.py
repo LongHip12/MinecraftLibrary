@@ -2345,43 +2345,6 @@ def admin_backup_to_cloud():
         return jsonify({"success": True, "backup": result})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
-
-
-@app.route("/api/debug/supabase", methods=["GET"])
-def debug_supabase():
-    """Public endpoint — shows config without secrets, helps diagnose 401."""
-    import supabase_backup as sb
-    url = sb.SUPABASE_URL
-    key = sb.SUPABASE_KEY
-    url_ok = bool(url)
-    key_ok = bool(key)
-    key_preview = (key[:6] + "..." + key[-4:]) if len(key) > 12 else ("set" if key else "")
-    configured = sb.is_configured()
-    ping_ok = False
-    ping_error = None
-    if configured:
-        try:
-            import requests as _req
-            r = _req.get(
-                f"{url}/rest/v1/backups",
-                headers={"apikey": key, "Authorization": f"Bearer {key}"},
-                params={"select": "id", "limit": "1"},
-                timeout=8,
-            )
-            ping_ok = r.status_code == 200
-            ping_error = None if ping_ok else f"HTTP {r.status_code}: {r.text[:120]}"
-        except Exception as e:
-            ping_error = str(e)
-    return jsonify({
-        "url_set": url_ok,
-        "url": url if url_ok else None,
-        "key_set": key_ok,
-        "key_preview": key_preview,
-        "configured": configured,
-        "ping_ok": ping_ok,
-        "ping_error": ping_error,
-    })
-
 @app.route("/api/admin/supabase-status", methods=["GET"])
 def admin_supabase_status():
     current_user = get_session_user(request)
