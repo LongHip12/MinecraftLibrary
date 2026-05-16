@@ -76,11 +76,11 @@
         </div>
       </div>
       <div class="admin-user-actions">
-        <button class="three-dot-btn" onclick="event.stopPropagation()">
+        <button class="three-dot-btn" onclick="event.stopPropagation()" title="More actions">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
         </button>
         <div class="user-actions-menu">
-          <button class="user-action-item" onclick="grantVerifiedBadge('{{ u.id }}', this)" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;">
+          <button class="user-action-item" onclick="grantVerifiedBadge('{{ u.id }}', this)" title="Toggle verified badge for this user" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#3b82f6"/><path d="M4.5 8.5l2.5 2 4.5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             {% if u.verified %}Revoke Verified Badge{% else %}Grant Verified Badge{% endif %}
           </button>
@@ -117,8 +117,8 @@
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
     <h2 style="font-size:18px;font-weight:700;color:var(--text2);margin:0;">Content Manager</h2>
     <div style="display:flex;gap:6px;">
-      <button id="tab-mods-btn" onclick="switchContentTab('mods')" class="btn btn-sm" style="font-size:13px;">Mods</button>
-      <button id="tab-clients-btn" onclick="switchContentTab('clients')" class="btn btn-sm btn-ghost" style="font-size:13px;">Clients</button>
+      <button id="tab-mods-btn" onclick="switchContentTab('mods')" class="btn btn-sm" title="Show mods" style="font-size:13px;">Mods</button>
+      <button id="tab-clients-btn" onclick="switchContentTab('clients')" class="btn btn-sm btn-ghost" title="Show clients" style="font-size:13px;">Clients</button>
     </div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
@@ -146,9 +146,9 @@
       </div>
       <div class="admin-mod-actions">
         <a href="/mods/{{ mod.id }}/info" class="btn btn-ghost btn-sm">View</a>
-        <button class="btn btn-secondary btn-sm" onclick="openAdminEditItem({{ mod.id }}, 'mod', '{{ mod.name | replace("'", "\\'") }}', `{{ mod.description | replace('`', '\\`') }}`, '{{ mod.download_link }}', '{{ mod.mc_versions | join(",") }}')">Edit</button>
+        <button class="btn btn-secondary btn-sm" title="Edit this mod" onclick="openAdminEditItem({{ mod.id }}, 'mod', '{{ mod.name | replace("'", "\\'") }}', `{{ mod.description | replace('`', '\\`') }}`, '{{ mod.download_link }}', '{{ mod.mc_versions | join(",") }}')">Edit</button>
         <form method="POST" action="/api/v1/auth/admin/pages/delete/{{ mod.id }}" style="display:inline;" data-confirm="Delete this mod permanently?">
-          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          <button type="submit" class="btn btn-danger btn-sm" title="Permanently delete this mod">Delete</button>
         </form>
       </div>
     </div>
@@ -168,9 +168,9 @@
       </div>
       <div class="admin-mod-actions">
         <a href="/clients/{{ cl.client_id if cl.client_id else cl.id }}/info" class="btn btn-ghost btn-sm">View</a>
-        <button class="btn btn-secondary btn-sm" onclick="openAdminEditItem({{ cl.id }}, 'client', '{{ cl.name | replace("'", "\\'") }}', `{{ cl.description | replace('`', '\\`') }}`, '{{ cl.download_link }}', '{{ cl.mc_versions | join(",") }}')">Edit</button>
+        <button class="btn btn-secondary btn-sm" title="Edit this client" onclick="openAdminEditItem({{ cl.id }}, 'client', '{{ cl.name | replace("'", "\\'") }}', `{{ cl.description | replace('`', '\\`') }}`, '{{ cl.download_link }}', '{{ cl.mc_versions | join(",") }}')">Edit</button>
         <form method="POST" action="/api/v1/auth/admin/pages/delete/{{ cl.id }}" style="display:inline;" data-confirm="Delete this client permanently?">
-          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          <button type="submit" class="btn btn-danger btn-sm" title="Permanently delete this client">Delete</button>
         </form>
       </div>
     </div>
@@ -211,8 +211,8 @@
         <input type="text" name="mc_versions" id="admin-edit-versions" class="input-field">
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end;">
-        <button type="button" onclick="document.getElementById('admin-edit-modal').classList.remove('open')" class="btn btn-ghost">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" onclick="document.getElementById('admin-edit-modal').classList.remove('open')" class="btn btn-ghost" title="Discard changes">Cancel</button>
+        <button type="submit" class="btn btn-primary" title="Save changes">Save</button>
       </div>
     </form>
   </div>
