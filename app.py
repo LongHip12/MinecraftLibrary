@@ -2401,6 +2401,20 @@ def admin_delete_backup(backup_id):
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route("/api/admin/restore-latest", methods=["POST"])
+def admin_restore_latest():
+    current_user = get_session_user(request)
+    if not current_user or not is_admin(current_user):
+        return jsonify({"success": False, "error": "Forbidden"}), 403
+    try:
+        row = supabase_backup.restore_latest_backup(DATA_DIR)
+        if not row:
+            return jsonify({"success": False, "error": "No backups found"}), 404
+        return jsonify({"success": True, "restored": row.get("created_at"), "label": row.get("label")})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route("/api/admin/rate-limit", methods=["POST"])
 def admin_set_rate_limit():
     current_user = get_session_user(request)
@@ -2427,8 +2441,14 @@ def api_docs():
     return render_template("api_docs.html", user=user, is_admin_user=is_admin_user, user_has_token=bool(acc and acc.get("api_token")) if acc else False)
 
 
-# Start Supabase auto-backup
+# Startup: restore from Supabase if local data is empty
+supabase_backup.startup_restore(DATA_DIR)
+
+# Start Supabase auto-backup every 5 minutes
 supabase_backup.start_auto_backup(DATA_DIR, DEFAULT_DATA)
+
+# Start Supabase auto-restore every 15 minutes
+supabase_backup.start_auto_restore(DATA_DIR)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 3000))
