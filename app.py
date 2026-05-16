@@ -35,7 +35,10 @@ DEFAULT_DATA = {
     "mods-data.json": {"mods": [], "next_id": 1, "next_client_id": 1},
     "sessions-data.json": {"sessions": {}},
     "forum-data.json": {"posts": []},
+    "settings-data.json": {"api_rate_limit": 60},
 }
+
+_rate_limit_store = {}
 
 for _fname, _default in DEFAULT_DATA.items():
     _fpath = os.path.join(DATA_DIR, _fname)
@@ -1191,6 +1194,7 @@ def admin_dashboard():
     accounts = load_json("accounts-data.json")
     mods_data = load_json("mods-data.json")
     sessions = load_json("sessions-data.json")
+    settings = load_json("settings-data.json")
     today = get_today_str()
     labels, chart_views, chart_downloads = get_chart_data(mods_data["mods"], 14)
     top_mods = sorted(mods_data["mods"], key=lambda m: m.get("views", 0), reverse=True)[:8]
@@ -1218,7 +1222,8 @@ def admin_dashboard():
         top_tags=sorted(tag_counts.items(), key=lambda x: x[1], reverse=True)[:10],
         trending=sorted(mods_data["mods"],
                         key=lambda m: m.get("daily_stats", {}).get(today, {}).get("views", 0),
-                        reverse=True)[:5])
+                        reverse=True)[:5],
+        api_rate_limit=settings.get("api_rate_limit", 60))
 
 
 @app.route("/error")
@@ -1839,6 +1844,28 @@ def api_forum_messages(post_id):
     return jsonify({"success": True, "messages": [msg_to_dict(m) for m in msgs], "total": len(post.get("messages", []))})
 
 
+
+
+def get_api_rate_limit():
+    settings = load_json("settings-data.json")
+    return int(settings.get("api_rate_limit", 60))
+
+
+def check_api_rate_limit(token):
+    if not token:
+        return None
+    limit = get_api_rate_limit()
+    now = datetime.now()
+    window_start = now - timedelta(seconds=60)
+    timestamps = _rate_limit_store.get(token, [])
+    timestamps = [t for t in timestamps if t > window_start]
+    if len(timestamps) >= limit:
+        _rate_limit_store[token] = timestamps
+        return jsonify({"success": False, "error": "Rate limit exceeded", "retry_after": 60}), 429
+    timestamps.append(now)
+    _rate_limit_store[token] = timestamps
+    return None
+
 def _get_api_user(token_header):
     token = (token_header or "").strip()
     if not token:
@@ -1884,6 +1911,9 @@ def api_v2_upload():
         uploader = _get_api_user(token)
         if not uploader:
             return jsonify({"success": False, "error": "Invalid or missing token"}), 401
+        rl = check_api_rate_limit(token)
+        if rl:
+            return rl
         upload_type = request.headers.get("X-Type", "").strip().lower()
         if upload_type == "mods":
             upload_type = "mod"
@@ -1950,6 +1980,9 @@ def api_v2_edit():
         editor = _get_api_user(token)
         if not editor:
             return jsonify({"success": False, "error": "Invalid or missing token"}), 401
+        rl = check_api_rate_limit(token)
+        if rl:
+            return rl
         product_type = request.headers.get("X-Type", "").strip().lower()
         if product_type == "mods":
             product_type = "mod"
@@ -2010,6 +2043,9 @@ def api_v2_delete():
         deleter = _get_api_user(token)
         if not deleter:
             return jsonify({"success": False, "error": "Invalid or missing token"}), 401
+        rl = check_api_rate_limit(token)
+        if rl:
+            return rl
         product_type = request.headers.get("X-Type", "").strip().lower()
         if product_type == "mods":
             product_type = "mod"
@@ -2038,110 +2074,6 @@ def api_v2_delete():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/api/v2/mods", methods=["GET"])
-def api_v2_mods():
-    try:
-        mods_data = load_json("mods-data.json")
-        mods = [m for m in mods_data["mods"] if m.get("type", "mod") == "mod"]
-        tag        = request.args.get("tag",       "").strip().lower()
-        search     = request.args.get("search",    "").strip().lower()
-        loaders_raw= request.args.get("loaders",   "").strip().lower()
-        mcversion  = request.args.get("mcversion", "").strip().lower()
-        edition    = request.args.get("edition",   "").strip().lower()
-        version    = request.args.get("version",   "").strip().lower()
-        sort_by    = request.args.get("sort",      "newest").strip().lower()
-        max_count  = min(int(request.args.get("max", 20)), 100)
-        if tag:
-            mods = [m for m in mods if tag in [t.strip().lower() for t in m.get("tags", [])]]
-        if search:
-            mods = [m for m in mods if search in str(m.get("name") or "").lower() or search in str(m.get("description") or "").lower()]
-        if loaders_raw:
-            req_loaders = [l.strip() for l in loaders_raw.replace(", ", ",").split(",") if l.strip()]
-            mods = [m for m in mods if any(rl in [str(l or "").strip().lower() for l in m.get("loaders", [])] for rl in req_loaders)]
-        if mcversion:
-            mods = [m for m in mods if any(mcversion in str(v or "").lower() for v in m.get("mc_versions", []))]
-        if edition:
-            mods = [m for m in mods if edition in [str(e or "").strip().lower() for e in m.get("editions", [])]]
-        if version:
-            req_vers = [v.strip().lower() for v in version.replace(", ", ",").split(",") if v.strip()]
-            mods = [m for m in mods if any(rv in str(vv or "").lower() for rv in req_vers for vv in m.get("mc_versions", []))]
-        if sort_by == "downloads":
-            mods = sorted(mods, key=lambda m: m.get("downloads") or 0, reverse=True)
-        elif sort_by == "views":
-            mods = sorted(mods, key=lambda m: m.get("views") or 0, reverse=True)
-        else:
-            mods = sorted(mods, key=lambda m: str(m.get("created_at") or ""), reverse=True)
-        mods = mods[:max_count]
-        result = [{
-            "id": m["id"],
-            "name": m.get("name", ""),
-            "description": m.get("description", ""),
-            "Edition": m.get("editions", []),
-            "MinecraftVersion": m.get("mc_versions", []),
-            "Tags": m.get("tags", []),
-            "Loaders": m.get("loaders", []),
-            "Download": m.get("download_link", ""),
-            "views": m.get("views", 0),
-            "downloads": m.get("downloads", 0),
-            "created_at": m.get("created_at", ""),
-        } for m in mods]
-        return jsonify({"success": True, "mods": result, "count": len(result)})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-@app.route("/api/v2/clients", methods=["GET"])
-def api_v2_clients():
-    try:
-        mods_data = load_json("mods-data.json")
-        clients   = [m for m in mods_data["mods"] if m.get("type") == "client"]
-        tag        = request.args.get("tag",       "").strip().lower()
-        search     = request.args.get("search",    "").strip().lower()
-        loaders_raw= request.args.get("loaders",   "").strip().lower()
-        mcversion  = request.args.get("mcversion", "").strip().lower()
-        edition    = request.args.get("edition",   "").strip().lower()
-        version    = request.args.get("version",   "").strip().lower()
-        sort_by    = request.args.get("sort",      "newest").strip().lower()
-        max_count  = min(int(request.args.get("max", 20)), 100)
-        if tag:
-            clients = [c for c in clients if tag in [t.strip().lower() for t in c.get("tags", [])]]
-        if search:
-            clients = [c for c in clients if search in str(c.get("name") or "").lower() or search in str(c.get("description") or "").lower()]
-        if loaders_raw:
-            req_loaders = [l.strip() for l in loaders_raw.replace(", ", ",").split(",") if l.strip()]
-            clients = [c for c in clients if any(rl in [str(l or "").strip().lower() for l in c.get("loaders", [])] for rl in req_loaders)]
-        if mcversion:
-            clients = [c for c in clients if any(mcversion in str(v or "").lower() for v in c.get("mc_versions", []))]
-        if edition:
-            clients = [c for c in clients if edition in [str(e or "").strip().lower() for e in c.get("editions", [])]]
-        if version:
-            req_vers = [v.strip().lower() for v in version.replace(", ", ",").split(",") if v.strip()]
-            clients = [c for c in clients if any(rv in str(vv or "").lower() for rv in req_vers for vv in c.get("mc_versions", []))]
-        if sort_by == "downloads":
-            clients = sorted(clients, key=lambda c: c.get("downloads") or 0, reverse=True)
-        elif sort_by == "views":
-            clients = sorted(clients, key=lambda c: c.get("views") or 0, reverse=True)
-        else:
-            clients = sorted(clients, key=lambda c: str(c.get("created_at") or ""), reverse=True)
-        clients = clients[:max_count]
-        result = [{
-            "id": c.get("client_id", c["id"]),
-            "name": c.get("name", ""),
-            "description": c.get("description", ""),
-            "Edition": c.get("editions", []),
-            "MinecraftVersion": c.get("mc_versions", []),
-            "Tags": c.get("tags", []),
-            "Loaders": c.get("loaders", []),
-            "Download": c.get("download_link", ""),
-            "views": c.get("views", 0),
-            "downloads": c.get("downloads", 0),
-            "created_at": c.get("created_at", ""),
-        } for c in clients]
-        return jsonify({"success": True, "clients": result, "count": len(result)})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
 @app.route("/api/v2/dashboard-data", methods=["GET"])
 def api_v2_dashboard_data():
     try:
@@ -2150,6 +2082,9 @@ def api_v2_dashboard_data():
         user = next((u for u in accounts.get("users", []) if (u.get("api_token") or "").strip() == token), None)
         if not user:
             return jsonify({"success": False, "error": "Invalid token"}), 401
+        rl = check_api_rate_limit(token)
+        if rl:
+            return rl
         mods_data = load_json("mods-data.json")
         user_mods = [m for m in mods_data["mods"] if m.get("uploader_id") == user["id"]]
         today = get_today_str()
@@ -2158,10 +2093,7 @@ def api_v2_dashboard_data():
         views_today = sum(m.get("daily_stats", {}).get(today, {}).get("views", 0) for m in user_mods)
         downloads_today = sum(m.get("daily_stats", {}).get(today, {}).get("downloads", 0) for m in user_mods)
         top_mods = sorted(user_mods, key=lambda m: m.get("views") or 0, reverse=True)[:5]
-        hide_follow = request.headers.get("X-HideFollow", request.args.get("X-HideFollow", "")).strip().lower()
-        show_follow = request.args.get("showfollow", "false").lower() in ("true", "1")
-        if hide_follow in ("none", "off", "false"):
-            show_follow = True
+        hide_follow = request.headers.get("X-HideFollow", "").strip().lower() in ("true", "1")
         followers_count = len(user.get("followers", []))
         following_count = len(user.get("following", []))
         resp = {
@@ -2177,13 +2109,11 @@ def api_v2_dashboard_data():
             "Following": following_count,
             "TopMods": [{"id": m["id"], "name": m.get("name", ""), "views": m.get("views", 0), "downloads": m.get("downloads", 0)} for m in top_mods],
         }
-        if show_follow:
+        if not hide_follow:
             follower_ids = user.get("followers", [])
             following_ids = user.get("following", [])
-            if hide_follow not in ("followers", "both"):
-                resp["FollowersList"] = [u2.get("username") for u2 in accounts["users"] if u2["id"] in follower_ids]
-            if hide_follow not in ("following", "both"):
-                resp["FollowingList"] = [u2.get("username") for u2 in accounts["users"] if u2["id"] in following_ids]
+            resp["FollowersList"] = [u2.get("username") for u2 in accounts["users"] if u2["id"] in follower_ids]
+            resp["FollowingList"] = [u2.get("username") for u2 in accounts["users"] if u2["id"] in following_ids]
         return jsonify(resp)
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -2197,6 +2127,9 @@ def api_v2_profile_edit():
         user = next((u for u in accounts.get("users", []) if u.get("api_token") == token), None)
         if not user:
             return jsonify({"success": False, "error": "Invalid token"}), 401
+        rl = check_api_rate_limit(token)
+        if rl:
+            return rl
         data = request.get_json(silent=True) or {}
         def g(k): return (data.get(k) or request.form.get(k) or request.headers.get("X-" + k, "")).strip()
         new_pw = g("password") or g("Password")
@@ -2204,7 +2137,7 @@ def api_v2_profile_edit():
         new_display = g("display_name") or g("DisplayName")
         new_avatar = g("avatar") or g("Avatar")
         new_banner = g("banner") or g("Banner")
-        hide_follow = request.headers.get("X-HideFollow", "").strip().lower()
+        hide_follow_raw = request.headers.get("X-HideFollow", "").strip().lower()
         if new_pw:
             if len(new_pw) < 6:
                 return jsonify({"success": False, "error": "Password must be at least 6 characters"}), 400
@@ -2224,13 +2157,11 @@ def api_v2_profile_edit():
             user["avatar"] = new_avatar
         if new_banner:
             user["banner"] = new_banner
-        if hide_follow in ("followers", "both"):
+        if hide_follow_raw in ("true", "1"):
             user["hide_followers"] = True
-        elif hide_follow in ("none", "off", "false"):
-            user["hide_followers"] = False
-        if hide_follow in ("following", "both"):
             user["hide_following"] = True
-        elif hide_follow in ("none", "off", "false"):
+        elif hide_follow_raw in ("false", "0"):
+            user["hide_followers"] = False
             user["hide_following"] = False
         save_json("accounts-data.json", accounts)
         return jsonify({"success": True, "username": user["username"], "display_name": user.get("display_name")})
@@ -2245,6 +2176,9 @@ def api_v3_edit():
         admin_user = _get_api_user(token)
         if not admin_user or not is_admin(admin_user):
             return jsonify({"success": False, "error": "Admin token required"}), 403
+        rl = check_api_rate_limit(token)
+        if rl:
+            return rl
         product_type = request.headers.get("X-Type", "").strip().lower()
         if product_type in ("mods",):
             product_type = "mod"
@@ -2286,6 +2220,9 @@ def api_v3_user():
         admin_user = _get_api_user(token)
         if not admin_user or not is_admin(admin_user):
             return jsonify({"success": False, "error": "Admin token required"}), 403
+        rl = check_api_rate_limit(token)
+        if rl:
+            return rl
         data = request.get_json(silent=True) or {}
         def gh(k): return request.headers.get(k, data.get(k.lower().replace("-", "_"), "")).strip()
         target_id = gh("X-UserId")
@@ -2335,6 +2272,9 @@ def api_v3_data():
         admin_user = _get_api_user(token)
         if not admin_user or not is_admin(admin_user):
             return jsonify({"success": False, "error": "Admin token required"}), 403
+        rl = check_api_rate_limit(token.strip())
+        if rl:
+            return rl
         accounts = load_json("accounts-data.json")
         mods_data = load_json("mods-data.json")
         sessions = load_json("sessions-data.json")
@@ -2354,6 +2294,25 @@ def api_v3_data():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+
+
+@app.route("/api/admin/rate-limit", methods=["POST"])
+def admin_set_rate_limit():
+    current_user = get_session_user(request)
+    if not current_user or not is_admin(current_user):
+        return jsonify({"success": False, "error": "Forbidden"}), 403
+    data = request.get_json(silent=True) or {}
+    val = data.get("api_rate_limit") or request.form.get("api_rate_limit")
+    try:
+        limit = max(1, int(val))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "Invalid value"}), 400
+    settings = load_json("settings-data.json")
+    settings["api_rate_limit"] = limit
+    save_json("settings-data.json", settings)
+    _rate_limit_store.clear()
+    return jsonify({"success": True, "api_rate_limit": limit})
 
 @app.route("/api/docs")
 def api_docs():
