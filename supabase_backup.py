@@ -20,7 +20,7 @@ def is_configured():
 
 def save_backup(data_dir, default_data, label="Manual"):
     if not is_configured():
-        raise RuntimeError("Supabase chưa được cấu hình (thiếu SUPABASE_URL hoặc SUPABASE_SERVICE_KEY)")
+        raise RuntimeError("Supabase is not configured (missing SUPABASE_URL or SUPABASE_SERVICE_KEY)")
     snapshot = {}
     for fname in default_data.keys():
         fpath = os.path.join(data_dir, fname)
@@ -62,7 +62,7 @@ def list_backups(limit=30):
 
 def restore_backup(backup_id, data_dir):
     if not is_configured():
-        raise RuntimeError("Supabase chưa được cấu hình")
+        raise RuntimeError("Supabase is not configured")
     resp = requests.get(
         f"{SUPABASE_URL}/rest/v1/backups",
         headers={**_headers(), "Prefer": ""},
@@ -76,7 +76,7 @@ def restore_backup(backup_id, data_dir):
     resp.raise_for_status()
     results = resp.json()
     if not results:
-        raise ValueError("Không tìm thấy backup")
+        raise ValueError("Backup not found")
     row = results[0]
     snapshot = row["data"]
     os.makedirs(data_dir, exist_ok=True)
@@ -88,7 +88,7 @@ def restore_backup(backup_id, data_dir):
 
 def delete_backup(backup_id):
     if not is_configured():
-        raise RuntimeError("Supabase chưa được cấu hình")
+        raise RuntimeError("Supabase is not configured")
     resp = requests.delete(
         f"{SUPABASE_URL}/rest/v1/backups",
         headers=_headers(),
@@ -107,7 +107,7 @@ def _run_auto_backup(data_dir, default_data):
     try:
         save_backup(data_dir, default_data, label="Auto")
     except Exception as e:
-        print(f"[supabase_backup] Auto backup thất bại: {e}")
+        print(f"[supabase_backup] Auto backup failed: {e}")
     finally:
         _auto_timer = threading.Timer(
             AUTO_BACKUP_INTERVAL_HOURS * 3600,
@@ -118,10 +118,10 @@ def _run_auto_backup(data_dir, default_data):
         _auto_timer.start()
 
 def start_auto_backup(data_dir, default_data, delay_seconds=30):
-    """Gọi hàm này 1 lần khi khởi động app để bật auto-backup."""
+    """Call this once on app startup to enable auto-backup."""
     global _auto_timer
     if not is_configured():
-        print("[supabase_backup] Auto backup bị tắt — chưa cấu hình Supabase.")
+        print("[supabase_backup] Auto backup disabled — Supabase not configured.")
         return
     _auto_timer = threading.Timer(
         delay_seconds,
@@ -130,4 +130,4 @@ def start_auto_backup(data_dir, default_data, delay_seconds=30):
     )
     _auto_timer.daemon = True
     _auto_timer.start()
-    print(f"[supabase_backup] Auto backup bật — sẽ chạy sau {delay_seconds}s, rồi mỗi {AUTO_BACKUP_INTERVAL_HOURS}h.")
+    print(f"[supabase_backup] Auto backup enabled — first run in {delay_seconds}s, then every {AUTO_BACKUP_INTERVAL_HOURS}h.")

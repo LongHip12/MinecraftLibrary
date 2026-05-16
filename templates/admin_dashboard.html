@@ -27,6 +27,9 @@ document.addEventListener('DOMContentLoaded', function() {
       }).catch(function(){ btn.disabled = false; btn.textContent = 'Save'; });
     });
   }
+
+  document.getElementById('saveDataBtn').addEventListener('click', downloadData);
+  document.getElementById('cloudBackupBtn').addEventListener('click', backupToCloud);
   loadBackupList();
 });
 
@@ -55,13 +58,13 @@ function backupToCloud() {
       btn.disabled = false;
       btn.innerHTML = ICON_CLOUD + ' Save to Cloud';
       if (d.success) {
-        showBackupMsg('✓ Đã lưu lên Supabase!', '#22c55e');
+        showBackupMsg('✓ Saved to Supabase!', '#22c55e');
         loadBackupList();
       } else {
-        showBackupMsg('✗ Lỗi: ' + d.error, '#ef4444');
+        showBackupMsg('✗ Error: ' + d.error, '#ef4444');
       }
     })
-    .catch(function(){ btn.disabled = false; btn.innerHTML = ICON_CLOUD + ' Save to Cloud'; showBackupMsg('✗ Lỗi kết nối', '#ef4444'); });
+    .catch(function(){ btn.disabled = false; btn.innerHTML = ICON_CLOUD + ' Save to Cloud'; showBackupMsg('✗ Connection error', '#ef4444'); });
 }
 
 function showBackupMsg(text, color) {
@@ -75,46 +78,53 @@ function showBackupMsg(text, color) {
 function loadBackupList() {
   var list = document.getElementById('backupList');
   if (!list) return;
-  list.innerHTML = '<div style="color:var(--text3);font-size:12px;">Đang tải...</div>';
+  list.innerHTML = '<div style="color:var(--text3);font-size:12px;">Loading...</div>';
   fetch('/api/admin/backups')
     .then(function(r){return r.json();})
     .then(function(d){
       if (!d.success || !d.backups.length) {
-        list.innerHTML = '<div style="color:var(--text3);font-size:12px;">Chưa có backup nào.</div>';
+        list.innerHTML = '<div style="color:var(--text3);font-size:12px;">No backups yet.</div>';
         return;
       }
       list.innerHTML = d.backups.map(function(b){
         var dt = new Date(b.created_at);
-        var label = b.label === 'Auto' ?
-          '<span style="font-size:10px;background:#334155;color:#94a3b8;border-radius:4px;padding:1px 6px;">Auto</span>' :
-          '<span style="font-size:10px;background:#1e3a5f;color:#60a5fa;border-radius:4px;padding:1px 6px;">Manual</span>';
+        var dtStr = dt.toLocaleString();
+        var label = b.label === 'Auto'
+          ? '<span style="font-size:10px;background:#334155;color:#94a3b8;border-radius:4px;padding:1px 6px;">Auto</span>'
+          : '<span style="font-size:10px;background:#1e3a5f;color:#60a5fa;border-radius:4px;padding:1px 6px;">Manual</span>';
         return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">'
           + label
-          + '<span style="flex:1;color:var(--text2);">' + dt.toLocaleString('vi-VN') + '</span>'
-          + '<button title="Restore backup này" onclick="restoreBackup('' + b.id + '','' + dt.toLocaleString('vi-VN') + '')" style="padding:3px 10px;border-radius:6px;background:#0f4c81;color:#60a5fa;border:none;cursor:pointer;font-size:11px;font-family:inherit;">Restore</button>'
-          + '<button title="Xóa backup này" onclick="deleteBackup('' + b.id + '',this)" style="padding:3px 8px;border-radius:6px;background:#450a0a;color:#f87171;border:none;cursor:pointer;font-size:11px;font-family:inherit;">✕</button>'
+          + '<span style="flex:1;color:var(--text2);">' + dtStr + '</span>'
+          + '<button class="bk-restore" data-id="' + b.id + '" data-label="' + dtStr + '" title="Restore this backup" style="padding:3px 10px;border-radius:6px;background:#0f4c81;color:#60a5fa;border:none;cursor:pointer;font-size:11px;font-family:inherit;">Restore</button>'
+          + '<button class="bk-delete" data-id="' + b.id + '" title="Delete this backup" style="padding:3px 8px;border-radius:6px;background:#450a0a;color:#f87171;border:none;cursor:pointer;font-size:11px;font-family:inherit;">✕</button>'
           + '</div>';
       }).join('');
+      list.querySelectorAll('.bk-restore').forEach(function(btn){
+        btn.addEventListener('click', function(){ restoreBackup(btn.dataset.id, btn.dataset.label); });
+      });
+      list.querySelectorAll('.bk-delete').forEach(function(btn){
+        btn.addEventListener('click', function(){ deleteBackup(btn.dataset.id, btn); });
+      });
     })
-    .catch(function(){ list.innerHTML = '<div style="color:#f87171;font-size:12px;">Không thể kết nối Supabase.</div>'; });
+    .catch(function(){ list.innerHTML = '<div style="color:#f87171;font-size:12px;">Cannot connect to Supabase.</div>'; });
 }
 
 function restoreBackup(id, label) {
-  if (!confirm('Khôi phục backup "' + label + '"? Dữ liệu hiện tại sẽ bị ghi đè!')) return;
+  if (!confirm('Restore backup from "' + label + '"? Current data will be overwritten!')) return;
   fetch('/api/admin/restore/' + id, {method:'POST'})
     .then(function(r){return r.json();})
     .then(function(d){
       if (d.success) {
-        showBackupMsg('✓ Đã khôi phục backup ' + d.restored, '#22c55e');
+        showBackupMsg('✓ Restored backup from ' + d.restored, '#22c55e');
       } else {
         showBackupMsg('✗ ' + d.error, '#ef4444');
       }
     })
-    .catch(function(){ showBackupMsg('✗ Lỗi kết nối', '#ef4444'); });
+    .catch(function(){ showBackupMsg('✗ Connection error', '#ef4444'); });
 }
 
 function deleteBackup(id, btn) {
-  if (!confirm('Xóa backup này?')) return;
+  if (!confirm('Delete this backup?')) return;
   btn.disabled = true;
   fetch('/api/admin/backup/' + id, {method:'DELETE'})
     .then(function(r){return r.json();})
@@ -294,21 +304,21 @@ function deleteBackup(id, btn) {
       Backup Data
     </div>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-      <button id="saveDataBtn" onclick="downloadData()" title="Download file backup mã hóa về máy" style="padding:8px 16px;border-radius:8px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;">
+      <button id="saveDataBtn" title="Download encrypted backup to your machine" style="padding:8px 16px;border-radius:8px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         Download Backup
       </button>
-      <button id="cloudBackupBtn" onclick="backupToCloud()" title="Lưu backup lên Supabase ngay bây giờ" style="padding:8px 16px;border-radius:8px;background:#0f172a;color:#60a5fa;border:1px solid #1e3a5f;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;">
+      <button id="cloudBackupBtn" title="Save backup to Supabase now" style="padding:8px 16px;border-radius:8px;background:#0f172a;color:#60a5fa;border:1px solid #1e3a5f;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path></svg>
         Save to Cloud
       </button>
       <span id="backupActionMsg" style="font-size:12px;display:none;"></span>
     </div>
     <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">
-      ☁ Auto backup mỗi 6 tiếng · Giữ 50 bản gần nhất
+      ☁ Auto backup every 6 hours · Keeps last 50 snapshots
     </div>
     <div id="backupList" style="max-height:220px;overflow-y:auto;">
-      <div style="color:var(--text3);font-size:12px;">Đang tải...</div>
+      <div style="color:var(--text3);font-size:12px;">Loading...</div>
     </div>
   </div>
 
