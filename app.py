@@ -385,8 +385,10 @@ def verify_otp_code(email, code, purpose):
 
 
 def get_user_by_email(email):
+    if not email:
+        return None
     accounts = load_json("accounts-data.json")
-    return next((u for u in accounts["users"] if u.get("email", "").lower() == email.lower()), None)
+    return next((u for u in accounts["users"] if (u.get("email") or "").lower() == email.lower()), None)
 
 
 def verify_hcaptcha(token):
@@ -715,7 +717,7 @@ def login():
             error = "Please complete the captcha"
         else:
             accounts = load_json("accounts-data.json")
-            found = next((u for u in accounts["users"] if u["username"].lower() == username.lower() or u.get("email", "").lower() == username.lower()), None)
+            found = next((u for u in accounts["users"] if u["username"].lower() == username.lower() or (u.get("email") or "").lower() == username.lower()), None)
             if found and found.get("password") and check_password_hash(found["password"], password):
                 token, expires = create_session(found["id"], remember)
                 device_token = issue_device_token()
@@ -738,7 +740,7 @@ def api_send_otp():
         purpose = data.get("purpose", "")
         email = ""
         if purpose in ("register", "reset"):
-            email = data.get("email", "").strip().lower()
+            email = (data.get("email") or "").strip().lower()
             if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
                 return jsonify({"success": False, "error": "Invalid email address"})
             if purpose == "register":
@@ -762,11 +764,11 @@ def api_send_otp():
             logged_user = get_session_user(request)
             if not logged_user:
                 return jsonify({"success": False, "error": "Not logged in"})
-            email = data.get("email", "").strip().lower()
+            email = (data.get("email") or "").strip().lower()
             if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
                 return jsonify({"success": False, "error": "Invalid email address"})
             accounts = load_json("accounts-data.json")
-            if any(u.get("email", "").lower() == email and u["id"] != logged_user["id"] for u in accounts["users"]):
+            if any((u.get("email") or "").lower() == email and u["id"] != logged_user["id"] for u in accounts["users"]):
                 return jsonify({"success": False, "error": "Email already used by another account"})
         else:
             return jsonify({"success": False, "error": "Invalid purpose"})
@@ -797,11 +799,11 @@ def add_email():
     if not user:
         return jsonify({"success": False, "error": "Not logged in"})
     data = request.get_json(silent=True) or {}
-    email = data.get("email", "").strip().lower()
+    email = (data.get("email") or "").strip().lower()
     if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
         return jsonify({"success": False, "error": "Invalid email address"})
     accounts = load_json("accounts-data.json")
-    if any(u.get("email", "").lower() == email and u["id"] != user["id"] for u in accounts["users"]):
+    if any((u.get("email") or "").lower() == email and u["id"] != user["id"] for u in accounts["users"]):
         return jsonify({"success": False, "error": "Email already used by another account"})
     target = next((u for u in accounts["users"] if u["id"] == user["id"]), None)
     if not target:
@@ -867,7 +869,7 @@ def register():
             accounts = load_json("accounts-data.json")
             if any(u["username"].lower() == username.lower() for u in accounts["users"]):
                 error = "Username already taken"
-            elif any(u.get("email", "").lower() == email for u in accounts["users"]):
+            elif any((u.get("email") or "").lower() == email for u in accounts["users"]):
                 error = "Email already in use"
             else:
                 new_id = str(uuid.uuid4())
@@ -948,7 +950,7 @@ def reset_password():
         if not verify_otp_code(email, otp_code, "reset"):
             return jsonify({"success": False, "error": "Invalid or expired verification code"})
         accounts = load_json("accounts-data.json")
-        target = next((u for u in accounts["users"] if u.get("email", "").lower() == email), None)
+        target = next((u for u in accounts["users"] if (u.get("email") or "").lower() == email), None)
         if not target:
             return jsonify({"success": False, "error": "Account not found"})
         target["password"] = generate_password_hash(new_password)
@@ -1016,7 +1018,7 @@ def google_callback():
     accounts = load_json("accounts-data.json")
     found_user = next((u for u in accounts["users"] if u.get("google_id") == google_id), None)
     if not found_user and g_email:
-        found_user = next((u for u in accounts["users"] if u.get("email", "").lower() == g_email.lower()), None)
+        found_user = next((u for u in accounts["users"] if (u.get("email") or "").lower() == g_email.lower()), None)
         if found_user:
             found_user["google_id"] = google_id
             save_json("accounts-data.json", accounts)
@@ -1133,7 +1135,7 @@ def confirm_change_email():
     if not user:
         return jsonify({"success": False, "error": "Not logged in"})
     data = request.get_json(silent=True) or {}
-    new_email = data.get("email", "").strip().lower()
+    new_email = (data.get("email") or "").strip().lower()
     otp_code = data.get("otp_code", "").strip()
     auth_token = data.get("auth_token", "").strip()
     if not new_email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', new_email):
@@ -1152,7 +1154,7 @@ def confirm_change_email():
     if not verify_otp_code(new_email, otp_code, "change_email"):
         return jsonify({"success": False, "error": "Invalid or expired code for new email"})
     accounts = load_json("accounts-data.json")
-    if any(u.get("email", "").lower() == new_email and u["id"] != user["id"] for u in accounts["users"]):
+    if any((u.get("email") or "").lower() == new_email and u["id"] != user["id"] for u in accounts["users"]):
         return jsonify({"success": False, "error": "Email already used by another account"})
     target = next((u for u in accounts["users"] if u["id"] == user["id"]), None)
     if not target:
