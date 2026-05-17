@@ -52,7 +52,7 @@
     {% endif %}
 
     <div class="admin-action-target">
-      <img src="{{ target.avatar if target.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="{{ target.display_name }}">
+      <img src="{{ target.avatar if target.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="{{ target.display_name }}" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
       <div>
         <div style="font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;">
           {{ target.display_name }}
