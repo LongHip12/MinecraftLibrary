@@ -1374,6 +1374,7 @@
 /* ── Mobile category dropdown ── */
 .mobile-cat-dropdown-wrap {
   position: relative;
+  overflow: visible;
   margin-bottom: 14px;
 }
 .mobile-cat-dropdown-btn {
