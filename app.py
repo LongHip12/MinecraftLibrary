@@ -2330,6 +2330,20 @@ def forum_index():
 
     for p in paginated:
         enrich_post(p)
+        cover = None
+        for att in p.get("attachments", []):
+            if att.get("is_image"):
+                cover = att["url"]
+                break
+        if not cover:
+            for msg in p.get("messages", []):
+                for att in msg.get("attachments", []):
+                    if att.get("is_image"):
+                        cover = att["url"]
+                        break
+                if cover:
+                    break
+        p["cover_image"] = cover
 
     total_messages = sum(
         len(p.get("messages", [])) +
@@ -2469,6 +2483,8 @@ def forum_add_reply(post_id, msg_id):
         return redirect(url_for("forum_post", post_id=post_id))
     content = request.form.get("content", "").strip()
     files = request.files.getlist("files")
+    reply_to_content = request.form.get("reply_to_content", "").strip()[:200]
+    reply_to_author = request.form.get("reply_to_author", "").strip()[:80]
     if content or files:
         attachments = save_forum_files(files)
         msg.setdefault("replies", []).append({
@@ -2477,6 +2493,8 @@ def forum_add_reply(post_id, msg_id):
             "content": content,
             "created_at": datetime.now().isoformat(),
             "reply_to_id": msg_id,
+            "reply_to_content": reply_to_content or None,
+            "reply_to_author": reply_to_author or None,
             "attachments": attachments,
         })
         save_forum(forum)
@@ -2505,6 +2523,8 @@ def forum_add_subreply(post_id, msg_id, rep_id):
         return jsonify({"success": False, "error": "Reply not found"}), 404
     content = request.form.get("content", "").strip()
     files = request.files.getlist("files")
+    reply_to_content = request.form.get("reply_to_content", "").strip()[:200]
+    reply_to_author = request.form.get("reply_to_author", "").strip()[:80]
     if not content and not files:
         return jsonify({"success": False, "error": "Message cannot be empty"}), 400
     attachments = save_forum_files(files)
@@ -2513,6 +2533,8 @@ def forum_add_subreply(post_id, msg_id, rep_id):
         "author_id": user["id"],
         "content": content,
         "created_at": datetime.now().isoformat(),
+        "reply_to_content": reply_to_content or None,
+        "reply_to_author": reply_to_author or None,
         "attachments": attachments,
     })
     save_forum(forum)
