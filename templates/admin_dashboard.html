@@ -789,6 +789,130 @@ function showCustomConfirm(title, message, confirmLabel, confirmColor, onConfirm
       </div>
     </div>
 
+  <div class="dash-section" id="consoleSection" style="margin-top:0;">
+    <div class="dash-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <span style="display:flex;align-items:center;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+        Console
+      </span>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span id="consoleLastUpdate" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
+        <div style="display:flex;gap:4px;" id="consoleLevelFilters">
+          <button onclick="setConsoleFilter('')" id="cf-all" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);">All</button>
+          <button onclick="setConsoleFilter('info')" id="cf-info" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;">Info</button>
+          <button onclick="setConsoleFilter('warn')" id="cf-warn" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;">Warn</button>
+          <button onclick="setConsoleFilter('error')" id="cf-error" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;">Error</button>
+          <button onclick="setConsoleFilter('debug')" id="cf-debug" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;">Debug</button>
+        </div>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);cursor:pointer;">
+          <input type="checkbox" id="consoleAutoScroll" checked style="width:12px;height:12px;cursor:pointer;">
+          Auto-scroll
+        </label>
+        <button onclick="clearConsole()" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;color:#fa5050;border-color:rgba(250,80,80,0.25);">✕ Clear</button>
+      </div>
+    </div>
+    <div id="consoleBox" style="background:#0c0c14;border:1px solid rgba(255,255,255,0.07);border-radius:10px;font-family:'Fira Mono','Cascadia Code','Consolas',monospace;font-size:12px;line-height:1.7;overflow-y:auto;max-height:480px;padding:0;">
+      <div id="consoleLines" style="padding:8px 0;"></div>
+    </div>
+    <div style="margin-top:6px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text3);">
+      <span id="consoleCount"></span>
+      <span>Refreshes every 2s · last 1000 lines kept</span>
+    </div>
+  </div>
+
+  <script>
+  var _consoleLogs = [];
+  var _consoleSince = '';
+  var _consoleFilter = '';
+  var _consoleCleared = false;
+  var _consoleClearedAt = '';
+
+  var _BADGE = {
+    info:    '<span style="display:inline-block;min-width:42px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.4px;border-radius:3px;padding:1px 6px;background:rgba(96,165,250,0.18);color:#60a5fa;margin-right:8px;">INFO</span>',
+    warn:    '<span style="display:inline-block;min-width:42px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.4px;border-radius:3px;padding:1px 6px;background:rgba(251,191,36,0.18);color:#fbbf24;margin-right:8px;">WARN</span>',
+    error:   '<span style="display:inline-block;min-width:42px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.4px;border-radius:3px;padding:1px 6px;background:rgba(250,80,80,0.18);color:#fa5050;margin-right:8px;">ERROR</span>',
+    debug:   '<span style="display:inline-block;min-width:42px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.4px;border-radius:3px;padding:1px 6px;background:rgba(148,163,184,0.15);color:#94a3b8;margin-right:8px;">DEBUG</span>',
+    startup: '<span style="display:inline-block;min-width:42px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.4px;border-radius:3px;padding:1px 6px;background:rgba(74,222,128,0.18);color:#4ade80;margin-right:8px;">START</span>'
+  };
+  var _MSG_COLOR = {info:'#d4d4e8',warn:'#fef3c7',error:'#fecaca',debug:'#94a3b8',startup:'#bbf7d0'};
+
+  function _escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function _renderLine(log) {
+    var lv = log.level || 'info';
+    var badge = _BADGE[lv] || _BADGE['info'];
+    var color = _MSG_COLOR[lv] || _MSG_COLOR['info'];
+    var ts = log.t ? log.t.replace('T',' ').slice(0,23) : '';
+    var bg = lv === 'error' ? 'rgba(250,80,80,0.04)' : lv === 'warn' ? 'rgba(251,191,36,0.03)' : 'transparent';
+    return '<div style="display:flex;align-items:flex-start;padding:2px 14px;border-bottom:1px solid rgba(255,255,255,0.02);background:'+bg+';min-height:24px;">'
+      + '<span style="color:#4a5568;font-size:10px;white-space:nowrap;padding-top:2px;margin-right:10px;min-width:152px;flex-shrink:0;">'+_escHtml(ts)+'</span>'
+      + badge
+      + '<span style="color:'+color+';word-break:break-all;white-space:pre-wrap;">'+_escHtml(log.msg)+'</span>'
+      + '</div>';
+  }
+
+  function setConsoleFilter(lv) {
+    _consoleFilter = lv;
+    ['all','info','warn','error','debug'].forEach(function(k) {
+      var btn = document.getElementById('cf-'+k);
+      if (!btn) return;
+      btn.style.background = ((lv==='' && k==='all') || lv===k) ? 'rgba(255,255,255,0.12)' : '';
+      btn.style.borderColor = ((lv==='' && k==='all') || lv===k) ? 'rgba(255,255,255,0.25)' : '';
+    });
+    _renderConsole();
+  }
+
+  function _renderConsole() {
+    var lines = _consoleLogs;
+    if (_consoleFilter) lines = lines.filter(function(l){ return l.level === _consoleFilter; });
+    var el = document.getElementById('consoleLines');
+    if (!el) return;
+    el.innerHTML = lines.length ? lines.map(_renderLine).join('') : '<div style="padding:20px 16px;color:#4a5568;font-size:12px;">No logs yet.</div>';
+    var cnt = document.getElementById('consoleCount');
+    if (cnt) cnt.textContent = lines.length + ' / ' + _consoleLogs.length + ' lines';
+    var box = document.getElementById('consoleBox');
+    var autoScroll = document.getElementById('consoleAutoScroll');
+    if (box && autoScroll && autoScroll.checked) box.scrollTop = box.scrollHeight;
+  }
+
+  function clearConsole() {
+    _consoleLogs = [];
+    _consoleClearedAt = new Date().toISOString().replace('T',' ').slice(0,23);
+    _consoleCleared = true;
+    _renderConsole();
+  }
+
+  function _fetchLogs() {
+    var url = '/api/admin/logs' + (_consoleSince ? '?since=' + encodeURIComponent(_consoleSince) : '');
+    fetch(url)
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d.success) return;
+        var newLogs = d.logs || [];
+        if (newLogs.length) {
+          if (!_consoleSince) {
+            _consoleLogs = newLogs;
+          } else {
+            _consoleLogs = _consoleLogs.concat(newLogs);
+            if (_consoleLogs.length > 1000) _consoleLogs = _consoleLogs.slice(-1000);
+          }
+          if (newLogs.length) {
+            _consoleSince = newLogs[newLogs.length-1].t;
+          }
+          _renderConsole();
+        }
+        var upd = document.getElementById('consoleLastUpdate');
+        if (upd) upd.textContent = 'Updated ' + new Date().toLocaleTimeString();
+      })
+      .catch(function(){});
+  }
+
+  _fetchLogs();
+  setInterval(_fetchLogs, 2000);
+  </script>
+
   <script>
   var _serviceLabels = {email_brevo:'Email (Brevo)',email_smtp:'Email (SMTP)',google_oauth:'Google OAuth',discord_oauth:'Discord OAuth',discord_bot:'Discord Bot',supabase_backup:'Supabase Backup'};
   function loadHealth() {
