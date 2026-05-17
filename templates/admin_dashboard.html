@@ -130,7 +130,7 @@
       <div>
       {% for u in recent_users %}
       <div class="user-row">
-        <img src="{{ u.avatar if u.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="{{ u.username }}" class="user-row-avatar">
+        <img src="{{ u.avatar if u.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="{{ u.username }}" class="user-row-avatar" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
         <div style="flex:1;min-width:0;">
           <div class="user-row-name">{{ u.display_name if u.display_name else u.username }}</div>
           <div class="user-row-time">@{{ u.username }} · Joined {{ u.created_at[:10] if u.created_at else '—' }}</div>
