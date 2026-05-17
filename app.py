@@ -41,6 +41,8 @@ GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "")
 DISCORD_CLIENT_ID = os.environ.get("DISCORD_CLIENT_ID", "")
 DISCORD_CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET", "")
 DISCORD_REDIRECT_URI = os.environ.get("DISCORD_REDIRECT_URI", "")
+DISCORD_GUILD_ID = os.environ.get("DISCORD_GUILD_ID", "")
+DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN", "")
 MAX_FILE_SIZE = 10 * 1024 * 1024
 FORUM_MAX_FILE_SIZE = 50 * 1024 * 1024
 
@@ -1166,7 +1168,7 @@ def discord_login():
         "client_id": DISCORD_CLIENT_ID,
         "redirect_uri": redirect_uri,
         "response_type": "code",
-        "scope": "identify email",
+        "scope": "identify email guilds.join",
         "state": state_data,
         "prompt": "consent"
     })
@@ -1214,6 +1216,23 @@ def discord_callback():
     d_global_name = dinfo.get("global_name") or d_username
     d_avatar_hash = dinfo.get("avatar")
     d_avatar = f"https://cdn.discordapp.com/avatars/{discord_id}/{d_avatar_hash}.png" if d_avatar_hash else ""
+
+    def try_join_guild(user_access_token, uid):
+        if DISCORD_GUILD_ID and DISCORD_BOT_TOKEN:
+            try:
+                requests.put(
+                    f"https://discord.com/api/guilds/{DISCORD_GUILD_ID}/members/{uid}",
+                    headers={
+                        "Authorization": f"Bot {DISCORD_BOT_TOKEN}",
+                        "Content-Type": "application/json"
+                    },
+                    json={"access_token": user_access_token},
+                    timeout=5
+                )
+            except Exception:
+                pass
+
+    try_join_guild(access_token, discord_id)
     accounts = load_json("accounts-data.json")
     if action == "link":
         current_user = get_session_user(request)
