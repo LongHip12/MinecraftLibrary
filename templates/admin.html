@@ -50,7 +50,7 @@
   <div class="admin-users-grid">
     {% for u in all_users %}
     <div class="admin-user-row">
-      <img src="{{ u.avatar if u.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="{{ u.display_name }}" class="admin-user-avatar">
+      <img src="{{ u.avatar if u.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="{{ u.display_name }}" class="admin-user-avatar" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
       <div class="admin-user-info">
         <div class="admin-user-name" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
           {{ u.display_name }}
