@@ -225,8 +225,8 @@
       if (svg) svg.style.transform = isOpen ? '' : 'rotate(180deg)';
       var span = btn.querySelector('span');
       if (span) {
-        var count = list.querySelectorAll('.reply-card').length;
-        span.textContent = isOpen ? count + ' phản hồi' : 'Ẩn ' + count + ' phản hồi';
+        var count = list.querySelectorAll('.reply-card, .subreply-card').length;
+        span.textContent = isOpen ? (count === 1 ? '1 reply' : count + ' replies') : 'Hide ' + (count === 1 ? '1 reply' : count + ' replies');
       }
     });
   });
