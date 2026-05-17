@@ -220,7 +220,6 @@
       <div class="img-select-area" id="img-select-area" onclick="document.getElementById('images-input').click()">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
         <span>Click to select images (PNG, JPG, GIF, WebP)</span>
-        <span style="font-size:11px;color:var(--text3);">First selected image will be used as the banner</span>
       </div>
       <input type="file" id="images-input" accept="image/*" multiple style="display:none" onchange="onImagesSelected(this)">
       <div class="img-queue" id="img-queue"></div>
@@ -381,6 +380,13 @@ function onImagesSelected(input) {
   input.value = '';
 }
 
+function setBannerImg(idx) {
+  if (idx === 0) return;
+  const item = imageQueue.splice(idx, 1)[0];
+  imageQueue.unshift(item);
+  renderQueue();
+}
+
 function renderQueue() {
   const q = document.getElementById('img-queue');
   q.innerHTML = '';
@@ -389,7 +395,7 @@ function renderQueue() {
     div.className = 'img-queue-item' + (idx === 0 ? ' banner-item' : '');
     const src = item.blob ? URL.createObjectURL(item.blob) : item.dataUrl;
     div.innerHTML =
-      `<img src="${src}" alt="Image ${idx+1}">` +
+      `<img src="${src}" alt="Image ${idx+1}" style="cursor:${idx === 0 ? 'default' : 'pointer'};" onclick="setBannerImg(${idx})">` +
       (idx === 0 ? `<div class="img-queue-badge">Banner</div>` : '') +
       `<div class="img-queue-btns">
         <button type="button" title="Crop this image" class="img-queue-btn" onclick="openCropper(${idx})">✂ Crop</button>
