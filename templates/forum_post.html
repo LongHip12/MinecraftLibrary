@@ -421,7 +421,7 @@
         {% endfor %}
         {% if user %}
         <button title="Add emoji reaction" class="react-add-btn" style="font-size:11px;padding:2px 6px;" type="button"
-          onclick="toggleMsgEmojiPicker(event,'{{ post.id }}','{{ msg.id }}')">
+          onclick="toggleForumReactPicker(event,'msg','{{ post.id }}','{{ msg.id }}')">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
@@ -503,7 +503,7 @@
               {% endfor %}
               {% if user %}
               <button title="Add emoji reaction" class="react-add-btn" style="font-size:11px;padding:2px 6px;" type="button"
-                onclick="toggleReplyEmojiPicker(event,'{{ post.id }}','{{ msg.id }}','{{ rep.id }}')">
+                onclick="toggleForumReactPicker(event,'rep','{{ post.id }}','{{ msg.id }}','{{ rep.id }}')">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               </button>
@@ -513,82 +513,6 @@
             <button class="delete-msg-btn" onclick="deleteReply('{{ post.id }}','{{ msg.id }}','{{ rep.id }}')" style="margin-top:6px;" title="Delete reply">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
             </button>
-            {% endif %}
-            <div style="display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap;">
-              {% if not post.locked or (user and user.tag == 'admin') %}
-              <button title="Reply to this reply" class="reply-btn"
-                data-msg="{{ msg.id }}" data-rep="{{ rep.id }}"
-                data-author="{{ rep.author.display_name if rep.author and rep.author.id else 'Anonymous' }}"
-                data-preview="{{ (rep.content or '')[:60] }}"
-                onclick="triggerSubReply(this)">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
-                <span>Reply</span>
-              </button>
-              {% endif %}
-              {% if rep.replies %}
-              <button title="Show/hide nested replies" class="toggle-replies-btn" data-target="subreplies-{{ rep.id }}">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                <span>{{ rep.replies|length }} {{ 'reply' if rep.replies|length == 1 else 'replies' }}</span>
-              </button>
-              {% endif %}
-            </div>
-            {% if rep.replies %}
-            <div class="subreplies-list" id="subreplies-{{ rep.id }}" style="display:none;flex-direction:column;gap:6px;margin-top:8px;padding-left:10px;border-left:2px solid rgba(255,255,255,0.07);">
-              {% for srep in rep.replies %}
-              <div class="subreply-card" id="srep-{{ srep.id }}" style="display:flex;gap:8px;align-items:flex-start;">
-                {% if srep.author and srep.author.id %}
-                <a href="/users/{{ srep.author.username }}">
-                  <img class="reply-avatar" style="width:22px;height:22px;min-width:22px;" src="{{ srep.author.avatar if srep.author.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
-                </a>
-                {% else %}
-                <img class="reply-avatar" style="width:22px;height:22px;min-width:22px;" src="https://i.imgur.com/BCzwCla.png" alt="" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
-                {% endif %}
-                <div style="flex:1;min-width:0;">
-                  <div class="reply-author-row">
-                    {% if srep.author and srep.author.id %}
-                    <a class="reply-author-name" href="/users/{{ srep.author.username }}">{{ srep.author.display_name }}</a>
-                    {% else %}
-                    <span class="reply-author-name" style="color:var(--text2);">Anonymous</span>
-                    {% endif %}
-                    {% if srep.author and srep.author.tag == 'admin' %}<span class="tag tag-admin" style="font-size:9px;">Admin</span>{% endif %}
-                    <span class="reply-date">{{ srep.created_at[:16].replace('T',' ') }} UTC</span>
-                  </div>
-                  {% if srep.reply_to_content %}
-                  <div class="msg-quote-block">
-                    <div class="msg-quote-author">↩ {{ srep.reply_to_author or 'User' }}</div>
-                    <div class="msg-quote-text">{{ srep.reply_to_content }}</div>
-                  </div>
-                  {% endif %}
-                  {% if srep.content %}<div class="reply-body">{{ srep.content }}</div>{% endif %}
-                  <div class="msg-reactions" id="srep-reactions-{{ srep.id }}" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;align-items:center;">
-                    {% set sreacts = srep.reactions | default({}) %}
-                    {% for emoji, urlist in sreacts.items() %}
-                    {% if urlist|length > 0 %}
-                    <button title="React" class="react-chip {% if user and user.id in urlist %}active{% endif %}"
-                      style="font-size:12px;padding:2px 8px;"
-                      data-emoji="{{ emoji }}" data-srep="{{ srep.id }}"
-                      onclick="toggleSubReplyReact('{{ post.id }}','{{ msg.id }}','{{ rep.id }}','{{ srep.id }}',this.dataset.emoji)">
-                      {{ emoji }}<span>{{ urlist|length }}</span>
-                    </button>
-                    {% endif %}
-                    {% endfor %}
-                    {% if user %}
-                    <button title="Add emoji reaction" class="react-add-btn" style="font-size:11px;padding:2px 6px;" type="button"
-                      onclick="toggleSubReplyEmojiPicker(event,'{{ post.id }}','{{ msg.id }}','{{ rep.id }}','{{ srep.id }}')">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    </button>
-                    {% endif %}
-                  </div>
-                  {% if user and (user.tag == 'admin' or user.id == srep.author_id or (post.author and user.id == post.author.id)) %}
-                  <button class="delete-msg-btn" onclick="deleteSubReply('{{ post.id }}','{{ msg.id }}','{{ rep.id }}','{{ srep.id }}')" style="margin-top:4px;" title="Delete reply">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
-                  </button>
-                  {% endif %}
-                </div>
-              </div>
-              {% endfor %}
-            </div>
             {% endif %}
           </div>
         </div>
@@ -1041,7 +965,7 @@ function _renderNewMsgHtml(msg) {
       '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg><span>Reply</span></button>'
     : '';
   var reactBtn = _IS_LOGGED_IN
-    ? '<button title="Add reaction" class="react-add-btn" style="font-size:11px;padding:2px 6px;" type="button" onclick="toggleMsgEmojiPicker(event,\'' + _escHtml(_POST_ID) + '\',\'' + _escHtml(msg.id) + '\')">' +
+    ? '<button title="Add reaction" class="react-add-btn" style="font-size:11px;padding:2px 6px;" type="button" onclick="toggleForumReactPicker(event,\'msg\',\'' + _escHtml(_POST_ID) + '\',\'' + _escHtml(msg.id) + '\')">' +
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>' +
       '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>'
     : '';
@@ -1137,176 +1061,91 @@ function _pollMessages(immediate) {
 
 // file previews are handled by forum.js window.previewChatFiles (accumulates, not replaces)
 
-// ── Message reactions ───────────────────────────────────
-var _msgEmojiTarget = null; // {postId, msgId}
+// ── Unified centered emoji picker for forum reactions ────
+var _fReactTarget = null;
 var _QUICK_EMOJIS = ['😀','😂','😍','🥰','😎','🤩','😱','🤔','🙄','😴','💀','😈','🤡','👻','🔥','💯','✅','❌','👍','👎','👋','🙌','🤝','💪','❤️','💔','💕','⭐','🎉','🎮','⚔️','🛡️','🏆','🎯','💎','🍀','🌟','🚀','🌈','⚡','🧠','🫶','🤌','👌','✌️','😮','😵','😤','🤯','👀','🫡','🫣','🥹'];
 
-function _buildMsgEmojiPicker() {
-  var p = document.createElement('div');
-  p.id = 'msg-emoji-picker';
-  p.style.cssText = 'position:fixed;z-index:5000;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px;display:none;box-shadow:0 20px 60px rgba(0,0,0,0.7);width:260px;';
+function _getOrBuildForumReactPicker() {
+  var p = document.getElementById('forum-react-picker');
+  if (p) return p;
+  var ov = document.createElement('div');
+  ov.id = 'forum-react-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:4999;background:rgba(0,0,0,0.35);backdrop-filter:blur(3px);display:none;';
+  ov.onclick = _closeForumReactPicker;
+  document.body.appendChild(ov);
+  p = document.createElement('div');
+  p.id = 'forum-react-picker';
+  p.style.cssText = 'position:fixed;z-index:5000;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:12px;box-shadow:0 24px 64px rgba(0,0,0,0.85),0 0 0 1px rgba(255,255,255,0.05);width:292px;display:none;';
   var search = document.createElement('input');
   search.type = 'text';
   search.placeholder = 'Search emoji…';
-  search.style.cssText = 'width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;font-family:inherit;box-sizing:border-box;margin-bottom:6px;outline:none;';
+  search.id = 'forum-react-search';
+  search.style.cssText = 'width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:7px;padding:7px 12px;color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:8px;outline:none;';
   var grid = document.createElement('div');
-  grid.style.cssText = 'display:grid;grid-template-columns:repeat(8,1fr);gap:2px;max-height:160px;overflow-y:auto;scrollbar-width:thin;';
-  function renderMsgGrid(filter) {
-    grid.innerHTML = '';
-    var filt = filter ? filter.toLowerCase() : '';
-    var list = _QUICK_EMOJIS.filter(function(em) {
-      if (!filt) return true;
-      if (em.includes(filt)) return true;
-      var names = {'😀':'smile happy','😂':'laugh cry','😍':'heart eyes love','🥰':'love hearts','😎':'cool sunglasses','👍':'thumbs up like','👎':'thumbs down','❤️':'heart love','🔥':'fire hot','💯':'hundred','✅':'check yes','❌':'no wrong','🎉':'party','😱':'scream shock','🤔':'thinking','💀':'skull dead','👻':'ghost','🌟':'star','🚀':'rocket','💪':'muscle strong','🙌':'hands celebrate','🤝':'handshake','🎮':'game','⚔️':'sword battle','🏆':'trophy win','👋':'wave hello','🤯':'mind blown','👀':'eyes','🫶':'heart hands','🫡':'salute','😮':'surprised','💔':'broken heart','😤':'angry','😴':'sleep','😈':'devil','😵':'dizzy','⭐':'star','🌈':'rainbow','⚡':'lightning','🧠':'brain'};
-      var n = names[em] || '';
-      return n.includes(filt);
-    });
-    list.forEach(function(em) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = em;
-      b.style.cssText = 'font-size:20px;padding:4px 2px;border:none;background:none;border-radius:5px;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;line-height:1.2;';
-      b.onmouseenter = function() { b.style.background = 'rgba(255,255,255,0.09)'; b.style.transform = 'scale(1.25)'; };
-      b.onmouseleave = function() { b.style.background = ''; b.style.transform = ''; };
-      b.onclick = function() {
-        if (_msgEmojiTarget) {
-          toggleMsgReact(_msgEmojiTarget.postId, _msgEmojiTarget.msgId, em);
-          p.style.display = 'none';
-          _msgEmojiTarget = null;
-        }
-      };
-      grid.appendChild(b);
-    });
-  }
-  search.addEventListener('input', function() { renderMsgGrid(search.value); });
-  renderMsgGrid('');
+  grid.id = 'forum-react-grid';
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(8,1fr);gap:2px;max-height:200px;overflow-y:auto;scrollbar-width:thin;';
+  search.addEventListener('input', function() { _renderForumReactGrid(search.value); });
   p.appendChild(search);
   p.appendChild(grid);
   document.body.appendChild(p);
   return p;
 }
 
-function toggleMsgEmojiPicker(e, postId, msgId) {
+function _renderForumReactGrid(filter) {
+  var grid = document.getElementById('forum-react-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  var names = {'😀':'smile happy','😂':'laugh cry','😍':'heart eyes love','🥰':'love hearts','😎':'cool sunglasses','👍':'thumbs up like','👎':'thumbs down','❤️':'heart love','🔥':'fire hot','💯':'hundred','✅':'check yes','❌':'no wrong','🎉':'party','😱':'scream shock','🤔':'thinking','💀':'skull dead','👻':'ghost','🌟':'star','🚀':'rocket','💪':'muscle strong','🙌':'hands celebrate','🤝':'handshake','🎮':'game','⚔️':'sword battle','🏆':'trophy win','👋':'wave hello','🤯':'mind blown','👀':'eyes','🫶':'heart hands','🫡':'salute','😮':'surprised','💔':'broken heart','😤':'angry','😴':'sleep','😈':'devil','😵':'dizzy','⭐':'star','🌈':'rainbow','⚡':'lightning','🧠':'brain'};
+  var filt = (filter || '').toLowerCase();
+  _QUICK_EMOJIS.filter(function(em) {
+    if (!filt) return true;
+    return em.includes(filt) || (names[em] || '').includes(filt);
+  }).forEach(function(em) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = em;
+    b.style.cssText = 'font-size:20px;padding:4px 2px;border:none;background:none;border-radius:6px;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;line-height:1.2;';
+    b.onmouseenter = function() { b.style.background = 'rgba(255,255,255,0.09)'; b.style.transform = 'scale(1.25)'; };
+    b.onmouseleave = function() { b.style.background = ''; b.style.transform = ''; };
+    b.onclick = function() { _applyForumReact(em); };
+    grid.appendChild(b);
+  });
+}
+
+function _applyForumReact(em) {
+  if (!_fReactTarget) return;
+  var t = _fReactTarget;
+  _closeForumReactPicker();
+  if (t.level === 'msg') toggleMsgReact(t.postId, t.msgId, em);
+  else if (t.level === 'rep') toggleReplyReact(t.postId, t.msgId, t.repId, em);
+}
+
+function _closeForumReactPicker() {
+  var p = document.getElementById('forum-react-picker');
+  var ov = document.getElementById('forum-react-overlay');
+  if (p) p.style.display = 'none';
+  if (ov) ov.style.display = 'none';
+  _fReactTarget = null;
+}
+
+function toggleForumReactPicker(e, level, postId, msgId, repId) {
   e.stopPropagation();
-  var p = document.getElementById('msg-emoji-picker') || _buildMsgEmojiPicker();
-  var same = _msgEmojiTarget && _msgEmojiTarget.postId === postId && _msgEmojiTarget.msgId === msgId;
-  if (p.style.display === 'block' && same) { p.style.display = 'none'; _msgEmojiTarget = null; return; }
-  _msgEmojiTarget = { postId: postId, msgId: msgId };
-  var btn = e.currentTarget;
-  var r = btn.getBoundingClientRect();
-  var pw = 260, ph = 220;
-  var top = r.bottom + 6 + window.scrollY;
-  var left = r.left + window.scrollX;
-  if (r.left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8 + window.scrollX;
-  if (r.bottom + ph + 6 > window.innerHeight) top = r.top - ph - 6 + window.scrollY;
-  p.style.top = top + 'px';
-  p.style.left = left + 'px';
+  var p = _getOrBuildForumReactPicker();
+  var ov = document.getElementById('forum-react-overlay');
+  var same = _fReactTarget && _fReactTarget.level === level && _fReactTarget.msgId === msgId && (!repId || _fReactTarget.repId === repId);
+  if (p.style.display === 'block' && same) { _closeForumReactPicker(); return; }
+  _fReactTarget = { level: level, postId: postId, msgId: msgId, repId: repId || null };
+  var si = document.getElementById('forum-react-search');
+  if (si) si.value = '';
+  _renderForumReactGrid('');
+  if (ov) ov.style.display = 'block';
   p.style.display = 'block';
-  var si = p.querySelector('input');
-  if (si) { si.value = ''; p.querySelector('div').innerHTML = ''; }
-  var grid = p.querySelector('div');
-  if (grid) {
-    grid.innerHTML = '';
-    _QUICK_EMOJIS.forEach(function(em) {
-      var b = document.createElement('button');
-      b.type = 'button'; b.textContent = em;
-      b.style.cssText = 'font-size:20px;padding:4px 2px;border:none;background:none;border-radius:5px;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;line-height:1.2;';
-      b.onmouseenter = function() { b.style.background = 'rgba(255,255,255,0.09)'; b.style.transform = 'scale(1.25)'; };
-      b.onmouseleave = function() { b.style.background = ''; b.style.transform = ''; };
-      b.onclick = function() {
-        toggleMsgReact(_msgEmojiTarget.postId, _msgEmojiTarget.msgId, em);
-        p.style.display = 'none'; _msgEmojiTarget = null;
-      };
-      grid.appendChild(b);
-    });
-  }
+  if (si) setTimeout(function() { si.focus(); }, 30);
 }
 
 document.addEventListener('click', function(e) {
-  var p = document.getElementById('msg-emoji-picker');
-  if (p && p.style.display === 'block' && !p.contains(e.target)) { p.style.display = 'none'; _msgEmojiTarget = null; }
-  var rp = document.getElementById('rep-emoji-picker');
-  if (rp && rp.style.display === 'block' && !rp.contains(e.target)) { rp.style.display = 'none'; _repEmojiTarget = null; }
+  var p = document.getElementById('forum-react-picker');
+  if (p && p.style.display === 'block' && !p.contains(e.target)) _closeForumReactPicker();
 });
-
-// ── Reply reactions ──────────────────────────────────────
-var _repEmojiTarget = null; // {postId, msgId, repId}
-
-function toggleReplyEmojiPicker(e, postId, msgId, repId) {
-  e.stopPropagation();
-  var p = document.getElementById('rep-emoji-picker');
-  if (!p) {
-    p = document.createElement('div');
-    p.id = 'rep-emoji-picker';
-    p.style.cssText = 'position:fixed;z-index:5000;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px;display:none;box-shadow:0 20px 60px rgba(0,0,0,0.7);width:260px;';
-    var search = document.createElement('input');
-    search.type = 'text';
-    search.placeholder = 'Search emoji…';
-    search.style.cssText = 'width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;font-family:inherit;box-sizing:border-box;margin-bottom:6px;outline:none;';
-    var grid = document.createElement('div');
-    grid.id = 'rep-emoji-grid';
-    grid.style.cssText = 'display:grid;grid-template-columns:repeat(8,1fr);gap:2px;max-height:160px;overflow-y:auto;scrollbar-width:thin;';
-    function fillGrid(filter) {
-      grid.innerHTML = '';
-      var filt = (filter || '').toLowerCase();
-      var _names = {'😀':'smile happy','😂':'laugh cry','😍':'heart eyes love','🥰':'love hearts','😎':'cool','👍':'thumbs up like','👎':'thumbs down','❤️':'heart love','🔥':'fire hot','💯':'hundred','✅':'check yes','❌':'no wrong','🎉':'party','😱':'scream shock','🤔':'thinking','💀':'skull dead','👻':'ghost','🌟':'star','🚀':'rocket','💪':'muscle strong','🙌':'hands celebrate','🤝':'handshake','🎮':'game','⚔️':'sword battle','🏆':'trophy win','👋':'wave hello','🤯':'mind blown','👀':'eyes','🫶':'heart hands','🫡':'salute','😮':'surprised','💔':'broken heart','😤':'angry','😴':'sleep','😈':'devil','😵':'dizzy','⭐':'star','🌈':'rainbow','⚡':'lightning','🧠':'brain'};
-      _QUICK_EMOJIS.filter(function(em) {
-        if (!filt) return true;
-        if (em.includes(filt)) return true;
-        return (_names[em] || '').includes(filt);
-      }).forEach(function(em) {
-        var b = document.createElement('button');
-        b.type = 'button'; b.textContent = em;
-        b.style.cssText = 'font-size:20px;padding:4px 2px;border:none;background:none;border-radius:5px;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;line-height:1.2;';
-        b.onmouseenter = function() { b.style.background = 'rgba(255,255,255,0.09)'; b.style.transform = 'scale(1.25)'; };
-        b.onmouseleave = function() { b.style.background = ''; b.style.transform = ''; };
-        b.onclick = function() {
-          if (_repEmojiTarget) {
-            toggleReplyReact(_repEmojiTarget.postId, _repEmojiTarget.msgId, _repEmojiTarget.repId, em);
-            p.style.display = 'none'; _repEmojiTarget = null;
-          }
-        };
-        grid.appendChild(b);
-      });
-    }
-    search.addEventListener('input', function() { fillGrid(search.value); });
-    fillGrid('');
-    p.appendChild(search);
-    p.appendChild(grid);
-    document.body.appendChild(p);
-  }
-  var same = _repEmojiTarget && _repEmojiTarget.repId === repId;
-  if (p.style.display === 'block' && same) { p.style.display = 'none'; _repEmojiTarget = null; return; }
-  _repEmojiTarget = { postId: postId, msgId: msgId, repId: repId };
-  var btn = e.currentTarget;
-  var r = btn.getBoundingClientRect();
-  var pw = 260, ph = 220;
-  var top = r.bottom + 6 + window.scrollY;
-  var left = r.left + window.scrollX;
-  if (r.left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8 + window.scrollX;
-  if (r.bottom + ph + 6 > window.innerHeight) top = r.top - ph - 6 + window.scrollY;
-  p.style.top = top + 'px';
-  p.style.left = left + 'px';
-  p.style.display = 'block';
-  var si = p.querySelector('input');
-  if (si) { si.value = ''; }
-  var grid2 = document.getElementById('rep-emoji-grid');
-  if (grid2) {
-    grid2.innerHTML = '';
-    _QUICK_EMOJIS.forEach(function(em) {
-      var b = document.createElement('button');
-      b.type = 'button'; b.textContent = em;
-      b.style.cssText = 'font-size:20px;padding:4px 2px;border:none;background:none;border-radius:5px;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;line-height:1.2;';
-      b.onmouseenter = function() { b.style.background = 'rgba(255,255,255,0.09)'; b.style.transform = 'scale(1.25)'; };
-      b.onmouseleave = function() { b.style.background = ''; b.style.transform = ''; };
-      b.onclick = function() {
-        toggleReplyReact(_repEmojiTarget.postId, _repEmojiTarget.msgId, _repEmojiTarget.repId, em);
-        p.style.display = 'none'; _repEmojiTarget = null;
-      };
-      grid2.appendChild(b);
-    });
-  }
-}
 
 async function toggleReplyReact(postId, msgId, repId, emoji) {
   try {
@@ -1343,49 +1182,6 @@ async function toggleReplyReact(postId, msgId, repId, emoji) {
   } catch(err) { if (typeof showToast === 'function') showToast('Network error', 'error'); }
 }
 
-var _srepEmojiTarget = null;
-
-function toggleSubReplyEmojiPicker(e, postId, msgId, repId, srepId) {
-  e.stopPropagation();
-  var p = document.getElementById('srep-emoji-picker');
-  if (!p) {
-    p = document.createElement('div');
-    p.id = 'srep-emoji-picker';
-    p.style.cssText = 'position:fixed;z-index:5000;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px;display:none;box-shadow:0 20px 60px rgba(0,0,0,0.7);width:260px;';
-    var search = document.createElement('input');
-    search.type = 'text'; search.placeholder = 'Search emoji…';
-    search.style.cssText = 'width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;font-family:inherit;box-sizing:border-box;margin-bottom:6px;outline:none;';
-    var grid = document.createElement('div');
-    grid.id = 'srep-emoji-grid';
-    grid.style.cssText = 'display:grid;grid-template-columns:repeat(8,1fr);gap:2px;max-height:160px;overflow-y:auto;scrollbar-width:thin;';
-    function fillGrid(filter) {
-      grid.innerHTML = '';
-      var filt = (filter || '').toLowerCase();
-      _QUICK_EMOJIS.filter(function(em) { return !filt || em.includes(filt); }).forEach(function(em) {
-        var b = document.createElement('button'); b.type = 'button'; b.textContent = em;
-        b.style.cssText = 'font-size:20px;padding:4px 2px;border:none;background:none;border-radius:5px;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;line-height:1.2;';
-        b.onmouseenter = function() { b.style.background = 'rgba(255,255,255,0.09)'; b.style.transform = 'scale(1.25)'; };
-        b.onmouseleave = function() { b.style.background = ''; b.style.transform = ''; };
-        b.onclick = function() { if (_srepEmojiTarget) { toggleSubReplyReact(_srepEmojiTarget.postId,_srepEmojiTarget.msgId,_srepEmojiTarget.repId,_srepEmojiTarget.srepId,em); p.style.display='none'; _srepEmojiTarget=null; } };
-        grid.appendChild(b);
-      });
-    }
-    search.addEventListener('input', function() { fillGrid(search.value); }); fillGrid('');
-    p.appendChild(search); p.appendChild(grid); document.body.appendChild(p);
-  }
-  var same = _srepEmojiTarget && _srepEmojiTarget.srepId === srepId;
-  if (p.style.display === 'block' && same) { p.style.display = 'none'; _srepEmojiTarget = null; return; }
-  _srepEmojiTarget = { postId: postId, msgId: msgId, repId: repId, srepId: srepId };
-  var btn = e.currentTarget;
-  var r = btn.getBoundingClientRect();
-  var pw = 260, ph = 200;
-  var top = r.bottom + 6 + window.scrollY;
-  var left = r.left + window.scrollX;
-  if (r.left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8 + window.scrollX;
-  if (r.bottom + ph + 6 > window.innerHeight) top = r.top - ph - 6 + window.scrollY;
-  p.style.top = top + 'px'; p.style.left = left + 'px'; p.style.display = 'block';
-  var si = p.querySelector('input'); if (si) { si.value = ''; var g = document.getElementById('srep-emoji-grid'); if(g){g.innerHTML='';_QUICK_EMOJIS.forEach(function(em){var b=document.createElement('button');b.type='button';b.textContent=em;b.style.cssText='font-size:20px;padding:4px 2px;border:none;background:none;border-radius:5px;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;line-height:1.2;';b.onmouseenter=function(){b.style.background='rgba(255,255,255,0.09)';b.style.transform='scale(1.25)';};b.onmouseleave=function(){b.style.background='';b.style.transform='';};b.onclick=function(){if(_srepEmojiTarget){toggleSubReplyReact(_srepEmojiTarget.postId,_srepEmojiTarget.msgId,_srepEmojiTarget.repId,_srepEmojiTarget.srepId,em);p.style.display='none';_srepEmojiTarget=null;}};g.appendChild(b);});} }
-}
 
 async function toggleSubReplyReact(postId, msgId, repId, srepId, emoji) {
   try {
