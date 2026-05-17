@@ -713,15 +713,18 @@ function _buildForumEmojiPicker() {
   function showCat(catName) {
     _curCat = catName;
     tabs.querySelectorAll('.fp-ecat-btn').forEach(function(b) {
-      b.style.opacity = b.dataset.cat === catName ? '1' : '0.5';
-      b.style.background = b.dataset.cat === catName ? 'rgba(255,255,255,0.08)' : '';
+      var active = b.dataset.cat === catName;
+      b.style.opacity = active ? '1' : '0.42';
+      b.style.background = active ? 'rgba(250,80,80,0.12)' : '';
+      b.style.borderBottom = active ? '2px solid var(--primary)' : '2px solid transparent';
+      b.style.color = active ? 'var(--primary)' : '';
     });
     renderGrid(_EMOJI_CATS[catName] || []);
   }
   Object.keys(_EMOJI_CATS).forEach(function(catName) {
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'fp-ecat-btn'; btn.dataset.cat = catName;
-    btn.style.cssText = 'flex-shrink:0;padding:5px 8px;font-size:18px;background:none;border:none;cursor:pointer;border-radius:6px;transition:all 0.15s;opacity:0.5;line-height:1;';
+    btn.style.cssText = 'flex-shrink:0;padding:5px 9px;font-size:17px;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;border-radius:6px 6px 0 0;transition:all 0.15s;opacity:0.42;line-height:1;';
     btn.title = catName; btn.textContent = (_EMOJI_CATS[catName] || ['😀'])[0];
     btn.onclick = function() { showCat(catName); };
     tabs.appendChild(btn);
