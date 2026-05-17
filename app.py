@@ -145,18 +145,25 @@ def send_email_html(to, subject, html_body):
     msg.attach(MIMEText(html_body, "html"))
     result = [False]
     def _do_send():
-        try:
-            server = smtplib.SMTP("smtp.gmail.com", 587)
-            server.starttls()
-            server.login(GMAIL_FROM, APP_PASSWORD)
-            server.send_message(msg)
-            server.quit()
-            result[0] = True
-        except Exception:
-            pass
+        # Try SMTP_SSL port 465 first (faster, no STARTTLS handshake)
+        for attempt in [
+            lambda: smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=12),
+            lambda: smtplib.SMTP("smtp.gmail.com", 587, timeout=12),
+        ]:
+            try:
+                server = attempt()
+                if isinstance(server, smtplib.SMTP) and not isinstance(server, smtplib.SMTP_SSL):
+                    server.starttls()
+                server.login(GMAIL_FROM, APP_PASSWORD)
+                server.send_message(msg)
+                server.quit()
+                result[0] = True
+                return
+            except Exception:
+                continue
     t = threading.Thread(target=_do_send, daemon=True)
     t.start()
-    t.join(timeout=25)
+    t.join(timeout=20)
     return result[0]
 
 
