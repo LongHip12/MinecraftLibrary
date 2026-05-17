@@ -829,12 +829,9 @@
   color: var(--text3);
   cursor: pointer;
   font-family: inherit;
+  opacity: 1;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
-  opacity: 0;
-  transition: opacity 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
 }
-.msg-card:hover .react-add-btn,
-.reply-card:hover .react-add-btn { opacity: 1; }
 .react-add-btn:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); color: var(--text2); }
 
 /* ── Download warning page ── */
