@@ -1,5 +1,8 @@
 import os
+import sys
 import json
+import io
+from collections import deque
 from dotenv import load_dotenv
 load_dotenv()
 import uuid
@@ -11,6 +14,7 @@ import threading
 import re
 import traceback
 import urllib.parse
+import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
@@ -21,10 +25,70 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 import supabase_backup
 
+LOG_BUFFER = deque(maxlen=1000)
+
+def _detect_level(text):
+    ll = text.lower()
+    if 'traceback' in ll or 'exception' in ll:
+        return 'error'
+    if ll.startswith('[error]') or ' error' in ll or 'error:' in ll:
+        return 'error'
+    if ll.startswith('[warn]') or 'warning' in ll or 'warn:' in ll:
+        return 'warn'
+    if ll.startswith('[debug]') or 'debug:' in ll:
+        return 'debug'
+    return 'info'
+
+class _TeeStream:
+    def __init__(self, original, default_level='info'):
+        self._orig = original
+        self._default = default_level
+        self._buf = ''
+    def write(self, text):
+        self._orig.write(text)
+        try:
+            self._orig.flush()
+        except Exception:
+            pass
+        self._buf += text
+        while '\n' in self._buf:
+            line, self._buf = self._buf.split('\n', 1)
+            line = line.rstrip('\r')
+            if line.strip():
+                lv = _detect_level(line) if self._default == 'info' else self._default
+                LOG_BUFFER.append({'t': datetime.now().isoformat(timespec='milliseconds'), 'level': lv, 'msg': line})
+    def flush(self):
+        try:
+            self._orig.flush()
+        except Exception:
+            pass
+    def isatty(self):
+        return False
+    def fileno(self):
+        try:
+            return self._orig.fileno()
+        except Exception:
+            raise io.UnsupportedOperation('fileno')
+
+sys.stdout = _TeeStream(sys.stdout, 'info')
+sys.stderr = _TeeStream(sys.stderr, 'error')
+
+class _LogHandler(logging.Handler):
+    def emit(self, record):
+        lv_map = {'DEBUG': 'debug', 'INFO': 'info', 'WARNING': 'warn', 'ERROR': 'error', 'CRITICAL': 'error'}
+        lv = lv_map.get(record.levelname, 'info')
+        msg = self.format(record)
+        LOG_BUFFER.append({'t': datetime.now().isoformat(timespec='milliseconds'), 'level': lv, 'msg': msg})
+
+_log_handler = _LogHandler()
+_log_handler.setFormatter(logging.Formatter('%(name)s — %(message)s'))
+logging.getLogger().addHandler(_log_handler)
+
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_prefix=1)
 app.secret_key = os.environ.get("SESSION_SECRET") or secrets.token_hex(32)
 APP_START_TIME = datetime.now()
+LOG_BUFFER.append({'t': APP_START_TIME.isoformat(timespec='milliseconds'), 'level': 'startup', 'msg': f'[STARTUP] App started — Python {sys.version.split()[0]}'})
 CORS(app)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -3426,6 +3490,17 @@ supabase_backup.start_auto_backup(DATA_DIR, DEFAULT_DATA)
 
 # Start Supabase auto-restore every 15 minutes
 supabase_backup.start_auto_restore(DATA_DIR)
+
+@app.route("/api/admin/logs", methods=["GET"])
+def admin_logs():
+    current_user = get_session_user(request)
+    if not current_user or not is_admin(current_user):
+        return jsonify({"success": False, "error": "Forbidden"}), 403
+    since = request.args.get("since", "")
+    logs = list(LOG_BUFFER)
+    if since:
+        logs = [l for l in logs if l['t'] > since]
+    return jsonify({"success": True, "logs": logs})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 3000))
