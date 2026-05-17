@@ -741,7 +741,7 @@ def api_send_otp():
         email = ""
         if purpose in ("register", "reset"):
             email = (data.get("email") or "").strip().lower()
-            captcha_token = data.get("captcha_token", "")
+            captcha_token = data.get("captchaToken", "") or data.get("captcha_token", "")
             if not verify_hcaptcha(captcha_token):
                 return jsonify({"success": False, "error": "Please complete the captcha"})
             if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
