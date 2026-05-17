@@ -221,7 +221,8 @@ document.getElementById('register-step1-form').addEventListener('submit', async 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, purpose: 'register' })
     });
-    var data = await resp.json();
+    var data;
+    try { data = await resp.json(); } catch(_) { data = { success: false, error: 'Server error (code ' + resp.status + '). Please try again.' }; }
     if (data.success) {
       document.getElementById('step1').style.display = 'none';
       document.getElementById('step2').style.display = 'block';
@@ -237,9 +238,9 @@ document.getElementById('register-step1-form').addEventListener('submit', async 
       if (window.hcaptcha) hcaptcha.reset();
     }
   } catch(err) {
-    showError('Network error. Please try again.');
+    showError('Cannot connect to server. Please check your connection and try again.');
     btn.disabled = false;
-    btn.innerHTML = '<span>Send Verification Code</span>';
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> <span>Send Verification Code</span>';
   }
 });
 
