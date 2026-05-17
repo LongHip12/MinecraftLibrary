@@ -477,6 +477,14 @@
                       </button>
                       {% endif %}
                     </div>
+                    {% if user %}
+                    <div class="cmt-msg-actions">
+                      <button title="Reply to this comment" class="cmt-reply-action-btn" type="button" onclick="triggerCommentReply('{{ c.id }}','{{ r.display_name | replace("'","") }}')">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+                        Reply
+                      </button>
+                    </div>
+                    {% endif %}
                   </div>
                 </div>
                 {% endfor %}
