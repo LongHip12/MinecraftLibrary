@@ -68,7 +68,7 @@
   <div class="nav-right">
     {% if user %}
     <a href="/users/{{ user.username }}" title="{{ user.display_name }}">
-      <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="Avatar" class="nav-avatar">
+      <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="Avatar" class="nav-avatar" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
     </a>
     <a href="/logout" class="btn btn-ghost btn-sm nav-auth-desktop">Sign Out</a>
     {% else %}
@@ -129,7 +129,7 @@
   </nav>
   {% if user %}
   <a href="/users/{{ user.username }}" class="sb-user-row">
-    <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="" class="sb-user-avatar">
+    <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="" class="sb-user-avatar" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
     <div class="sb-user-info">
       <div class="sb-user-name">{{ user.display_name }}</div>
       <div class="sb-user-sub">@{{ user.username }}</div>
@@ -187,7 +187,7 @@
   <div class="nav-drawer-footer">
     {% if user %}
     <a href="/users/{{ user.username }}" class="nav-drawer-user">
-      <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="Avatar" class="nav-drawer-avatar">
+      <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="Avatar" class="nav-drawer-avatar" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
       <span>{{ user.display_name }}</span>
       {% if user.verified %}
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-left:2px;"><circle cx="8" cy="8" r="8" fill="#3b82f6"/><path d="M4.5 8.5l2.5 2 4.5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
