@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import io
+import time
 from collections import deque
 from dotenv import load_dotenv
 load_dotenv()
@@ -18,7 +19,7 @@ import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, jsonify, make_response, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, jsonify, make_response, send_from_directory, g
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -592,6 +593,31 @@ FORUM_CATEGORIES = [
 FORUM_PER_PAGE = 15
 ANONYMOUS_AVATAR = "https://i.imgur.com/BCzwCla.png"
 
+
+_SKIP_LOG_PREFIXES = ('/static/', '/static/css/', '/static/js/', '/static/uploads/', '/static/forum_uploads/')
+
+@app.before_request
+def _req_start():
+    g._req_t0 = time.monotonic()
+
+@app.after_request
+def _req_log(response):
+    try:
+        skip = any(request.path.startswith(p) for p in _SKIP_LOG_PREFIXES)
+        if not skip:
+            elapsed = (time.monotonic() - g._req_t0) * 1000
+            status = response.status_code
+            if status >= 500:
+                lv = 'error'
+            elif status >= 400:
+                lv = 'warn'
+            else:
+                lv = 'http'
+            msg = f'{request.method} {request.full_path.rstrip("?")} {status} {elapsed:.0f}ms'
+            LOG_BUFFER.append({'t': datetime.now().isoformat(timespec='milliseconds'), 'level': lv, 'msg': msg})
+    except Exception:
+        pass
+    return response
 
 @app.before_request
 def check_ban():
