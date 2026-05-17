@@ -938,30 +938,38 @@ function showCustomConfirm(title, message, confirmLabel, confirmColor, onConfirm
   }
 
   function _highlightLog(escaped, lv) {
+    if (lv === 'startup') return escaped;
     if (lv === 'http') {
-      return escaped
-        .replace(/^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)(\s)/,
-          '<span style="color:#4ade80;font-weight:700;">$1</span>$2')
-        .replace(/\s(2\d\d)\s/, ' <span style="color:#4ade80;font-weight:700;">$1</span> ')
-        .replace(/\s(3\d\d)\s/, ' <span style="color:#38bdf8;font-weight:700;">$1</span> ')
-        .replace(/\s(4\d\d)\s/, ' <span style="color:#fbbf24;font-weight:700;">$1</span> ')
-        .replace(/\s(5\d\d)\s/, ' <span style="color:#f87171;font-weight:700;">$1</span> ')
-        .replace(/(\d+ms)$/, '<span style="color:#818cf8;">$1</span>');
+      var hm = escaped.match(/^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS) (\S+) (\d{3}) (\d+ms)$/);
+      if (hm) {
+        var sc = parseInt(hm[3]);
+        var sc_col = sc>=500?'#f87171':sc>=400?'#fbbf24':sc>=300?'#38bdf8':'#4ade80';
+        return '<span style="color:#4ade80;font-weight:700;">'+hm[1]+'</span>'
+          +' <span style="color:#93c5fd;">'+hm[2]+'</span>'
+          +' <span style="color:'+sc_col+';font-weight:700;">'+hm[3]+'</span>'
+          +' <span style="color:#818cf8;">'+hm[4]+'</span>';
+      }
+      return escaped;
     }
-    return escaped
-      .replace(/\b(ERROR|CRITICAL|FATAL)\b/g, '<span style="color:#f87171;font-weight:700;">$1</span>')
-      .replace(/\b(WARNING|WARN)\b/g, '<span style="color:#fbbf24;font-weight:700;">$1</span>')
-      .replace(/\b(INFO)\b/g, '<span style="color:#60a5fa;">$1</span>')
-      .replace(/\b(DEBUG)\b/g, '<span style="color:#64748b;">$1</span>')
-      .replace(/(\[[\w._:-]+\])/g, '<span style="color:#64748b;">$1</span>')
-      .replace(/(&quot;[^&]*&quot;)/g, '<span style="color:#86efac;">$1</span>')
-      .replace(/\b(\d{3})\b(?=\s)/g, function(_, code) {
-        var c = parseInt(code);
-        var col = c>=500?'#f87171':c>=400?'#fbbf24':c>=300?'#38bdf8':c>=200?'#4ade80':'#e2e8f0';
-        return '<span style="color:'+col+';font-weight:700;">'+code+'</span>';
-      })
-      .replace(/(\/[\w\-./?=%&+#]+)/g, '<span style="color:#93c5fd;">$1</span>')
-      .replace(/\b(\d+\.\d+\.\d+\.\d+)\b/g, '<span style="color:#c4b5fd;">$1</span>');
+    var _sp = [];
+    function _ph(color, bold, txt) {
+      var i = _sp.length;
+      _sp.push('<span style="color:'+color+(bold?';font-weight:700':'')+'">' + txt + '</span>');
+      return '\x00' + i + '\x00';
+    }
+    var s = escaped;
+    s = s.replace(/\b(ERROR|CRITICAL|FATAL)\b/g,  function(_,w){ return _ph('#f87171', true, w); });
+    s = s.replace(/\b(WARNING|WARN)\b/g,           function(_,w){ return _ph('#fbbf24', true, w); });
+    s = s.replace(/\b(INFO)\b/g,                   function(_,w){ return _ph('#60a5fa', false, w); });
+    s = s.replace(/\b(DEBUG)\b/g,                  function(_,w){ return _ph('#64748b', false, w); });
+    s = s.replace(/(\[[^\]]*\])/g,                 function(_,w){ return _ph('#64748b', false, w); });
+    s = s.replace(/(&quot;[^"]*&quot;)/g,          function(_,w){ return _ph('#86efac', false, w); });
+    s = s.replace(/\b(\d{3})\b/g, function(_,code) {
+      var c = parseInt(code);
+      return _ph(c>=500?'#f87171':c>=400?'#fbbf24':c>=300?'#38bdf8':c>=200?'#4ade80':'#e2e8f0', true, code);
+    });
+    s = s.replace(/\b(\d+\.\d+\.\d+\.\d+)\b/g,   function(_,ip){ return _ph('#c4b5fd', false, ip); });
+    return s.replace(/\x00(\d+)\x00/g, function(_,i){ return _sp[parseInt(i)]; });
   }
 
   var _LV_COLOR = {
