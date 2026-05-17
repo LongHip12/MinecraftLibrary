@@ -225,10 +225,10 @@
         <div class="post-author-row">
           {% if post.author and post.author.id %}
           <a href="/users/{{ post.author.username }}">
-            <img class="post-author-avatar" src="{{ post.author.avatar if post.author.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="">
+            <img class="post-author-avatar" src="{{ post.author.avatar if post.author.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
           </a>
           {% else %}
-          <img class="post-author-avatar" src="https://i.imgur.com/BCzwCla.png" alt="">
+          <img class="post-author-avatar" src="https://i.imgur.com/BCzwCla.png" alt="" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
           {% endif %}
           <div>
             {% if post.author and post.author.id %}
@@ -317,10 +317,10 @@
       <div class="message-author-row">
         {% if msg.author and msg.author.id %}
         <a href="/users/{{ msg.author.username }}">
-          <img class="msg-avatar" src="{{ msg.author.avatar if msg.author.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="">
+          <img class="msg-avatar" src="{{ msg.author.avatar if msg.author.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
         </a>
         {% else %}
-        <img class="msg-avatar" src="https://i.imgur.com/BCzwCla.png" alt="">
+        <img class="msg-avatar" src="https://i.imgur.com/BCzwCla.png" alt="" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
         {% endif %}
         <div>
           {% if msg.author and msg.author.id %}
@@ -417,10 +417,10 @@
         <div class="reply-card" id="rep-{{ rep.id }}">
           {% if rep.author and rep.author.id %}
           <a href="/users/{{ rep.author.username }}">
-            <img class="reply-avatar" src="{{ rep.author.avatar if rep.author.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="">
+            <img class="reply-avatar" src="{{ rep.author.avatar if rep.author.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
           </a>
           {% else %}
-          <img class="reply-avatar" src="https://i.imgur.com/BCzwCla.png" alt="">
+          <img class="reply-avatar" src="https://i.imgur.com/BCzwCla.png" alt="" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
           {% endif %}
           <div class="reply-content-wrap">
             <div class="reply-author-row">
@@ -748,7 +748,7 @@ function _escHtml(s) {
 
 function _renderNewMsgHtml(msg) {
   var ts = msg.created_at ? msg.created_at.replace('T',' ').slice(0,16) : '';
-  return '<img src="https://i.imgur.com/BCzwCla.png" class="msg-avatar" alt="">' +
+  return '<img src="https://i.imgur.com/BCzwCla.png" class="msg-avatar" alt="" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">' +
     '<div class="msg-body">' +
     '<div class="msg-header">' +
     '<span class="msg-author">' + _escHtml(msg.author_name) + '</span>' +
