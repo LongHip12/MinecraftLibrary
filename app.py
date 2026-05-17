@@ -2087,6 +2087,9 @@ def internal_error(e):
 
 @app.errorhandler(Exception)
 def handle_exception(e):
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return e
     if request.path.startswith("/api/"):
         return jsonify({"success": False, "error": "Server error. Please try again."}), 500
     raise e
