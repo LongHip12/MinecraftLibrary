@@ -404,9 +404,9 @@
         {% endif %}
       </div>
       {% if msg.replies %}
-        <button title="Show or hide replies" class="toggle-replies-btn" data-target="replies-{{ msg.id }}" style="margin-left:auto;">
+        <button title="Hiện/ẩn phản hồi" class="toggle-replies-btn" data-target="replies-{{ msg.id }}" style="margin-left:auto;">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          <span>Show {{ msg.replies|length }} {{ 'reply' if msg.replies|length == 1 else 'replies' }}</span>
+          <span>{{ msg.replies|length }} phản hồi</span>
         </button>
         {% endif %}
       </div>
@@ -492,8 +492,8 @@
     </div>
     {% endfor %}
     {% else %}
-    <div style="text-align:center;padding:40px;color:var(--text3);font-size:14px;">
-      No replies yet — be the first to respond!
+    <div id="no-replies-empty" style="text-align:center;padding:40px;color:var(--text3);font-size:14px;">
+      Chưa có phản hồi nào — hãy là người đầu tiên!
     </div>
     {% endif %}
 
@@ -510,7 +510,7 @@
     <div class="chat-input-bar" id="chat-input-bar">
       <div class="chat-reply-banner" id="chat-reply-banner">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
-        <span>Replying to <strong id="chat-reply-author-name"></strong></span>
+        <span>Đang phản hồi <strong id="chat-reply-author-name"></strong></span>
         <span class="chat-reply-preview" id="chat-reply-preview-text"></span>
         <button class="chat-reply-x" onclick="cancelReply()" title="Cancel reply">×</button>
       </div>
@@ -702,18 +702,52 @@ document.addEventListener('click', function(e) {
 });
 
 function _appendReplyToMsg(msgId, content, authorName, authorAvatar) {
+  var msgCard = document.getElementById('msg-' + msgId);
+  if (!msgCard) return;
+
   var repList = document.getElementById('replies-' + msgId);
-  if (!repList) return;
+  if (!repList) {
+    repList = document.createElement('div');
+    repList.className = 'replies-list';
+    repList.id = 'replies-' + msgId;
+    repList.style.cssText = 'display:flex;flex-direction:column;gap:0;';
+    msgCard.appendChild(repList);
+  }
   repList.style.display = 'flex';
+
   var toggleBtn = document.querySelector('[data-target="replies-' + msgId + '"]');
+  if (!toggleBtn) {
+    var actionsDiv = msgCard.querySelector('.msg-actions');
+    if (actionsDiv) {
+      toggleBtn = document.createElement('button');
+      toggleBtn.title = 'Hiện/ẩn phản hồi';
+      toggleBtn.className = 'toggle-replies-btn';
+      toggleBtn.setAttribute('data-target', 'replies-' + msgId);
+      toggleBtn.style.marginLeft = 'auto';
+      toggleBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg><span></span>';
+      actionsDiv.appendChild(toggleBtn);
+      toggleBtn.addEventListener('click', function() {
+        var list = document.getElementById('replies-' + msgId);
+        if (!list) return;
+        var isOpen = list.style.display !== 'none' && list.style.display !== '';
+        list.style.display = isOpen ? 'none' : 'flex';
+        var svg = toggleBtn.querySelector('svg');
+        if (svg) svg.style.transform = isOpen ? '' : 'rotate(180deg)';
+        var sp = toggleBtn.querySelector('span');
+        var cnt = list.querySelectorAll('.reply-card').length;
+        if (sp) sp.textContent = isOpen ? cnt + ' phản hồi' : 'Ẩn ' + cnt + ' phản hồi';
+      });
+    }
+  }
   if (toggleBtn) {
     var count = repList.querySelectorAll('.reply-card').length + 1;
     var sp = toggleBtn.querySelector('span');
-    if (sp) sp.textContent = 'Hide ' + count + ' ' + (count === 1 ? 'reply' : 'replies');
+    if (sp) sp.textContent = 'Ẩn ' + count + ' phản hồi';
     var svg = toggleBtn.querySelector('svg');
     if (svg) svg.style.transform = 'rotate(180deg)';
     toggleBtn.style.display = '';
   }
+
   var now = new Date();
   var ts = now.toISOString().replace('T',' ').slice(0,16) + ' UTC';
   var card = document.createElement('div');
@@ -779,22 +813,36 @@ async function sendChatMessage() {
 }
 
 // ── Discord-style live message polling ──────────────────
-var _lastMsgTs = '{{ (messages[-1].created_at if messages else "") | replace("'","") }}';
+var _lastMsgTs = '{{ (post.messages[-1].created_at if post.messages else "") | replace("'","") }}';
 if (!_lastMsgTs) { _lastMsgTs = new Date().toISOString().slice(0, 23); }
+var _IS_LOGGED_IN = {{ 'true' if user else 'false' }};
+var _POST_ID = '{{ post.id }}';
+var _IS_LOCKED = {{ 'true' if post.locked else 'false' }};
 
 function _escHtml(s) {
   return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function _renderNewMsgHtml(msg) {
-  var ts = msg.created_at ? msg.created_at.replace('T',' ').slice(0,16) : '';
-  return '<img src="https://i.imgur.com/BCzwCla.png" class="msg-avatar" alt="" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' +
-    '<div class="msg-body">' +
-    '<div class="msg-header">' +
-    '<span class="msg-author">' + _escHtml(msg.author_name) + '</span>' +
-    '<span class="msg-time" style="margin-left:6px;font-size:12px;color:var(--text3);">' + ts + '</span>' +
-    '</div>' +
-    '<div class="msg-text">' + _escHtml(msg.content) + '</div>' +
+  var ts = msg.created_at ? msg.created_at.replace('T',' ').slice(0,16) + ' UTC' : '';
+  var avatar = msg.author_avatar || 'https://i.imgur.com/BCzwCla.png';
+  var replyBtn = (!_IS_LOCKED && _IS_LOGGED_IN)
+    ? '<button class="reply-btn" title="Reply" data-msg="' + _escHtml(msg.id) + '" data-author="' + _escHtml(msg.author_name) + '" data-preview="' + _escHtml((msg.content||'').slice(0,60)) + '" onclick="triggerReply(this)">' +
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg><span>Trả lời</span></button>'
+    : '';
+  var reactBtn = _IS_LOGGED_IN
+    ? '<button title="Thêm biểu cảm" class="react-add-btn" style="font-size:11px;padding:2px 6px;" type="button" onclick="toggleMsgEmojiPicker(event,\'' + _escHtml(_POST_ID) + '\',\'' + _escHtml(msg.id) + '\')">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>' +
+      '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>'
+    : '';
+  return '<div class="message-author-row">' +
+    '<img class="msg-avatar" src="' + _escHtml(avatar) + '" alt="" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' +
+    '<div><span class="msg-author-name">' + _escHtml(msg.author_name) + '</span>' +
+    '<span class="msg-date" style="margin-left:8px;">' + ts + '</span></div></div>' +
+    (msg.content ? '<div class="msg-body">' + _escHtml(msg.content) + '</div>' : '') +
+    '<div class="msg-actions" id="msg-actions-' + _escHtml(msg.id) + '">' +
+      replyBtn +
+      '<div class="msg-reactions" id="msg-reactions-' + _escHtml(msg.id) + '" style="display:flex;flex-wrap:wrap;gap:5px;margin-left:4px;">' + reactBtn + '</div>' +
     '</div>';
 }
 
@@ -833,6 +881,8 @@ function _appendNewMessages(msgs) {
   var atBottom = _isNearBottom();
   msgs.forEach(function(msg) {
     if (document.getElementById('msg-' + msg.id)) return;
+    var empty = document.getElementById('no-replies-empty');
+    if (empty) empty.style.display = 'none';
     var div = document.createElement('div');
     div.className = 'message-card';
     div.id = 'msg-' + msg.id;
