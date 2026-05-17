@@ -671,7 +671,7 @@ def rate_mod(mod_id):
     user = get_session_user(request)
     if not user:
         return jsonify({"success": False, "error": "Not logged in"}), 401
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     stars = data.get("stars", 0)
     if not (1 <= stars <= 5):
         return jsonify({"success": False, "error": "Invalid rating"}), 400
@@ -728,7 +728,7 @@ def login():
 
 @app.route("/api/send-otp", methods=["POST"])
 def api_send_otp():
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     purpose = data.get("purpose", "")
     email = ""
     if purpose in ("register", "reset"):
@@ -786,7 +786,7 @@ def add_email():
     user = get_session_user(request)
     if not user:
         return jsonify({"success": False, "error": "Not logged in"})
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     email = data.get("email", "").strip().lower()
     if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
         return jsonify({"success": False, "error": "Invalid email address"})
@@ -811,7 +811,7 @@ def verify_email_route():
     user = get_session_user(request)
     if not user:
         return jsonify({"success": False, "error": "Not logged in"})
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     otp_code = data.get("otp_code", "").strip()
     email = user.get("email", "").strip().lower()
     if not email:
@@ -921,7 +921,7 @@ def reset_password():
         return redirect(url_for("index"))
     if request.method == "POST":
         if request.is_json:
-            body = request.get_json() or {}
+            body = request.get_json(silent=True) or {}
             email = body.get("email", "").strip().lower()
             otp_code = body.get("otp_code", "").strip()
             new_password = body.get("new_password", "")
@@ -1061,7 +1061,7 @@ def unlink_google():
     if not target.get("password") and not target.get("discord_id"):
         return jsonify({"success": False, "error": "Cannot disconnect Google — you have no other login method"})
     if target.get("email") and target.get("email_verified"):
-        data = request.get_json() or {}
+        data = request.get_json(silent=True) or {}
         otp_code = data.get("otp_code", "").strip()
         if not otp_code:
             return jsonify({"success": False, "error": "Verification code required"})
@@ -1077,7 +1077,7 @@ def authorize_email_change():
     user = get_session_user(request)
     if not user:
         return jsonify({"success": False, "error": "Not logged in"})
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     otp_code = data.get("otp_code", "").strip()
     current_email = user.get("email", "").strip().lower()
     if not current_email:
@@ -1099,7 +1099,7 @@ def remove_email():
     user = get_session_user(request)
     if not user:
         return jsonify({"success": False, "error": "Not logged in"})
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     otp_code = data.get("otp_code", "").strip()
     current_email = user.get("email", "").strip().lower()
     if current_email:
@@ -1122,7 +1122,7 @@ def confirm_change_email():
     user = get_session_user(request)
     if not user:
         return jsonify({"success": False, "error": "Not logged in"})
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     new_email = data.get("email", "").strip().lower()
     otp_code = data.get("otp_code", "").strip()
     auth_token = data.get("auth_token", "").strip()
@@ -1869,7 +1869,7 @@ def add_comment(mod_id):
                 file.save(os.path.join(UPLOAD_DIR, "modbanner", fname))
                 image_url = f"/static/uploads/modbanner/{fname}"
     else:
-        data = request.get_json() or {}
+        data = request.get_json(silent=True) or {}
         text = data.get("text", "").strip()
         reply_to_id = data.get("reply_to_id", "")
         reply_to_name = data.get("reply_to_name", "")
@@ -1903,7 +1903,7 @@ def react_comment(mod_id, comment_id):
     user = get_session_user(request)
     if not user:
         return jsonify({"success": False, "error": "Not logged in"}), 401
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     emoji = data.get("emoji", "")
     if not emoji or len(emoji) > 10:
         return jsonify({"success": False, "error": "Invalid emoji"}), 400
