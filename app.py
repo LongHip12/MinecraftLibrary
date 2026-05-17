@@ -2243,7 +2243,13 @@ def enrich_post(post):
             rep_author = get_user_by_id(rep.get("author_id", "")) if rep.get("author_id") else None
             rep["author"] = rep_author if rep_author else anonymous_user()
             rep.setdefault("attachments", [])
+            rep.setdefault("replies", [])
             reply_count += 1
+            for srep in rep["replies"]:
+                srep_author = get_user_by_id(srep.get("author_id", "")) if srep.get("author_id") else None
+                srep["author"] = srep_author if srep_author else anonymous_user()
+                srep.setdefault("attachments", [])
+                reply_count += 1
     post["reply_count"] = reply_count
     return post
 
@@ -2478,6 +2484,41 @@ def forum_add_reply(post_id, msg_id):
     return jsonify({"success": True, "redirect": redir})
 
 
+@app.route("/forum/message/<post_id>/<msg_id>/reply/<rep_id>/subreply", methods=["POST"])
+def forum_add_subreply(post_id, msg_id, rep_id):
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Login required"}), 401
+    if is_muted(user):
+        return jsonify({"success": False, "error": "You are muted"}), 403
+    forum = load_forum()
+    post = next((p for p in forum["posts"] if p["id"] == post_id), None)
+    if not post:
+        return jsonify({"success": False, "error": "Post not found"}), 404
+    if post.get("locked") and not is_admin(user):
+        return jsonify({"success": False, "error": "Thread is locked"}), 403
+    msg = next((m for m in post.get("messages", []) if m["id"] == msg_id), None)
+    if not msg:
+        return jsonify({"success": False, "error": "Message not found"}), 404
+    rep = next((r for r in msg.get("replies", []) if r["id"] == rep_id), None)
+    if not rep:
+        return jsonify({"success": False, "error": "Reply not found"}), 404
+    content = request.form.get("content", "").strip()
+    files = request.files.getlist("files")
+    if not content and not files:
+        return jsonify({"success": False, "error": "Message cannot be empty"}), 400
+    attachments = save_forum_files(files)
+    rep.setdefault("replies", []).append({
+        "id": str(uuid.uuid4()),
+        "author_id": user["id"],
+        "content": content,
+        "created_at": datetime.now().isoformat(),
+        "attachments": attachments,
+    })
+    save_forum(forum)
+    return jsonify({"success": True, "redirect": url_for("forum_post", post_id=post_id) + "#rep-" + rep_id})
+
+
 @app.route("/forum/download/<file_id>")
 def forum_download_warn(file_id):
     redirect_flag = request.args.get("redirect", "")
@@ -2541,6 +2582,43 @@ def forum_react_reply(post_id, msg_id, rep_id):
     if not rep:
         return jsonify({"success": False, "error": "Reply not found"}), 404
     reactions = rep.setdefault("reactions", {})
+    react_users = reactions.setdefault(emoji, [])
+    uid = user["id"]
+    if uid in react_users:
+        react_users.remove(uid)
+        added = False
+    else:
+        react_users.append(uid)
+        added = True
+    if not react_users:
+        del reactions[emoji]
+    save_forum(forum)
+    return jsonify({"success": True, "added": added, "count": len(react_users)})
+
+
+@app.route("/api/forum/react/<post_id>/<msg_id>/<rep_id>/<srep_id>", methods=["POST"])
+def forum_react_subreply(post_id, msg_id, rep_id, srep_id):
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Login required"}), 401
+    data = request.get_json(silent=True) or {}
+    emoji = (data.get("emoji") or "").strip()
+    if not emoji:
+        return jsonify({"success": False, "error": "No emoji"}), 400
+    forum = load_forum()
+    post = next((p for p in forum["posts"] if p["id"] == post_id), None)
+    if not post:
+        return jsonify({"success": False, "error": "Post not found"}), 404
+    msg = next((m for m in post.get("messages", []) if m["id"] == msg_id), None)
+    if not msg:
+        return jsonify({"success": False, "error": "Message not found"}), 404
+    rep = next((r for r in msg.get("replies", []) if r["id"] == rep_id), None)
+    if not rep:
+        return jsonify({"success": False, "error": "Reply not found"}), 404
+    srep = next((s for s in rep.get("replies", []) if s["id"] == srep_id), None)
+    if not srep:
+        return jsonify({"success": False, "error": "Sub-reply not found"}), 404
+    reactions = srep.setdefault("reactions", {})
     react_users = reactions.setdefault(emoji, [])
     uid = user["id"]
     if uid in react_users:
@@ -2671,6 +2749,32 @@ def forum_delete_reply(post_id, msg_id, rep_id):
     if rep.get("author_id") != user["id"] and not is_admin(user) and user["id"] != post_author_id:
         return jsonify({"success": False, "error": "Forbidden"}), 403
     msg["replies"] = [r for r in msg.get("replies", []) if r["id"] != rep_id]
+    save_forum(forum)
+    return jsonify({"success": True})
+
+
+@app.route("/api/forum/subreply/<post_id>/<msg_id>/<rep_id>/<srep_id>/delete", methods=["POST"])
+def forum_delete_subreply(post_id, msg_id, rep_id, srep_id):
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Forbidden"}), 403
+    forum = load_forum()
+    post = next((p for p in forum["posts"] if p["id"] == post_id), None)
+    if not post:
+        return jsonify({"success": False, "error": "Not found"}), 404
+    msg = next((m for m in post.get("messages", []) if m["id"] == msg_id), None)
+    if not msg:
+        return jsonify({"success": False, "error": "Not found"}), 404
+    rep = next((r for r in msg.get("replies", []) if r["id"] == rep_id), None)
+    if not rep:
+        return jsonify({"success": False, "error": "Not found"}), 404
+    srep = next((s for s in rep.get("replies", []) if s["id"] == srep_id), None)
+    if not srep:
+        return jsonify({"success": False, "error": "Not found"}), 404
+    post_author_id = post.get("author_id")
+    if srep.get("author_id") != user["id"] and not is_admin(user) and user["id"] != post_author_id:
+        return jsonify({"success": False, "error": "Forbidden"}), 403
+    rep["replies"] = [s for s in rep.get("replies", []) if s["id"] != srep_id]
     save_forum(forum)
     return jsonify({"success": True})
 
