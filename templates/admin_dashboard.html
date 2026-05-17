@@ -3,143 +3,6 @@
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/dashboard.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <div class="dash-section" id="healthSection" style="margin-top:0;">
-      <div class="dash-section-title" style="display:flex;align-items:center;justify-content:space-between;">
-        <span style="display:flex;align-items:center;gap:8px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-          System Health
-        </span>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span id="healthLastRefresh" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
-          <button onclick="loadHealth()" id="healthRefreshBtn" class="btn btn-ghost btn-sm" style="padding:4px 10px;font-size:11px;">↻ Refresh</button>
-        </div>
-      </div>
-
-      <div id="healthLoading" style="text-align:center;color:var(--text3);padding:28px;font-size:13px;">Loading…</div>
-      <div id="healthContent" style="display:none;">
-
-        <!-- Uptime + Python -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;">
-          <div class="dash-stat-card" style="padding:14px 16px;">
-            <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Uptime</div>
-            <div id="hUptime" style="font-size:16px;font-weight:700;color:#4ade80;font-family:monospace;">—</div>
-          </div>
-          <div class="dash-stat-card" style="padding:14px 16px;">
-            <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Python</div>
-            <div id="hPython" style="font-size:16px;font-weight:700;color:#60a5fa;font-family:monospace;">—</div>
-          </div>
-          <div class="dash-stat-card" style="padding:14px 16px;">
-            <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Active Sessions</div>
-            <div id="hSessions" style="font-size:16px;font-weight:700;color:#f0f0f8;">—</div>
-          </div>
-          <div class="dash-stat-card" style="padding:14px 16px;">
-            <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Started At</div>
-            <div id="hStarted" style="font-size:12px;font-weight:600;color:var(--text2);font-family:monospace;">—</div>
-          </div>
-        </div>
-
-        <!-- Services -->
-        <div style="margin-bottom:16px;">
-          <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Services</div>
-          <div id="hServices" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;"></div>
-        </div>
-
-        <!-- Env Vars -->
-        <div style="margin-bottom:16px;">
-          <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Environment Variables</div>
-          <div id="hEnvVars" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
-        </div>
-
-        <!-- Data Files -->
-        <div>
-          <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Data Files</div>
-          <div id="hDataFiles" style="display:flex;flex-direction:column;gap:6px;"></div>
-        </div>
-      </div>
-    </div>
-
-  <script>
-  var _serviceLabels = {
-    email_brevo: 'Email (Brevo)',
-    email_smtp: 'Email (SMTP)',
-    google_oauth: 'Google OAuth',
-    discord_oauth: 'Discord OAuth',
-    discord_bot: 'Discord Bot',
-    supabase_backup: 'Supabase Backup'
-  };
-
-  function loadHealth() {
-    var btn = document.getElementById('healthRefreshBtn');
-    if (btn) btn.disabled = true;
-    fetch('/api/admin/health')
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        if (!d.success) return;
-        document.getElementById('healthLoading').style.display = 'none';
-        document.getElementById('healthContent').style.display = 'block';
-        document.getElementById('hUptime').textContent = d.uptime || '—';
-        document.getElementById('hPython').textContent = d.python_version || '—';
-        document.getElementById('hSessions').textContent = d.stats ? d.stats.active_sessions : '—';
-        var started = d.started_at ? new Date(d.started_at).toLocaleString() : '—';
-        document.getElementById('hStarted').textContent = started;
-        document.getElementById('healthLastRefresh').textContent = 'Updated ' + new Date().toLocaleTimeString();
-
-        // Services
-        var svc = document.getElementById('hServices');
-        svc.innerHTML = '';
-        Object.keys(d.services || {}).forEach(function(key) {
-          var ok = d.services[key];
-          var label = _serviceLabels[key] || key;
-          svc.innerHTML += '<div style="display:flex;align-items:center;gap:8px;background:' +
-            (ok ? 'rgba(74,222,128,0.06)' : 'rgba(250,80,80,0.06)') +
-            ';border:1px solid ' + (ok ? 'rgba(74,222,128,0.2)' : 'rgba(250,80,80,0.15)') +
-            ';border-radius:8px;padding:9px 12px;">' +
-            '<div style="width:7px;height:7px;border-radius:50%;background:' + (ok ? '#4ade80' : '#fa5050') + ';flex-shrink:0;' +
-            (ok ? '' : '') + '"></div>' +
-            '<span style="font-size:12px;font-weight:600;color:' + (ok ? '#4ade80' : 'var(--text2)') + ';">' + label + '</span>' +
-            '<span style="margin-left:auto;font-size:10px;font-weight:700;color:' + (ok ? '#4ade80' : '#fa5050') + ';">' +
-            (ok ? 'OK' : 'NOT SET') + '</span>' +
-            '</div>';
-        });
-
-        // Env vars
-        var envEl = document.getElementById('hEnvVars');
-        envEl.innerHTML = '';
-        Object.keys(d.env_vars || {}).forEach(function(key) {
-          var ok = d.env_vars[key];
-          envEl.innerHTML += '<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;' +
-            'font-family:monospace;border-radius:6px;padding:4px 9px;' +
-            'background:' + (ok ? 'rgba(74,222,128,0.08)' : 'rgba(250,80,80,0.08)') + ';' +
-            'border:1px solid ' + (ok ? 'rgba(74,222,128,0.2)' : 'rgba(250,80,80,0.15)') + ';' +
-            'color:' + (ok ? '#4ade80' : '#fa5050') + ';">' +
-            '<span style="width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;"></span>' +
-            key + '</span>';
-        });
-
-        // Data files
-        var dfEl = document.getElementById('hDataFiles');
-        dfEl.innerHTML = '';
-        (d.data_files || []).forEach(function(f) {
-          dfEl.innerHTML += '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;' +
-            'background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">' +
-            '<div style="width:7px;height:7px;border-radius:50%;background:' + (f.ok ? '#4ade80' : '#fa5050') + ';flex-shrink:0;"></div>' +
-            '<span style="font-family:monospace;font-size:12px;color:var(--text);flex:1;">' + f.name + '</span>' +
-            (f.records != null ? '<span style="font-size:11px;color:var(--text3);">' + f.records + '</span>' : '') +
-            '<span style="font-size:11px;font-weight:600;color:var(--text2);font-family:monospace;">' + f.size + '</span>' +
-            '</div>';
-        });
-
-        if (btn) btn.disabled = false;
-      })
-      .catch(function() {
-        document.getElementById('hUptime').textContent = 'Error loading';
-        if (btn) btn.disabled = false;
-      });
-  }
-  loadHealth();
-  setInterval(loadHealth, 30000);
-  </script>
-  
 {% endblock %}
 {% block content %}
 <div class="dashboard-page">
@@ -879,4 +742,88 @@ function showCustomConfirm(title, message, confirmLabel, confirmColor, onConfirm
   overlay.style.display = 'flex';
 }
 </script>
+
+    <div class="dash-section" id="healthSection" style="margin-top:0;">
+      <div class="dash-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="display:flex;align-items:center;gap:8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          System Health
+        </span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="healthLastRefresh" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
+          <button onclick="loadHealth()" id="healthRefreshBtn" class="btn btn-ghost btn-sm" style="padding:4px 10px;font-size:11px;">↻ Refresh</button>
+        </div>
+      </div>
+      <div id="healthLoading" style="text-align:center;color:var(--text3);padding:28px;font-size:13px;">Loading…</div>
+      <div id="healthContent" style="display:none;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;">
+          <div class="dash-stat-card" style="padding:14px 16px;">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Uptime</div>
+            <div id="hUptime" style="font-size:16px;font-weight:700;color:#4ade80;font-family:monospace;">—</div>
+          </div>
+          <div class="dash-stat-card" style="padding:14px 16px;">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Python</div>
+            <div id="hPython" style="font-size:16px;font-weight:700;color:#60a5fa;font-family:monospace;">—</div>
+          </div>
+          <div class="dash-stat-card" style="padding:14px 16px;">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Active Sessions</div>
+            <div id="hSessions" style="font-size:16px;font-weight:700;color:#f0f0f8;">—</div>
+          </div>
+          <div class="dash-stat-card" style="padding:14px 16px;">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Started At</div>
+            <div id="hStarted" style="font-size:12px;font-weight:600;color:var(--text2);font-family:monospace;">—</div>
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Services</div>
+          <div id="hServices" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;"></div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Environment Variables</div>
+          <div id="hEnvVars" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Data Files</div>
+          <div id="hDataFiles" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+      </div>
+    </div>
+
+  <script>
+  var _serviceLabels = {email_brevo:'Email (Brevo)',email_smtp:'Email (SMTP)',google_oauth:'Google OAuth',discord_oauth:'Discord OAuth',discord_bot:'Discord Bot',supabase_backup:'Supabase Backup'};
+  function loadHealth() {
+    var btn = document.getElementById('healthRefreshBtn');
+    if (btn) btn.disabled = true;
+    fetch('/api/admin/health')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if (!d.success) { if(btn) btn.disabled=false; return; }
+        document.getElementById('healthLoading').style.display='none';
+        document.getElementById('healthContent').style.display='block';
+        document.getElementById('hUptime').textContent = d.uptime||'—';
+        document.getElementById('hPython').textContent = d.python_version||'—';
+        document.getElementById('hSessions').textContent = d.stats ? d.stats.active_sessions : '—';
+        document.getElementById('hStarted').textContent = d.started_at ? new Date(d.started_at).toLocaleString() : '—';
+        document.getElementById('healthLastRefresh').textContent = 'Updated '+new Date().toLocaleTimeString();
+        var svc=document.getElementById('hServices'); svc.innerHTML='';
+        Object.keys(d.services||{}).forEach(function(k){
+          var ok=d.services[k], label=_serviceLabels[k]||k;
+          svc.innerHTML+='<div style="display:flex;align-items:center;gap:8px;background:'+(ok?'rgba(74,222,128,0.06)':'rgba(250,80,80,0.06)')+';border:1px solid '+(ok?'rgba(74,222,128,0.2)':'rgba(250,80,80,0.15)')+';border-radius:8px;padding:9px 12px;">'+'<div style="width:7px;height:7px;border-radius:50%;background:'+(ok?'#4ade80':'#fa5050')+';flex-shrink:0;"></div>'+'<span style="font-size:12px;font-weight:600;color:'+(ok?'#4ade80':'var(--text2)')+';">'+label+'</span>'+'<span style="margin-left:auto;font-size:10px;font-weight:700;color:'+(ok?'#4ade80':'#fa5050')+';"> '+(ok?'OK':'NOT SET')+'</span></div>';
+        });
+        var env=document.getElementById('hEnvVars'); env.innerHTML='';
+        Object.keys(d.env_vars||{}).forEach(function(k){
+          var ok=d.env_vars[k];
+          env.innerHTML+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;font-family:monospace;border-radius:6px;padding:4px 9px;background:'+(ok?'rgba(74,222,128,0.08)':'rgba(250,80,80,0.08)')+';border:1px solid '+(ok?'rgba(74,222,128,0.2)':'rgba(250,80,80,0.15)')+';color:'+(ok?'#4ade80':'#fa5050')+';"><span style="width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;"></span>'+k+'</span>';
+        });
+        var df=document.getElementById('hDataFiles'); df.innerHTML='';
+        (d.data_files||[]).forEach(function(f){
+          df.innerHTML+='<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">'+'<div style="width:7px;height:7px;border-radius:50%;background:'+(f.ok?'#4ade80':'#fa5050')+';flex-shrink:0;"></div>'+'<span style="font-family:monospace;font-size:12px;color:var(--text);flex:1;">'+f.name+'</span>'+(f.records!=null?'<span style="font-size:11px;color:var(--text3);">'+f.records+'</span>':'')+'<span style="font-size:11px;font-weight:600;color:var(--text2);font-family:monospace;">'+f.size+'</span></div>';
+        });
+        if(btn) btn.disabled=false;
+      })
+      .catch(function(){if(btn) btn.disabled=false;});
+  }
+  loadHealth();
+  setInterval(loadHealth, 30000);
+  </script>
 {% endblock %}
