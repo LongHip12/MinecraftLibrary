@@ -277,15 +277,17 @@
   <div class="dash-section" style="margin-top:24px;">
     <div class="dash-section-title">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-      Change Password
+      {% if profile.password %}Change Password{% else %}Set Password{% endif %}
     </div>
     <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:20px;">
       <div style="display:flex;flex-direction:column;gap:12px;max-width:420px;">
+        {% if profile.password %}
         <div>
           <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;font-weight:500;">Current Password</label>
           <input id="cpw-current" type="password" placeholder="••••••••"
             style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 14px;font-size:13px;color:var(--text);outline:none;box-sizing:border-box;">
         </div>
+        {% endif %}
         <div>
           <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;font-weight:500;">New Password</label>
           <input id="cpw-new" type="password" placeholder="At least 6 characters"
@@ -837,7 +839,8 @@ window.resendCpwOtp = async function() {
   } catch(e) { if (typeof showToast === 'function') showToast('Network error', 'error'); }
 };
 window.submitChangePassword = async function() {
-  var current = (document.getElementById('cpw-current') || {}).value || '';
+  var hasPwField = !!document.getElementById('cpw-current');
+  var current = hasPwField ? (document.getElementById('cpw-current').value || '') : '';
   var newPw = (document.getElementById('cpw-new') || {}).value || '';
   var confirm = (document.getElementById('cpw-confirm') || {}).value || '';
   var errEl = document.getElementById('cpw-err');
@@ -845,7 +848,7 @@ window.submitChangePassword = async function() {
   var otpPanel = document.getElementById('cpw-otp-panel');
   var otpCode = otpPanel && otpPanel.style.display !== 'none' ? getOtpValue('cpw-otp-boxes') : '';
   var hasOtpSection = !!document.getElementById('cpw-otp-section');
-  if (!current || !newPw || !confirm) {
+  if ((hasPwField && !current) || !newPw || !confirm) {
     if (errEl) { errEl.textContent = 'Fill in all fields'; errEl.style.display = 'block'; } return;
   }
   if (hasOtpSection && (!otpPanel || otpPanel.style.display === 'none')) {

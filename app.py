@@ -7,6 +7,7 @@ import secrets
 import mimetypes
 import requests
 import smtplib
+import threading
 import re
 import urllib.parse
 from email.mime.multipart import MIMEMultipart
@@ -143,7 +144,7 @@ def send_email_html(to, subject, html_body):
     msg["To"] = to
     msg.attach(MIMEText(html_body, "html"))
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=10)
         server.starttls()
         server.login(GMAIL_FROM, APP_PASSWORD)
         server.send_message(msg)
@@ -588,7 +589,7 @@ def login():
         else:
             accounts = load_json("accounts-data.json")
             found = next((u for u in accounts["users"] if u["username"].lower() == username.lower() or u.get("email", "").lower() == username.lower()), None)
-            if found and check_password_hash(found["password"], password):
+            if found and found.get("password") and check_password_hash(found["password"], password):
                 token, expires = create_session(found["id"], remember)
                 device_token = issue_device_token()
                 next_url = request.args.get("next", url_for("index"))
@@ -732,7 +733,7 @@ def register():
                     "tag": "user",
                     "avatar": "",
                     "banner": "",
-                    "description": "",
+                    "description": "Hello World!",
                     "followers": [],
                     "following": [],
                     "created_at": datetime.now().isoformat(),
@@ -742,7 +743,7 @@ def register():
                     "admin_until": None
                 })
                 save_json("accounts-data.json", accounts)
-                send_email_html(email, "Welcome to Lonely Hub!", welcome_email_html(username))
+                threading.Thread(target=send_email_html, args=(email, "Welcome to Lonely Hub!", welcome_email_html(username)), daemon=True).start()
                 token, expires = create_session(new_id, remember)
                 device_token = issue_device_token()
                 next_url = request.args.get("next", url_for("index"))
@@ -862,7 +863,8 @@ def google_callback():
             found_user["google_id"] = google_id
             save_json("accounts-data.json", accounts)
     if not found_user:
-        base_username = re.sub(r'[^a-zA-Z0-9_-]', '', g_name.replace(" ", "_"))[:16] or "user"
+        email_prefix = g_email.split("@")[0] if g_email else ""
+        base_username = re.sub(r'[^a-zA-Z0-9_-]', '', email_prefix)[:20] or "user"
         username = base_username
         suffix = 1
         while any(u["username"].lower() == username.lower() for u in accounts["users"]):
@@ -875,12 +877,12 @@ def google_callback():
             "display_name": g_name or username,
             "email": g_email,
             "email_verified": True,
-            "password": generate_password_hash(secrets.token_hex(16)),
+            "password": None,
             "google_id": google_id,
             "tag": "user",
             "avatar": ginfo.get("picture", ""),
             "banner": "",
-            "description": "",
+            "description": "Hello World!",
             "followers": [],
             "following": [],
             "created_at": datetime.now().isoformat(),
@@ -892,7 +894,7 @@ def google_callback():
         accounts["users"].append(found_user)
         save_json("accounts-data.json", accounts)
         if g_email:
-            send_email_html(g_email, "Welcome to Lonely Hub!", welcome_email_html(username))
+            threading.Thread(target=send_email_html, args=(g_email, "Welcome to Lonely Hub!", welcome_email_html(username)), daemon=True).start()
     session_token, expires = create_session(found_user["id"], True)
     device_token = issue_device_token()
     resp = make_response(redirect(url_for("index")))
@@ -2140,8 +2142,9 @@ def change_password():
     new_pw = data.get("new_password", "")
     confirm_pw = data.get("confirm_password", "")
     otp_code = data.get("otp_code", "").strip()
-    if not check_password_hash(user.get("password", ""), current_pw):
-        return jsonify({"success": False, "error": "Current password is incorrect"}), 400
+    if user.get("password"):
+        if not check_password_hash(user["password"], current_pw):
+            return jsonify({"success": False, "error": "Current password is incorrect"}), 400
     if len(new_pw) < 6:
         return jsonify({"success": False, "error": "New password must be at least 6 characters"}), 400
     if new_pw != confirm_pw:
