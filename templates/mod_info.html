@@ -438,14 +438,14 @@
               </button>
               {% endif %}
               {% if ns.replies %}
-              <button title="Show or hide replies" class="cmt-toggle-btn" onclick="toggleCmtReplies('cmt-rep-{{ c.id }}', this)">
+              <button title="Show or hide replies" class="cmt-toggle-btn" type="button" onclick="toggleCmtReplies('cmt-rep-{{ c.id }}', this)">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 <span>{{ ns.replies|length }} {{ 'reply' if ns.replies|length == 1 else 'replies' }}</span>
               </button>
               {% endif %}
             </div>
             {% if ns.replies %}
-            <div class="cmt-replies-list" id="cmt-rep-{{ c.id }}">
+            <div class="cmt-replies-list" id="cmt-rep-{{ c.id }}" style="display:none;">
               {% for r in ns.replies %}
               <div class="comment-item cmt-reply-item" id="comment-{{ r.id }}">
                 <img src="{{ r.avatar if r.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="comment-avatar" alt="{{ r.display_name }}" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
