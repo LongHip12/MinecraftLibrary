@@ -2066,14 +2066,30 @@ def error_page():
 
 @app.errorhandler(404)
 def not_found(e):
-    user = get_session_user(request)
+    if request.path.startswith("/api/"):
+        return jsonify({"success": False, "error": "Endpoint not found"}), 404
     return redirect(f"/error?code=404&msg=Page+not+found")
 
 
 @app.errorhandler(403)
 def forbidden(e):
-    user = get_session_user(request)
+    if request.path.startswith("/api/"):
+        return jsonify({"success": False, "error": "Access forbidden"}), 403
     return redirect(f"/error?code=403&msg=Access+forbidden")
+
+
+@app.errorhandler(500)
+def internal_error(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"success": False, "error": "Server error. Please try again."}), 500
+    return redirect(f"/error?code=500&msg=Internal+server+error")
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"success": False, "error": "Server error. Please try again."}), 500
+    raise e
 
 
 def load_forum():
