@@ -280,7 +280,7 @@
       {% if profile.password %}Change Password{% else %}Set Password{% endif %}
     </div>
     <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:20px;">
-      <div style="display:flex;flex-direction:column;gap:12px;max-width:420px;">
+      <div id="cpw-fields" style="display:flex;flex-direction:column;gap:12px;max-width:420px;">
         {% if profile.password %}
         <div>
           <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;font-weight:500;">Current Password</label>
@@ -298,35 +298,36 @@
           <input id="cpw-confirm" type="password" placeholder="Repeat new password"
             style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 14px;font-size:13px;color:var(--text);outline:none;box-sizing:border-box;">
         </div>
-        {% if profile.email_verified %}
-        <div id="cpw-otp-section">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-            <div style="flex:1;min-width:0;">
-              <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:6px;font-weight:500;">Verification Code</label>
-              <div style="font-size:12px;color:var(--text3);">We'll send a code to <strong style="color:var(--text);">{{ profile.email }}</strong></div>
-            </div>
-            <button onclick="sendCpwOtp()" id="cpw-send-otp-btn" class="btn btn-ghost btn-sm" style="white-space:nowrap;flex-shrink:0;align-self:flex-end;">Send Code</button>
-          </div>
-          <div id="cpw-otp-panel" style="display:none;">
-            <div class="otp-boxes" id="cpw-otp-boxes">
-              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
-              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
-              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
-              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
-              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
-              <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
-            </div>
-            <div style="margin-top:8px;">
-              <button onclick="resendCpwOtp()" id="cpw-resend-btn" class="btn btn-ghost btn-sm" disabled style="color:var(--text3);font-size:12px;">
-                Resend (<span id="cpw-countdown">60</span>s)
-              </button>
-            </div>
-          </div>
-        </div>
-        {% endif %}
         <div id="cpw-err" style="font-size:12px;color:#fa5050;display:none;"></div>
         <div>
-          <button onclick="submitChangePassword()" id="cpw-submit-btn" class="btn btn-primary btn-sm">Change Password</button>
+          <button onclick="startChangePassword()" id="cpw-btn" class="btn btn-primary btn-sm">
+            {% if profile.password %}Change Password{% else %}Set Password{% endif %}
+          </button>
+        </div>
+      </div>
+      <div id="cpw-otp-section" style="display:none;max-width:420px;margin-top:4px;">
+        {% if profile.email_verified %}
+        <div style="font-size:13px;color:var(--text3);margin-bottom:14px;">
+          A verification code was sent to <strong style="color:var(--text);">{{ profile.email }}</strong>
+        </div>
+        <div class="otp-boxes" id="cpw-otp-boxes">
+          <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+          <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+          <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+          <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+          <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+          <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="off">
+        </div>
+        {% endif %}
+        <div id="cpw-otp-err" style="font-size:12px;color:#fa5050;display:none;margin-top:8px;"></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;">
+          <button onclick="confirmChangePassword()" id="cpw-submit-btn" class="btn btn-primary btn-sm">Confirm</button>
+          {% if profile.email_verified %}
+          <button onclick="resendCpwOtp()" id="cpw-resend-btn" class="btn btn-ghost btn-sm" disabled style="font-size:12px;">
+            Resend (<span id="cpw-countdown">60</span>s)
+          </button>
+          {% endif %}
+          <button onclick="cancelChangePassword()" class="btn btn-ghost btn-sm" style="font-size:12px;">Cancel</button>
         </div>
       </div>
     </div>
@@ -807,25 +808,89 @@ window.resendEmailOtp = async function(purpose, isEv) {
   } catch(e) { if (typeof showToast === 'function') showToast('Network error', 'error'); }
 };
 
-// ── Change Password ───────────────────────────────────────
-window.sendCpwOtp = async function() {
-  var btn = document.getElementById('cpw-send-otp-btn');
-  if (btn) btn.disabled = true;
+// ── Change / Set Password ─────────────────────────────────
+window.startChangePassword = async function() {
+  var hasPwField = !!document.getElementById('cpw-current');
+  var current = hasPwField ? (document.getElementById('cpw-current').value || '') : '';
+  var newPw = (document.getElementById('cpw-new') || {}).value || '';
+  var cfm = (document.getElementById('cpw-confirm') || {}).value || '';
+  var errEl = document.getElementById('cpw-err');
+  if ((hasPwField && !current) || !newPw || !cfm) {
+    if (errEl) { errEl.textContent = 'Fill in all fields'; errEl.style.display = 'block'; } return;
+  }
+  if (newPw !== cfm) {
+    if (errEl) { errEl.textContent = 'Passwords do not match'; errEl.style.display = 'block'; } return;
+  }
+  if (newPw.length < 6) {
+    if (errEl) { errEl.textContent = 'New password must be at least 6 characters'; errEl.style.display = 'block'; } return;
+  }
+  if (errEl) errEl.style.display = 'none';
+  var btn = document.getElementById('cpw-btn');
+  {% if profile.email_verified %}
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending code...'; }
   try {
     var r = await fetch('/api/send-otp', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({purpose: 'change_password'}) });
     var d = await r.json();
     if (d.success) {
-      var panel = document.getElementById('cpw-otp-panel');
-      if (panel) panel.style.display = 'block';
-      if (btn) { btn.textContent = 'Resend (<span id="cpw-countdown">60</span>s)'; btn.disabled = true; }
-      startCountdown('cpw-countdown', 'cpw-send-otp-btn', 60);
+      document.getElementById('cpw-fields').style.display = 'none';
+      document.getElementById('cpw-otp-section').style.display = 'block';
       initOtpBoxes('cpw-otp-boxes');
+      startCountdown('cpw-countdown', 'cpw-resend-btn', 60);
       document.querySelector('#cpw-otp-boxes .otp-box').focus();
     } else {
-      if (typeof showToast === 'function') showToast(d.error || 'Failed to send code', 'error');
-      if (btn) btn.disabled = false;
+      if (errEl) { errEl.textContent = d.error || 'Failed to send code'; errEl.style.display = 'block'; }
+      if (btn) { btn.disabled = false; btn.textContent = '{% if profile.password %}Change Password{% else %}Set Password{% endif %}'; }
     }
-  } catch(e) { if (typeof showToast === 'function') showToast('Network error', 'error'); if (btn) btn.disabled = false; }
+  } catch(e) {
+    if (errEl) { errEl.textContent = 'Network error. Try again.'; errEl.style.display = 'block'; }
+    if (btn) { btn.disabled = false; btn.textContent = '{% if profile.password %}Change Password{% else %}Set Password{% endif %}'; }
+  }
+  {% else %}
+  confirmChangePassword();
+  {% endif %}
+};
+window.confirmChangePassword = async function() {
+  var hasPwField = !!document.getElementById('cpw-current');
+  var current = hasPwField ? (document.getElementById('cpw-current').value || '') : '';
+  var newPw = (document.getElementById('cpw-new') || {}).value || '';
+  var cfm = (document.getElementById('cpw-confirm') || {}).value || '';
+  var otpCode = document.getElementById('cpw-otp-boxes') ? getOtpValue('cpw-otp-boxes') : '';
+  var errEl = document.getElementById('cpw-otp-err');
+  var btn = document.getElementById('cpw-submit-btn');
+  {% if profile.email_verified %}
+  if (otpCode.length < 6) {
+    if (errEl) { errEl.textContent = 'Enter all 6 digits'; errEl.style.display = 'block'; } return;
+  }
+  {% endif %}
+  if (btn) btn.disabled = true;
+  if (errEl) errEl.style.display = 'none';
+  var body = { new_password: newPw, confirm_password: cfm };
+  if (hasPwField && current) body.current_password = current;
+  if (otpCode) body.otp_code = otpCode;
+  try {
+    var r = await fetch('/api/change-password', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+    var d = await r.json();
+    if (d.success) {
+      if (typeof showToast === 'function') showToast('Password changed!', 'success');
+      cancelChangePassword();
+      setTimeout(function() { location.reload(); }, 1200);
+    } else {
+      if (errEl) { errEl.textContent = d.error || 'Failed'; errEl.style.display = 'block'; }
+    }
+  } catch(e) { if (errEl) { errEl.textContent = 'Network error'; errEl.style.display = 'block'; } }
+  if (btn) btn.disabled = false;
+};
+window.cancelChangePassword = function() {
+  document.getElementById('cpw-fields').style.display = 'flex';
+  document.getElementById('cpw-otp-section').style.display = 'none';
+  var btn = document.getElementById('cpw-btn');
+  if (btn) { btn.disabled = false; btn.textContent = '{% if profile.password %}Change Password{% else %}Set Password{% endif %}'; }
+  var e1 = document.getElementById('cpw-err'); if (e1) e1.style.display = 'none';
+  var e2 = document.getElementById('cpw-otp-err'); if (e2) e2.style.display = 'none';
+  if (document.getElementById('cpw-current')) document.getElementById('cpw-current').value = '';
+  if (document.getElementById('cpw-new')) document.getElementById('cpw-new').value = '';
+  if (document.getElementById('cpw-confirm')) document.getElementById('cpw-confirm').value = '';
+  if (document.getElementById('cpw-otp-boxes')) clearOtpBoxes('cpw-otp-boxes');
 };
 window.resendCpwOtp = async function() {
   try {
@@ -834,48 +899,9 @@ window.resendCpwOtp = async function() {
     if (d.success) {
       if (typeof showToast === 'function') showToast('Code resent!', 'success');
       startCountdown('cpw-countdown', 'cpw-resend-btn', 60);
-      clearOtpBoxes('cpw-otp-boxes');
+      if (document.getElementById('cpw-otp-boxes')) clearOtpBoxes('cpw-otp-boxes');
     } else { if (typeof showToast === 'function') showToast(d.error || 'Failed', 'error'); }
   } catch(e) { if (typeof showToast === 'function') showToast('Network error', 'error'); }
-};
-window.submitChangePassword = async function() {
-  var hasPwField = !!document.getElementById('cpw-current');
-  var current = hasPwField ? (document.getElementById('cpw-current').value || '') : '';
-  var newPw = (document.getElementById('cpw-new') || {}).value || '';
-  var confirm = (document.getElementById('cpw-confirm') || {}).value || '';
-  var errEl = document.getElementById('cpw-err');
-  var btn = document.getElementById('cpw-submit-btn');
-  var otpPanel = document.getElementById('cpw-otp-panel');
-  var otpCode = otpPanel && otpPanel.style.display !== 'none' ? getOtpValue('cpw-otp-boxes') : '';
-  var hasOtpSection = !!document.getElementById('cpw-otp-section');
-  if ((hasPwField && !current) || !newPw || !confirm) {
-    if (errEl) { errEl.textContent = 'Fill in all fields'; errEl.style.display = 'block'; } return;
-  }
-  if (hasOtpSection && (!otpPanel || otpPanel.style.display === 'none')) {
-    if (errEl) { errEl.textContent = 'Send and enter the verification code first'; errEl.style.display = 'block'; } return;
-  }
-  if (hasOtpSection && otpCode.length < 6) {
-    if (errEl) { errEl.textContent = 'Enter all 6 digits of the verification code'; errEl.style.display = 'block'; } return;
-  }
-  if (btn) btn.disabled = true;
-  if (errEl) errEl.style.display = 'none';
-  var body = { current_password: current, new_password: newPw, confirm_password: confirm };
-  if (otpCode) body.otp_code = otpCode;
-  try {
-    var r = await fetch('/api/change-password', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
-    var d = await r.json();
-    if (d.success) {
-      if (typeof showToast === 'function') showToast('Password changed!', 'success');
-      document.getElementById('cpw-current').value = '';
-      document.getElementById('cpw-new').value = '';
-      document.getElementById('cpw-confirm').value = '';
-      clearOtpBoxes('cpw-otp-boxes');
-      if (otpPanel) otpPanel.style.display = 'none';
-    } else {
-      if (errEl) { errEl.textContent = d.error || 'Failed'; errEl.style.display = 'block'; }
-    }
-  } catch(e) { if (errEl) { errEl.textContent = 'Network error'; errEl.style.display = 'block'; } }
-  if (btn) btn.disabled = false;
 };
 
 // ── Linked accounts ──────────────────────────────────────
