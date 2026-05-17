@@ -2,6 +2,25 @@
 {% block title %}Forum — Lonely Hub{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/forum.css">
+<style>
+.forum-post-cover {
+  width: 56px;
+  height: 56px;
+  border-radius: 7px;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-left: 10px;
+  align-self: center;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+}
+.forum-post-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -141,8 +160,8 @@
       <!-- Post list -->
       {% if posts %}
         {% for post in posts %}
-        <a class="forum-post-card {% if post.pinned %}pinned{% endif %}" href="/forum/post/{{ post.id }}">
-          <div class="forum-post-left">
+        <a class="forum-post-card {% if post.pinned %}pinned{% endif %}" href="/forum/post/{{ post.id }}" style="display:flex;align-items:center;">
+          <div class="forum-post-left" style="flex:1;min-width:0;">
             <div class="forum-post-title-row">
               {% if post.pinned %}
               <span class="badge-pinned">
@@ -170,6 +189,11 @@
               </span>
             </div>
           </div>
+          {% if post.cover_image %}
+          <div class="forum-post-cover">
+            <img src="{{ post.cover_image }}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'">
+          </div>
+          {% endif %}
           <div class="forum-post-stats">
             <span class="forum-stat-chip">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
