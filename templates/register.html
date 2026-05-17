@@ -219,7 +219,7 @@ document.getElementById('register-step1-form').addEventListener('submit', async 
     var resp = await fetch('/api/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, purpose: 'register' })
+      body: JSON.stringify({ email: email, purpose: 'register', captchaToken: captchaToken })
     });
     var data;
     try { data = await resp.json(); } catch(_) { data = { success: false, error: 'Server error (code ' + resp.status + '). Please try again.' }; }
