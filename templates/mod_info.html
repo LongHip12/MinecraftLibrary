@@ -355,12 +355,15 @@
       <div class="comment-input-wrap" style="flex:1;">
         <div class="comment-reply-bar" id="comment-reply-bar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
-          Replying to <strong id="comment-reply-name"></strong>
+          <span>Replying to <strong id="comment-reply-name"></strong></span>
+          <span class="comment-reply-preview" id="comment-reply-preview-text"></span>
           <button title="Cancel reply" class="comment-reply-x" onclick="cancelCommentReply()">×</button>
         </div>
         <textarea id="comment-input" class="input-field comment-textarea" placeholder="Share your thoughts about this mod..." rows="2" maxlength="1000"></textarea>
         <input type="hidden" id="comment-reply-to-id" value="">
         <input type="hidden" id="comment-reply-to-name" value="">
+        <input type="hidden" id="comment-reply-quoted-text" value="">
+        <input type="hidden" id="comment-reply-quoted-author" value="">
         <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;">
           <label class="file-upload-label" style="padding:5px 12px;font-size:12px;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
@@ -402,13 +405,20 @@
             {% if c.image %}
             <img src="{{ c.image }}" class="comment-image" alt="Attached image" onclick="window.open('{{ c.image }}','_blank')">
             {% endif %}
-            <div class="comment-reactions" id="reactions-{{ c.id }}">
+            {# Collect replies for this comment #}
+            {% set ns = namespace(replies=[]) %}
+            {% for r in mod.comments %}
+              {% if r.reply_to_id and r.reply_to_id | string == c.id | string %}
+                {% set ns.replies = ns.replies + [r] %}
+              {% endif %}
+            {% endfor %}
+            <div class="cmt-actions-row" id="reactions-{{ c.id }}">
               {% set reacts = c.reactions | default({}) %}
               {% for emoji, users_reacted in reacts.items() %}
               {% if users_reacted|length > 0 %}
               <button class="react-chip {% if user and user.id in users_reacted %}active{% endif %}"
                 onclick="toggleReact('{{ c.id }}', this.dataset.emoji)"
-                data-emoji="{{ emoji }}" data-comment="{{ c.id }}">
+                data-emoji="{{ emoji }}" data-comment="{{ c.id }}" type="button">
                 {{ emoji }}<span>{{ users_reacted|length }}</span>
               </button>
               {% endif %}
@@ -418,77 +428,76 @@
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               </button>
-              {% endif %}
-            </div>
-            {% if user %}
-            <div class="cmt-msg-actions">
-              <button title="Reply to this comment" class="cmt-reply-action-btn" onclick="triggerCommentReply('{{ c.id }}','{{ c.display_name | replace("'","") }}')" type="button">
+              <button title="Reply to this comment" class="cmt-reply-action-btn"
+                data-comment="{{ c.id }}"
+                data-author="{{ c.display_name | replace('"','') | replace("'","") }}"
+                data-preview="{{ (c.text or '')[:60] | replace('"','') | replace("'","") }}"
+                onclick="triggerCmtReply(this)" type="button">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                 Reply
               </button>
-            </div>
-            {% endif %}
-            {# Collect replies for this comment #}
-            {% set ns = namespace(replies=[]) %}
-            {% for r in mod.comments %}
-              {% if r.reply_to_id and r.reply_to_id | string == c.id | string %}
-                {% set ns.replies = ns.replies + [r] %}
               {% endif %}
-            {% endfor %}
-            {% if ns.replies %}
-            <div class="cmt-replies-wrap">
+              {% if ns.replies %}
               <button title="Show or hide replies" class="cmt-toggle-btn" onclick="toggleCmtReplies('cmt-rep-{{ c.id }}', this)">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 <span>{{ ns.replies|length }} {{ 'reply' if ns.replies|length == 1 else 'replies' }}</span>
               </button>
-              <div class="cmt-replies-list" id="cmt-rep-{{ c.id }}">
-                {% for r in ns.replies %}
-                <div class="comment-item cmt-reply-item" id="comment-{{ r.id }}">
-                  <img src="{{ r.avatar if r.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="comment-avatar" alt="{{ r.display_name }}" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
-                  <div class="comment-body">
-                    <div class="comment-header">
-                      <a href="/users/{{ r.username }}" class="comment-name">{{ r.display_name }}</a>
-                      <span class="comment-time">{{ r.created_at[:10] }}</span>
-                      {% if user and (user.id == r.user_id or user.tag == 'admin') %}
-                      <button class="comment-delete-btn" onclick="deleteComment('{{ r.id }}')" title="Delete">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
-                      </button>
-                      {% endif %}
-                    </div>
-                    <div class="comment-text">{{ r.text }}</div>
-                    {% if r.image %}
-                    <img src="{{ r.image }}" class="comment-image" alt="Attached image" onclick="window.open('{{ r.image }}','_blank')">
+              {% endif %}
+            </div>
+            {% if ns.replies %}
+            <div class="cmt-replies-list" id="cmt-rep-{{ c.id }}">
+              {% for r in ns.replies %}
+              <div class="comment-item cmt-reply-item" id="comment-{{ r.id }}">
+                <img src="{{ r.avatar if r.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="comment-avatar" alt="{{ r.display_name }}" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
+                <div class="comment-body">
+                  <div class="comment-header">
+                    <a href="/users/{{ r.username }}" class="comment-name">{{ r.display_name }}</a>
+                    <span class="comment-time">{{ r.created_at[:10] }}</span>
+                    {% if user and (user.id == r.user_id or user.tag == 'admin') %}
+                    <button class="comment-delete-btn" onclick="deleteComment('{{ r.id }}')" title="Delete">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
+                    </button>
                     {% endif %}
-                    <div class="comment-reactions" id="reactions-{{ r.id }}">
-                      {% set rreacts = r.reactions | default({}) %}
-                      {% for emoji, users_reacted in rreacts.items() %}
-                      {% if users_reacted|length > 0 %}
-                      <button class="react-chip {% if user and user.id in users_reacted %}active{% endif %}"
-                        onclick="toggleReact('{{ r.id }}', this.dataset.emoji)"
-                        data-emoji="{{ emoji }}" data-comment="{{ r.id }}">
-                        {{ emoji }}<span>{{ users_reacted|length }}</span>
-                      </button>
-                      {% endif %}
-                      {% endfor %}
-                      {% if user %}
-                      <button class="react-add-btn" onclick="toggleEmojiPicker(event,'{{ r.id }}')" title="Add reaction" type="button">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                      </button>
-                      {% endif %}
-                    </div>
+                  </div>
+                  {% if r.reply_to_name %}
+                  <div class="cmt-quote-block">
+                    <div class="cmt-quote-author">↩ {{ r.reply_to_name }}</div>
+                    {% if r.reply_to_content %}<div class="cmt-quote-text">{{ r.reply_to_content }}</div>{% endif %}
+                  </div>
+                  {% endif %}
+                  <div class="comment-text">{{ r.text }}</div>
+                  {% if r.image %}
+                  <img src="{{ r.image }}" class="comment-image" alt="Attached image" onclick="window.open('{{ r.image }}','_blank')">
+                  {% endif %}
+                  <div class="cmt-actions-row" id="reactions-{{ r.id }}">
+                    {% set rreacts = r.reactions | default({}) %}
+                    {% for emoji, users_reacted in rreacts.items() %}
+                    {% if users_reacted|length > 0 %}
+                    <button class="react-chip {% if user and user.id in users_reacted %}active{% endif %}"
+                      onclick="toggleReact('{{ r.id }}', this.dataset.emoji)"
+                      data-emoji="{{ emoji }}" data-comment="{{ r.id }}" type="button">
+                      {{ emoji }}<span>{{ users_reacted|length }}</span>
+                    </button>
+                    {% endif %}
+                    {% endfor %}
                     {% if user %}
-                    <div class="cmt-msg-actions">
-                      <button title="Reply to this comment" class="cmt-reply-action-btn" type="button" onclick="triggerCommentReply('{{ c.id }}','{{ r.display_name | replace("'","") }}')">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
-                        Reply
-                      </button>
-                    </div>
+                    <button class="react-add-btn" onclick="toggleEmojiPicker(event,'{{ r.id }}')" title="Add reaction" type="button">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                    <button title="Reply to this comment" class="cmt-reply-action-btn"
+                      data-comment="{{ c.id }}"
+                      data-author="{{ r.display_name | replace('"','') | replace("'","") }}"
+                      data-preview="{{ (r.text or '')[:60] | replace('"','') | replace("'","") }}"
+                      onclick="triggerCmtReply(this)" type="button">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+                      Reply
+                    </button>
                     {% endif %}
                   </div>
                 </div>
-                {% endfor %}
               </div>
+              {% endfor %}
             </div>
             {% endif %}
           </div>
@@ -604,17 +613,30 @@ function toggleCmtReplies(id, btn) {
   if (span) span.textContent = (isOpen ? '' : 'Hide ') + count + ' ' + (count === 1 ? 'reply' : 'replies');
 }
 
-// ── Comment reply ───────────────────────────────────────
-function triggerCommentReply(commentId, authorName) {
+// ── Comment reply (forum-style with quote preview) ──────
+function triggerCmtReply(btn) {
+  var commentId = btn.dataset.comment;
+  var author = btn.dataset.author || '';
+  var preview = (btn.dataset.preview || '').slice(0, 60);
   document.getElementById('comment-reply-to-id').value = commentId;
-  document.getElementById('comment-reply-to-name').value = authorName;
-  document.getElementById('comment-reply-name').textContent = '@' + authorName;
+  document.getElementById('comment-reply-to-name').value = author;
+  document.getElementById('comment-reply-quoted-text').value = preview;
+  document.getElementById('comment-reply-quoted-author').value = author;
+  document.getElementById('comment-reply-name').textContent = '@' + author;
+  var prevEl = document.getElementById('comment-reply-preview-text');
+  if (prevEl) prevEl.textContent = preview ? '— ' + preview : '';
   document.getElementById('comment-reply-bar').classList.add('visible');
   document.getElementById('comment-input').focus();
+  var form = document.querySelector('.comment-form');
+  if (form) form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 function cancelCommentReply() {
   document.getElementById('comment-reply-to-id').value = '';
   document.getElementById('comment-reply-to-name').value = '';
+  document.getElementById('comment-reply-quoted-text').value = '';
+  document.getElementById('comment-reply-quoted-author').value = '';
+  var prevEl = document.getElementById('comment-reply-preview-text');
+  if (prevEl) prevEl.textContent = '';
   document.getElementById('comment-reply-bar').classList.remove('visible');
 }
 
@@ -633,6 +655,8 @@ async function submitComment() {
   const imageInput = document.getElementById('comment-image-input');
   const replyToId = document.getElementById('comment-reply-to-id').value;
   const replyToName = document.getElementById('comment-reply-to-name').value;
+  const replyQuotedText = document.getElementById('comment-reply-quoted-text').value;
+  const replyQuotedAuthor = document.getElementById('comment-reply-quoted-author').value;
   const btn = document.querySelector('.comment-input-wrap .btn-primary');
   btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
   try {
@@ -640,12 +664,16 @@ async function submitComment() {
     fd.append('text', text);
     fd.append('reply_to_id', replyToId);
     fd.append('reply_to_name', replyToName);
+    fd.append('reply_to_content', replyQuotedText);
+    fd.append('reply_to_author', replyQuotedAuthor);
     if (imageInput && imageInput.files[0]) fd.append('image', imageInput.files[0]);
     const resp = await fetch('/api/comment/{{ mod.id }}', { method: 'POST', body: fd });
     const data = await resp.json();
     if (data.success) {
       input.value = '';
       if (imageInput) { imageInput.value = ''; document.getElementById('comment-img-preview-name').textContent = ''; }
+      const quoteAuthor = replyQuotedAuthor || (data.comment && data.comment.reply_to_name) || '';
+      const quoteText = replyQuotedText || (data.comment && data.comment.reply_to_content) || '';
       cancelCommentReply();
       const empty = document.getElementById('comments-empty');
       if (empty) empty.remove();
@@ -664,13 +692,21 @@ async function submitComment() {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
             </button>
           </div>
-          ${c.reply_to_name ? `<div class="comment-reply-ref"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg> Replying to <strong>@${c.reply_to_name}</strong></div>` : ''}
+          ${quoteAuthor ? `<div class="cmt-quote-block"><div class="cmt-quote-author">↩ ${quoteAuthor}</div>${quoteText ? `<div class="cmt-quote-text">${quoteText}</div>` : ''}</div>` : ''}
           <div class="comment-text">${c.text}</div>
           ${c.image ? `<img src="${c.image}" class="comment-image" alt="Attached image" onclick="window.open('${c.image}','_blank')">` : ''}
-          <div class="comment-reactions" id="reactions-${c.id}">
+          <div class="cmt-actions-row" id="reactions-${c.id}">
             <button class="react-add-btn" onclick="toggleEmojiPicker(event,'${c.id}')" title="Add reaction" type="button">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <button title="Reply to this comment" class="cmt-reply-action-btn"
+              data-comment="${c.id}"
+              data-author="${c.display_name.replace(/['"]/g,'')}"
+              data-preview="${(c.text||'').slice(0,60).replace(/['"]/g,'')}"
+              onclick="triggerCmtReply(this)" type="button">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+              Reply
             </button>
           </div>
         </div>`;
