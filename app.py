@@ -732,59 +732,64 @@ def login():
 
 @app.route("/api/send-otp", methods=["POST"])
 def api_send_otp():
-    data = request.get_json(silent=True) or {}
-    purpose = data.get("purpose", "")
-    email = ""
-    if purpose in ("register", "reset"):
-        email = data.get("email", "").strip().lower()
-        if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
-            return jsonify({"success": False, "error": "Invalid email address"})
-        if purpose == "register":
-            if get_user_by_email(email):
-                return jsonify({"success": False, "error": "Email already in use"})
-        elif purpose == "reset":
-            if not get_user_by_email(email):
-                return jsonify({"success": False, "error": "No account with that email address"})
-    elif purpose in ("verify_email", "change_password", "verify_current_email", "remove_email", "unlink_google"):
-        logged_user = get_session_user(request)
-        if not logged_user:
-            return jsonify({"success": False, "error": "Not logged in"})
-        email = logged_user.get("email", "").strip().lower()
-        if not email:
-            return jsonify({"success": False, "error": "No email linked to your account"})
-        if purpose == "change_password" and not logged_user.get("email_verified"):
-            return jsonify({"success": False, "error": "Email must be verified first"})
-        if purpose == "verify_current_email" and not logged_user.get("email_verified"):
-            return jsonify({"success": False, "error": "Current email is not verified"})
-    elif purpose == "change_email":
-        logged_user = get_session_user(request)
-        if not logged_user:
-            return jsonify({"success": False, "error": "Not logged in"})
-        email = data.get("email", "").strip().lower()
-        if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
-            return jsonify({"success": False, "error": "Invalid email address"})
-        accounts = load_json("accounts-data.json")
-        if any(u.get("email", "").lower() == email and u["id"] != logged_user["id"] for u in accounts["users"]):
-            return jsonify({"success": False, "error": "Email already used by another account"})
-    else:
-        return jsonify({"success": False, "error": "Invalid purpose"})
-    purpose_texts = {
-        "register": "to complete your registration",
-        "reset": "to reset your password",
-        "verify_email": "to verify your email address",
-        "change_password": "to confirm your password change",
-        "change_email": "to verify your new email address",
-        "verify_current_email": "to confirm your identity before changing your email",
-        "remove_email": "to confirm removal of your linked email",
-        "unlink_google": "to confirm disconnecting your Google account"
-    }
-    otp = store_otp(email, purpose)
-    sent = send_email_html(email, "Lonely Hub — Verification Code", otp_email_html(otp, purpose_texts.get(purpose, "")))
-    if not sent:
-        return jsonify({"success": False, "error": "Failed to send email. Please check that your email address is correct and try again."})
-    return jsonify({"success": True})
+    try:
+        data = request.get_json(silent=True) or {}
+        purpose = data.get("purpose", "")
+        email = ""
+        if purpose in ("register", "reset"):
+            email = data.get("email", "").strip().lower()
+            if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+                return jsonify({"success": False, "error": "Invalid email address"})
+            if purpose == "register":
+                if get_user_by_email(email):
+                    return jsonify({"success": False, "error": "Email already in use"})
+            elif purpose == "reset":
+                if not get_user_by_email(email):
+                    return jsonify({"success": False, "error": "No account with that email address"})
+        elif purpose in ("verify_email", "change_password", "verify_current_email", "remove_email", "unlink_google"):
+            logged_user = get_session_user(request)
+            if not logged_user:
+                return jsonify({"success": False, "error": "Not logged in"})
+            email = logged_user.get("email", "").strip().lower()
+            if not email:
+                return jsonify({"success": False, "error": "No email linked to your account"})
+            if purpose == "change_password" and not logged_user.get("email_verified"):
+                return jsonify({"success": False, "error": "Email must be verified first"})
+            if purpose == "verify_current_email" and not logged_user.get("email_verified"):
+                return jsonify({"success": False, "error": "Current email is not verified"})
+        elif purpose == "change_email":
+            logged_user = get_session_user(request)
+            if not logged_user:
+                return jsonify({"success": False, "error": "Not logged in"})
+            email = data.get("email", "").strip().lower()
+            if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+                return jsonify({"success": False, "error": "Invalid email address"})
+            accounts = load_json("accounts-data.json")
+            if any(u.get("email", "").lower() == email and u["id"] != logged_user["id"] for u in accounts["users"]):
+                return jsonify({"success": False, "error": "Email already used by another account"})
+        else:
+            return jsonify({"success": False, "error": "Invalid purpose"})
+        purpose_texts = {
+            "register": "to complete your registration",
+            "reset": "to reset your password",
+            "verify_email": "to verify your email address",
+            "change_password": "to confirm your password change",
+            "change_email": "to verify your new email address",
+            "verify_current_email": "to confirm your identity before changing your email",
+            "remove_email": "to confirm removal of your linked email",
+            "unlink_google": "to confirm disconnecting your Google account"
+        }
+        otp = store_otp(email, purpose)
+        sent = send_email_html(email, "Lonely Hub — Verification Code", otp_email_html(otp, purpose_texts.get(purpose, "")))
+        if not sent:
+            return jsonify({"success": False, "error": "Failed to send email. Please check that your email address is correct and try again."})
+        return jsonify({"success": True})
 
 
+    except Exception as ex:
+        print(f"[ERROR] api_send_otp: {type(ex).__name__}: {ex}")
+        print(traceback.format_exc())
+        return jsonify({"success": False, "error": f"Server error: {type(ex).__name__}: {ex}"}), 500
 @app.route("/api/account/add-email", methods=["POST"])
 def add_email():
     user = get_session_user(request)
@@ -2094,6 +2099,8 @@ def handle_exception(e):
     from werkzeug.exceptions import HTTPException
     if isinstance(e, HTTPException):
         return e
+    print(f"[ERROR] Unhandled {request.method} {request.path}: {type(e).__name__}: {e}")
+    print(traceback.format_exc())
     if request.path.startswith("/api/"):
         return jsonify({"success": False, "error": "Server error. Please try again."}), 500
     raise e
