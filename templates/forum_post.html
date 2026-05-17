@@ -788,7 +788,7 @@ function _escHtml(s) {
 
 function _renderNewMsgHtml(msg) {
   var ts = msg.created_at ? msg.created_at.replace('T',' ').slice(0,16) : '';
-  return '<img src="https://i.imgur.com/BCzwCla.png" class="msg-avatar" alt="" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">' +
+  return '<img src="https://i.imgur.com/BCzwCla.png" class="msg-avatar" alt="" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' +
     '<div class="msg-body">' +
     '<div class="msg-header">' +
     '<span class="msg-author">' + _escHtml(msg.author_name) + '</span>' +
