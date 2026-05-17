@@ -673,77 +673,92 @@ var _EMOJI_CATS = {
   'Symbols': ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','❣️','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✝️','☪️','🕉️','☸️','✡️','🔯','🪯','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆔','⚛️','🉑','☢️','☣️','📴','📳','🈶','🈚','🈸','🈺','🈷️','✴️','🆚','💮','🉐','㊙️','㊗️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📛','🚫','💯','💢','♨️','🚷','🚯','🚳','🚱','🔞','📵','🚭','❗','❕','❓','❔','‼️','⁉️','🔅','🔆','〽️','⚠️','🔱','⚜️','🔰','♻️','✅','🈯','💹','❇️','✳️','❎','🌐','💠','Ⓜ️','🌀','💤','🏧','🚾','♿','🅿️','🛗','🈳','🈹','🚺','🚹','🚼','⚧️','🚻','🚮','🎦','🛂','🛃','🛄','🛅','🚸','🔃','🔄','🔙','🔛','🔝','🔜','🔚'],
   'Activities': ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🏒','🏑','🥍','🏏','🪃','🥅','⛳','🪁','🛝','🏹','🎣','🤿','🥊','🥋','🥅','⛸️','🛷','🎿','🛼','🛹','🎯','🎱','🎮','🕹️','🎲','🧩','🧸','♟️','🪅','🪩','🪆','♠️','♥️','♦️','♣️','♟️','🃏','🀄','🎴','🎭','🎨','🧵','🪡','🧶','🪢','👓','🕶️','🥽','🌂','☂️','🎃','🎄','🎆','🎇','🧨','✨','🎉','🎊','🎋','🎍','🎎','🎐','🎑','🧧','🎁','🎗️','🎟️','🎫','🏅','🥇','🥈','🥉','🏆','🥁','🪘','🎷','🎺','🎸','🎻','🪕','🎹','🪗'],
 };
-var _FORUM_EMOJIS = Object.values(_EMOJI_CATS).flat();
 
-function _buildEmojiPicker() {
+function _buildForumEmojiPicker() {
+  var existing = document.getElementById('forum-emoji-picker-float');
+  if (existing) return existing;
   var picker = document.createElement('div');
   picker.id = 'forum-emoji-picker-float';
   picker.className = 'forum-emoji-picker-float';
+  picker.style.display = 'none';
+  var head = document.createElement('div');
+  head.style.cssText = 'padding:9px 9px 5px;border-bottom:1px solid var(--border2);';
   var search = document.createElement('input');
-  search.type = 'text';
-  search.className = 'forum-emoji-search';
-  search.placeholder = 'Search emoji…';
+  search.type = 'text'; search.className = 'forum-emoji-search'; search.placeholder = 'Search emoji…';
+  head.appendChild(search);
+  var tabs = document.createElement('div');
+  tabs.style.cssText = 'display:flex;border-bottom:1px solid var(--border2);padding:2px 4px 0;overflow-x:auto;scrollbar-width:none;';
   var grid = document.createElement('div');
-  grid.className = 'forum-emoji-grid';
   grid.id = 'forum-emoji-grid';
-  function renderGrid(filter) {
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding:6px;max-height:220px;overflow-y:auto;scrollbar-width:thin;';
+  var _curCat = 'Smileys';
+  function renderGrid(list) {
     grid.innerHTML = '';
-    var list = filter ? _FORUM_EMOJIS.filter(function(em) { return em.includes(filter); }) : _FORUM_EMOJIS;
-    if (list.length === 0) {
+    if (!list.length) {
       var none = document.createElement('span');
       none.style.cssText = 'grid-column:1/-1;font-size:12px;color:var(--text3);padding:8px;text-align:center;';
       none.textContent = 'No results';
-      grid.appendChild(none);
-      return;
+      grid.appendChild(none); return;
     }
     list.forEach(function(em) {
       var b = document.createElement('button');
-      b.type = 'button'; b.className = 'forum-emoji-btn'; b.textContent = em;
+      b.type = 'button'; b.textContent = em;
+      b.style.cssText = 'font-size:20px;padding:5px 2px;border:none;background:none;border-radius:6px;cursor:pointer;text-align:center;transition:background 0.12s,transform 0.1s;line-height:1.2;';
+      b.onmouseenter = function() { b.style.background = 'rgba(255,255,255,0.09)'; b.style.transform = 'scale(1.25)'; };
+      b.onmouseleave = function() { b.style.background = ''; b.style.transform = ''; };
       b.onclick = function() { insertForumEmoji(em); };
       grid.appendChild(b);
     });
   }
-  search.addEventListener('input', function() { renderGrid(search.value); });
-  renderGrid('');
-  picker.appendChild(search);
-  picker.appendChild(grid);
+  function showCat(catName) {
+    _curCat = catName;
+    tabs.querySelectorAll('.fp-ecat-btn').forEach(function(b) {
+      b.style.opacity = b.dataset.cat === catName ? '1' : '0.5';
+      b.style.background = b.dataset.cat === catName ? 'rgba(255,255,255,0.08)' : '';
+    });
+    renderGrid(_EMOJI_CATS[catName] || []);
+  }
+  Object.keys(_EMOJI_CATS).forEach(function(catName) {
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'fp-ecat-btn'; btn.dataset.cat = catName;
+    btn.style.cssText = 'flex-shrink:0;padding:5px 8px;font-size:18px;background:none;border:none;cursor:pointer;border-radius:6px;transition:all 0.15s;opacity:0.5;line-height:1;';
+    btn.title = catName; btn.textContent = (_EMOJI_CATS[catName] || ['😀'])[0];
+    btn.onclick = function() { showCat(catName); };
+    tabs.appendChild(btn);
+  });
+  search.addEventListener('input', function() {
+    var q = search.value.trim().toLowerCase();
+    if (!q) { showCat(_curCat); return; }
+    var results = [], seen = new Set();
+    Object.values(_EMOJI_CATS).forEach(function(emojis) {
+      emojis.forEach(function(em) { if (!seen.has(em)) { seen.add(em); if (em.includes(q)) results.push(em); } });
+    });
+    renderGrid(results);
+  });
+  picker.appendChild(head); picker.appendChild(tabs); picker.appendChild(grid);
   document.body.appendChild(picker);
+  showCat('Smileys');
   return picker;
 }
 
 function toggleForumEmoji(e) {
   e.stopPropagation();
-  var picker = document.getElementById('forum-emoji-picker-float');
-  if (!picker) picker = _buildEmojiPicker();
+  var picker = _buildForumEmojiPicker();
   var showing = picker.style.display === 'block';
-  picker.style.display = showing ? 'none' : 'block';
-  if (!showing) {
-    var searchEl = picker.querySelector('.forum-emoji-search');
-    if (searchEl) { searchEl.value = ''; }
-    var grid = document.getElementById('forum-emoji-grid');
-    if (grid) {
-      grid.innerHTML = '';
-      _FORUM_EMOJIS.forEach(function(em) {
-        var b = document.createElement('button');
-        b.type = 'button'; b.className = 'forum-emoji-btn'; b.textContent = em;
-        b.onclick = function() { insertForumEmoji(em); };
-        grid.appendChild(b);
-      });
-    }
-    var btn = e.currentTarget;
-    picker.style.left = '-9999px';
-    picker.style.top = '-9999px';
-    requestAnimationFrame(function() {
-      var r = btn.getBoundingClientRect();
-      var ph = picker.offsetHeight;
-      var pw = picker.offsetWidth;
-      var top = r.top - ph - 8 + window.scrollY;
-      if (top < window.scrollY + 8) top = r.bottom + 8 + window.scrollY;
-      picker.style.left = Math.min(r.left, window.innerWidth - pw - 8) + 'px';
-      picker.style.top = top + 'px';
-      if (searchEl) searchEl.focus();
-    });
-  }
+  if (showing) { picker.style.display = 'none'; return; }
+  var searchEl = picker.querySelector('.forum-emoji-search');
+  if (searchEl) searchEl.value = '';
+  picker.style.left = '-9999px'; picker.style.top = '-9999px';
+  picker.style.display = 'block';
+  requestAnimationFrame(function() {
+    var r = e.currentTarget.getBoundingClientRect();
+    var ph = picker.offsetHeight, pw = picker.offsetWidth;
+    var top = r.top - ph - 8 + window.scrollY;
+    if (top < window.scrollY + 8) top = r.bottom + 8 + window.scrollY;
+    picker.style.left = Math.min(r.left, window.innerWidth - pw - 8) + 'px';
+    picker.style.top = top + 'px';
+    if (searchEl) searchEl.focus();
+  });
 }
 
 function insertForumEmoji(em) {
@@ -753,13 +768,14 @@ function insertForumEmoji(em) {
   ta.selectionStart = ta.selectionEnd = start + em.length;
   ta.focus();
   autoGrow(ta);
-  var p = document.getElementById('forum-emoji-picker-float');
-  if (p) p.style.display = 'none';
 }
 
 document.addEventListener('click', function(e) {
   var p = document.getElementById('forum-emoji-picker-float');
-  if (p && !p.contains(e.target)) p.style.display = 'none';
+  if (p && p.style.display === 'block' && !p.contains(e.target)) {
+    var emojiBtn = document.querySelector('.chat-attach-btn[onclick*="toggleForumEmoji"]');
+    if (!emojiBtn || !emojiBtn.contains(e.target)) p.style.display = 'none';
+  }
 });
 
 function _appendReplyToMsg(msgId, content, authorName, authorAvatar, quotedText, quotedAuthor) {
@@ -1063,7 +1079,6 @@ function _pollMessages(immediate) {
 
 // ── Unified centered emoji picker for forum reactions ────
 var _fReactTarget = null;
-var _QUICK_EMOJIS = ['😀','😂','😍','🥰','😎','🤩','😱','🤔','🙄','😴','💀','😈','🤡','👻','🔥','💯','✅','❌','👍','👎','👋','🙌','🤝','💪','❤️','💔','💕','⭐','🎉','🎮','⚔️','🛡️','🏆','🎯','💎','🍀','🌟','🚀','🌈','⚡','🧠','🫶','🤌','👌','✌️','😮','😵','😤','🤯','👀','🫡','🫣','🥹'];
 
 function _getOrBuildForumReactPicker() {
   var p = document.getElementById('forum-react-picker');
@@ -1075,35 +1090,60 @@ function _getOrBuildForumReactPicker() {
   document.body.appendChild(ov);
   p = document.createElement('div');
   p.id = 'forum-react-picker';
-  p.style.cssText = 'position:fixed;z-index:5000;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:12px;box-shadow:0 24px 64px rgba(0,0,0,0.85),0 0 0 1px rgba(255,255,255,0.05);width:292px;display:none;';
+  p.style.cssText = 'position:fixed;z-index:5000;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.85),0 0 0 1px rgba(255,255,255,0.05);width:320px;display:none;';
+  var head = document.createElement('div');
+  head.style.cssText = 'padding:9px 9px 5px;border-bottom:1px solid var(--border2);';
   var search = document.createElement('input');
-  search.type = 'text';
-  search.placeholder = 'Search emoji…';
-  search.id = 'forum-react-search';
-  search.style.cssText = 'width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:7px;padding:7px 12px;color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;margin-bottom:8px;outline:none;';
+  search.type = 'text'; search.id = 'forum-react-search'; search.placeholder = 'Search emoji…';
+  search.style.cssText = 'width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:7px;padding:7px 12px;color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;outline:none;';
+  head.appendChild(search);
+  var tabs = document.createElement('div');
+  tabs.id = 'forum-react-tabs';
+  tabs.style.cssText = 'display:flex;border-bottom:1px solid var(--border2);padding:2px 4px 0;overflow-x:auto;scrollbar-width:none;';
   var grid = document.createElement('div');
   grid.id = 'forum-react-grid';
-  grid.style.cssText = 'display:grid;grid-template-columns:repeat(8,1fr);gap:2px;max-height:200px;overflow-y:auto;scrollbar-width:thin;';
-  search.addEventListener('input', function() { _renderForumReactGrid(search.value); });
-  p.appendChild(search);
-  p.appendChild(grid);
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding:6px;max-height:220px;overflow-y:auto;scrollbar-width:thin;';
+  var _reactCurCat = 'Smileys';
+  function showReactCat(catName) {
+    _reactCurCat = catName;
+    tabs.querySelectorAll('.fp-react-cat-btn').forEach(function(b) {
+      b.style.opacity = b.dataset.cat === catName ? '1' : '0.5';
+      b.style.background = b.dataset.cat === catName ? 'rgba(255,255,255,0.08)' : '';
+    });
+    _renderForumReactGrid(_EMOJI_CATS[catName] || []);
+  }
+  Object.keys(_EMOJI_CATS).forEach(function(catName) {
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'fp-react-cat-btn'; btn.dataset.cat = catName;
+    btn.style.cssText = 'flex-shrink:0;padding:5px 8px;font-size:18px;background:none;border:none;cursor:pointer;border-radius:6px;transition:all 0.15s;opacity:0.5;line-height:1;';
+    btn.title = catName; btn.textContent = (_EMOJI_CATS[catName] || ['😀'])[0];
+    btn.onclick = function() { showReactCat(catName); };
+    tabs.appendChild(btn);
+  });
+  search.addEventListener('input', function() {
+    var q = search.value.trim().toLowerCase();
+    if (!q) { showReactCat(_reactCurCat); return; }
+    var results = [], seen = new Set();
+    Object.values(_EMOJI_CATS).forEach(function(emojis) {
+      emojis.forEach(function(em) { if (!seen.has(em)) { seen.add(em); if (em.includes(q)) results.push(em); } });
+    });
+    _renderForumReactGrid(results);
+  });
+  p._showReactCat = showReactCat;
+  p.appendChild(head); p.appendChild(tabs); p.appendChild(grid);
   document.body.appendChild(p);
+  showReactCat('Smileys');
   return p;
 }
 
-function _renderForumReactGrid(filter) {
+function _renderForumReactGrid(list) {
   var grid = document.getElementById('forum-react-grid');
   if (!grid) return;
   grid.innerHTML = '';
-  var names = {'😀':'smile happy','😂':'laugh cry','😍':'heart eyes love','🥰':'love hearts','😎':'cool sunglasses','👍':'thumbs up like','👎':'thumbs down','❤️':'heart love','🔥':'fire hot','💯':'hundred','✅':'check yes','❌':'no wrong','🎉':'party','😱':'scream shock','🤔':'thinking','💀':'skull dead','👻':'ghost','🌟':'star','🚀':'rocket','💪':'muscle strong','🙌':'hands celebrate','🤝':'handshake','🎮':'game','⚔️':'sword battle','🏆':'trophy win','👋':'wave hello','🤯':'mind blown','👀':'eyes','🫶':'heart hands','🫡':'salute','😮':'surprised','💔':'broken heart','😤':'angry','😴':'sleep','😈':'devil','😵':'dizzy','⭐':'star','🌈':'rainbow','⚡':'lightning','🧠':'brain'};
-  var filt = (filter || '').toLowerCase();
-  _QUICK_EMOJIS.filter(function(em) {
-    if (!filt) return true;
-    return em.includes(filt) || (names[em] || '').includes(filt);
-  }).forEach(function(em) {
+  (list || []).forEach(function(em) {
     var b = document.createElement('button');
     b.type = 'button'; b.textContent = em;
-    b.style.cssText = 'font-size:20px;padding:4px 2px;border:none;background:none;border-radius:6px;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;line-height:1.2;';
+    b.style.cssText = 'font-size:20px;padding:5px 2px;border:none;background:none;border-radius:6px;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;line-height:1.2;';
     b.onmouseenter = function() { b.style.background = 'rgba(255,255,255,0.09)'; b.style.transform = 'scale(1.25)'; };
     b.onmouseleave = function() { b.style.background = ''; b.style.transform = ''; };
     b.onclick = function() { _applyForumReact(em); };
@@ -1136,7 +1176,7 @@ function toggleForumReactPicker(e, level, postId, msgId, repId) {
   _fReactTarget = { level: level, postId: postId, msgId: msgId, repId: repId || null };
   var si = document.getElementById('forum-react-search');
   if (si) si.value = '';
-  _renderForumReactGrid('');
+  if (p._showReactCat) p._showReactCat('Smileys');
   if (ov) ov.style.display = 'block';
   p.style.display = 'block';
   if (si) setTimeout(function() { si.focus(); }, 30);
