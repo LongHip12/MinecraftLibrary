@@ -856,8 +856,8 @@ function showCustomConfirm(title, message, confirmLabel, confirmColor, onConfirm
       <button onclick="clearConsole()" style="padding:6px 10px;background:rgba(250,80,80,0.08);border:1px solid rgba(250,80,80,0.2);border-radius:8px;color:#f87171;font-size:12px;font-family:inherit;cursor:pointer;flex-shrink:0;">Clear</button>
     </div>
 
-    <div id="consoleBox" style="background:#0b0b18;border:1px solid rgba(255,255,255,0.07);border-radius:10px;font-family:'Fira Mono','Cascadia Code','Consolas',monospace;font-size:12.5px;line-height:1.65;overflow-y:auto;max-height:520px;">
-      <div id="consoleLines" style="padding:6px 0;"></div>
+    <div id="consoleBox" style="background:#0b0b18;border:1px solid rgba(255,255,255,0.07);border-radius:10px;font-family:'Fira Mono','Cascadia Code','Consolas',monospace;font-size:12.5px;line-height:1.65;overflow-y:auto;overflow-x:auto;max-height:520px;">
+      <div id="consoleLines" style="padding:6px 0;min-width:max-content;"></div>
     </div>
     <div style="margin-top:6px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text3);">
       <span id="consoleCount"></span>
@@ -884,6 +884,8 @@ function showCustomConfirm(title, message, confirmLabel, confirmColor, onConfirm
     document.querySelectorAll('#cLogTypeMenu,#cTimeMenu').forEach(function(m){ m.style.display='none'; });
     if (!isOpen) menu.style.display = 'block';
   }
+  document.getElementById('cLogTypeMenu').addEventListener('click', function(e){ e.stopPropagation(); });
+  document.getElementById('cTimeMenu').addEventListener('click', function(e){ e.stopPropagation(); });
   document.addEventListener('click', function() {
     document.querySelectorAll('#cLogTypeMenu,#cTimeMenu').forEach(function(m){ m.style.display='none'; });
   });
@@ -960,7 +962,7 @@ function showCustomConfirm(title, message, confirmLabel, confirmColor, onConfirm
     if (isArrow) color = '#2dd4bf';
     return '<div style="display:flex;align-items:baseline;padding:1px 16px;background:'+bg+';min-height:22px;">'
       + '<span style="color:#374151;font-size:11px;white-space:nowrap;flex-shrink:0;margin-right:14px;padding-top:1px;">'+_escHtml(ts)+'</span>'
-      + '<span style="color:'+color+';word-break:break-all;white-space:pre-wrap;">'+_escHtml(msg)+'</span>'
+      + '<span style="color:'+color+';white-space:nowrap;">'+_escHtml(msg)+'</span>'
       + '</div>';
   }
 
