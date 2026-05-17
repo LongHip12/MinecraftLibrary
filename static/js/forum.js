@@ -132,9 +132,72 @@
     if (previewArea) initFileInput(inp, previewArea);
   });
 
-  var postFileInput = document.getElementById('post-files');
-  var postPreview = document.getElementById('post-files-preview');
-  if (postFileInput && postPreview) initFileInput(postFileInput, postPreview);
+  // ── Accumulated file list for new thread (post-files) ────────
+  var _postFiles = [];
+
+  function renderPostFilePreviews() {
+    var container = document.getElementById('post-files-preview');
+    if (!container) return;
+    container.innerHTML = '';
+    _postFiles.forEach(function(file, idx) {
+      var item = document.createElement('div');
+      item.className = 'attach-preview-item';
+      item.style.position = 'relative';
+      if (file.type.startsWith('image/')) {
+        var img = document.createElement('img');
+        img.className = 'attach-preview-img';
+        var reader = new FileReader();
+        reader.onload = function(e) { img.src = e.target.result; };
+        reader.readAsDataURL(file);
+        item.appendChild(img);
+      } else {
+        var icon = document.createElement('span');
+        icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
+        item.appendChild(icon);
+      }
+      var name = document.createElement('span');
+      name.textContent = file.name.length > 24 ? file.name.slice(0, 22) + '…' : file.name;
+      item.appendChild(name);
+      var size = document.createElement('span');
+      size.className = 'attach-size';
+      size.textContent = formatBytes(file.size);
+      item.appendChild(size);
+      var xBtn = document.createElement('button');
+      xBtn.type = 'button';
+      xBtn.className = 'chat-file-remove';
+      xBtn.title = 'Remove';
+      xBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+      xBtn.addEventListener('click', function() {
+        _postFiles.splice(idx, 1);
+        renderPostFilePreviews();
+        _updatePostAttachBtn();
+      });
+      item.appendChild(xBtn);
+      container.appendChild(item);
+    });
+  }
+
+  function _updatePostAttachBtn() {
+    var label = document.getElementById('post-attach-label');
+    var moreBtn = document.getElementById('post-attach-more-btn');
+    if (!label) return;
+    if (_postFiles.length > 0) {
+      label.style.display = 'none';
+      if (moreBtn) moreBtn.style.display = 'inline-flex';
+    } else {
+      label.style.display = '';
+      if (moreBtn) moreBtn.style.display = 'none';
+    }
+  }
+
+  window.previewPostFiles = function(input) {
+    Array.from(input.files).forEach(function(file) { _postFiles.push(file); });
+    input.value = '';
+    renderPostFilePreviews();
+    _updatePostAttachBtn();
+  };
+
+  window.getPostFiles = function() { return _postFiles; };
 
   // ── Download warning modal ────────────────────────────────────
   var modal = document.getElementById('dl-warning-modal');
