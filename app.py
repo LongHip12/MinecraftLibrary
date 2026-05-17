@@ -33,6 +33,7 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 HCAPTCHA_SECRET = os.environ.get("SECRET", "")
 HCAPTCHA_SITE_KEY = os.environ.get("KEY", "")
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "")
 GMAIL_FROM = "lonelyhub12@gmail.com"
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
@@ -136,16 +137,35 @@ def is_valid_device_token(request):
 
 
 def send_email_html(to, subject, html_body):
+    # Primary: Brevo REST API (fast, reliable, no SMTP blocking issues)
+    if BREVO_API_KEY:
+        try:
+            resp = requests.post(
+                "https://api.brevo.com/v3/smtp/email",
+                headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
+                json={
+                    "sender": {"name": "Lonely Hub", "email": GMAIL_FROM},
+                    "to": [{"email": to}],
+                    "subject": subject,
+                    "htmlContent": html_body
+                },
+                timeout=15
+            )
+            return resp.status_code in (200, 201, 202)
+        except Exception:
+            pass
+    # Fallback: Gmail SMTP (if BREVO_API_KEY not set)
     if not APP_PASSWORD:
         return False
-    msg = MIMEMultipart("alternative")
+    from email.mime.multipart import MIMEMultipart as _MM
+    from email.mime.text import MIMEText as _MT
+    msg = _MM("alternative")
     msg["Subject"] = subject
     msg["From"] = GMAIL_FROM
     msg["To"] = to
-    msg.attach(MIMEText(html_body, "html"))
+    msg.attach(_MT(html_body, "html"))
     result = [False]
     def _do_send():
-        # Try SMTP_SSL port 465 first (faster, no STARTTLS handshake)
         for attempt in [
             lambda: smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=12),
             lambda: smtplib.SMTP("smtp.gmail.com", 587, timeout=12),
