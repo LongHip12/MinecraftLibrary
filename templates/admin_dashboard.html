@@ -790,88 +790,200 @@ function showCustomConfirm(title, message, confirmLabel, confirmColor, onConfirm
     </div>
 
   <div class="dash-section" id="consoleSection" style="margin-top:0;">
-    <div class="dash-section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-      <span style="display:flex;align-items:center;gap:8px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-        Console
-      </span>
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <span id="consoleLastUpdate" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
-        <div style="display:flex;gap:4px;" id="consoleLevelFilters">
-          <button onclick="setConsoleFilter('')" id="cf-all" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);">All</button>
-          <button onclick="setConsoleFilter('info')" id="cf-info" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;">Info</button>
-          <button onclick="setConsoleFilter('warn')" id="cf-warn" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;">Warn</button>
-          <button onclick="setConsoleFilter('error')" id="cf-error" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;">Error</button>
-          <button onclick="setConsoleFilter('debug')" id="cf-debug" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;">Debug</button>
-        </div>
-        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);cursor:pointer;">
-          <input type="checkbox" id="consoleAutoScroll" checked style="width:12px;height:12px;cursor:pointer;">
-          Auto-scroll
-        </label>
-        <button onclick="clearConsole()" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;color:#fa5050;border-color:rgba(250,80,80,0.25);">✕ Clear</button>
-      </div>
+    <div class="dash-section-title" style="margin-bottom:10px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+      Console
     </div>
-    <div id="consoleBox" style="background:#0c0c14;border:1px solid rgba(255,255,255,0.07);border-radius:10px;font-family:'Fira Mono','Cascadia Code','Consolas',monospace;font-size:12px;line-height:1.7;overflow-y:auto;max-height:480px;padding:0;">
-      <div id="consoleLines" style="padding:8px 0;"></div>
+
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      <div id="cLogTypeWrap" style="position:relative;">
+        <button id="cLogTypeBtn" onclick="toggleCDd('cLogTypeMenu',event)" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--text2);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          <span id="cLogTypeBtnLabel">All logs</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div id="cLogTypeMenu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#16162a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:6px;min-width:160px;z-index:600;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+          <div style="padding:4px 8px 6px;font-size:10px;font-weight:700;color:#4a5568;text-transform:uppercase;letter-spacing:.6px;">Filter by type</div>
+          <label id="clt-all" onclick="cltToggleAll(event)" style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text2);font-weight:600;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background=''">
+            <input type="checkbox" id="clt-all-cb" checked style="width:13px;height:13px;accent-color:#60a5fa;cursor:pointer;"> All logs
+          </label>
+          <div style="height:1px;background:rgba(255,255,255,0.06);margin:4px 0;"></div>
+          <label style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#2dd4bf;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background=''">
+            <input type="checkbox" class="clt-cb" value="startup" checked style="width:13px;height:13px;accent-color:#2dd4bf;cursor:pointer;" onchange="cltChange()"> Startup
+          </label>
+          <label style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#94a3b8;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background=''">
+            <input type="checkbox" class="clt-cb" value="http" checked style="width:13px;height:13px;accent-color:#94a3b8;cursor:pointer;" onchange="cltChange()"> HTTP
+          </label>
+          <label style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#e2e8f0;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background=''">
+            <input type="checkbox" class="clt-cb" value="info" checked style="width:13px;height:13px;accent-color:#e2e8f0;cursor:pointer;" onchange="cltChange()"> Info
+          </label>
+          <label style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#fbbf24;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background=''">
+            <input type="checkbox" class="clt-cb" value="warn" checked style="width:13px;height:13px;accent-color:#fbbf24;cursor:pointer;" onchange="cltChange()"> Warn
+          </label>
+          <label style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#f87171;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background=''">
+            <input type="checkbox" class="clt-cb" value="error" checked style="width:13px;height:13px;accent-color:#f87171;cursor:pointer;" onchange="cltChange()"> Error
+          </label>
+          <label style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#64748b;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background=''">
+            <input type="checkbox" class="clt-cb" value="debug" checked style="width:13px;height:13px;accent-color:#64748b;cursor:pointer;" onchange="cltChange()"> Debug
+          </label>
+        </div>
+      </div>
+
+      <div id="cTimeWrap" style="position:relative;">
+        <button id="cTimeBtn" onclick="toggleCDd('cTimeMenu',event)" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--text2);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span id="cTimeBtnLabel">Last hour</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div id="cTimeMenu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#16162a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:6px;min-width:148px;z-index:600;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+          <div onclick="setCTimeRange(15,'Last 15 min')" class="c-time-opt" data-val="15">Last 15 min</div>
+          <div onclick="setCTimeRange(60,'Last hour')" class="c-time-opt sel" data-val="60">Last hour</div>
+          <div onclick="setCTimeRange(360,'Last 6 hours')" class="c-time-opt" data-val="360">Last 6 hours</div>
+          <div onclick="setCTimeRange(1440,'Last 24 hours')" class="c-time-opt" data-val="1440">Last 24 hours</div>
+          <div onclick="setCTimeRange(0,'All time')" class="c-time-opt" data-val="0">All time</div>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:160px;position:relative;">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#4a5568;pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input id="cSearch" type="text" placeholder="Search logs…" oninput="_applyConsoleFilters()" style="width:100%;padding:6px 10px 6px 30px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--text);font-size:12px;font-family:inherit;outline:none;box-sizing:border-box;">
+      </div>
+
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text3);cursor:pointer;white-space:nowrap;flex-shrink:0;">
+        <input type="checkbox" id="consoleAutoScroll" checked style="width:13px;height:13px;accent-color:#60a5fa;cursor:pointer;">
+        Auto-scroll
+      </label>
+      <button onclick="clearConsole()" style="padding:6px 10px;background:rgba(250,80,80,0.08);border:1px solid rgba(250,80,80,0.2);border-radius:8px;color:#f87171;font-size:12px;font-family:inherit;cursor:pointer;flex-shrink:0;">Clear</button>
+    </div>
+
+    <div id="consoleBox" style="background:#0b0b18;border:1px solid rgba(255,255,255,0.07);border-radius:10px;font-family:'Fira Mono','Cascadia Code','Consolas',monospace;font-size:12.5px;line-height:1.65;overflow-y:auto;max-height:520px;">
+      <div id="consoleLines" style="padding:6px 0;"></div>
     </div>
     <div style="margin-top:6px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text3);">
       <span id="consoleCount"></span>
-      <span>Refreshes every 2s · last 1000 lines kept</span>
+      <span id="consoleLastUpdate"></span>
     </div>
   </div>
+
+  <style>
+  .c-time-opt{padding:7px 12px;font-size:12px;color:var(--text2);cursor:pointer;border-radius:6px;font-family:inherit;}
+  .c-time-opt:hover{background:rgba(255,255,255,0.06);}
+  .c-time-opt.sel{color:#60a5fa;font-weight:700;}
+  </style>
 
   <script>
   var _consoleLogs = [];
   var _consoleSince = '';
-  var _consoleFilter = '';
-  var _consoleCleared = false;
-  var _consoleClearedAt = '';
+  var _cTimeMinutes = 60;
+  var _cAllMenuOpen = '';
 
-  var _BADGE = {
-    info:    '<span style="display:inline-block;min-width:42px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.4px;border-radius:3px;padding:1px 6px;background:rgba(96,165,250,0.18);color:#60a5fa;margin-right:8px;">INFO</span>',
-    warn:    '<span style="display:inline-block;min-width:42px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.4px;border-radius:3px;padding:1px 6px;background:rgba(251,191,36,0.18);color:#fbbf24;margin-right:8px;">WARN</span>',
-    error:   '<span style="display:inline-block;min-width:42px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.4px;border-radius:3px;padding:1px 6px;background:rgba(250,80,80,0.18);color:#fa5050;margin-right:8px;">ERROR</span>',
-    debug:   '<span style="display:inline-block;min-width:42px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.4px;border-radius:3px;padding:1px 6px;background:rgba(148,163,184,0.15);color:#94a3b8;margin-right:8px;">DEBUG</span>',
-    startup: '<span style="display:inline-block;min-width:42px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.4px;border-radius:3px;padding:1px 6px;background:rgba(74,222,128,0.18);color:#4ade80;margin-right:8px;">START</span>'
-  };
-  var _MSG_COLOR = {info:'#d4d4e8',warn:'#fef3c7',error:'#fecaca',debug:'#94a3b8',startup:'#bbf7d0'};
+  function toggleCDd(id, e) {
+    e.stopPropagation();
+    var menu = document.getElementById(id);
+    var isOpen = menu.style.display !== 'none';
+    document.querySelectorAll('#cLogTypeMenu,#cTimeMenu').forEach(function(m){ m.style.display='none'; });
+    if (!isOpen) menu.style.display = 'block';
+  }
+  document.addEventListener('click', function() {
+    document.querySelectorAll('#cLogTypeMenu,#cTimeMenu').forEach(function(m){ m.style.display='none'; });
+  });
+
+  function cltToggleAll(e) {
+    var allCb = document.getElementById('clt-all-cb');
+    setTimeout(function() {
+      document.querySelectorAll('.clt-cb').forEach(function(cb){ cb.checked = allCb.checked; });
+      _updateCltLabel();
+      _applyConsoleFilters();
+    }, 0);
+  }
+
+  function cltChange() {
+    var cbs = document.querySelectorAll('.clt-cb');
+    var allChecked = Array.from(cbs).every(function(cb){ return cb.checked; });
+    document.getElementById('clt-all-cb').checked = allChecked;
+    _updateCltLabel();
+    _applyConsoleFilters();
+  }
+
+  function _updateCltLabel() {
+    var checked = Array.from(document.querySelectorAll('.clt-cb:checked')).map(function(cb){ return cb.value; });
+    var total = document.querySelectorAll('.clt-cb').length;
+    var lbl = document.getElementById('cLogTypeBtnLabel');
+    if (checked.length === 0) lbl.textContent = 'No logs';
+    else if (checked.length === total) lbl.textContent = 'All logs';
+    else lbl.textContent = checked.map(function(v){ return v[0].toUpperCase()+v.slice(1); }).join(', ');
+  }
+
+  function setCTimeRange(mins, label) {
+    _cTimeMinutes = mins;
+    document.getElementById('cTimeBtnLabel').textContent = label;
+    document.querySelectorAll('.c-time-opt').forEach(function(el){
+      el.classList.toggle('sel', parseInt(el.getAttribute('data-val')) === mins);
+    });
+    document.getElementById('cTimeMenu').style.display = 'none';
+    _applyConsoleFilters();
+  }
 
   function _escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
+
+  function _fmtTs(isoStr) {
+    if (!isoStr) return '';
+    var d = new Date(isoStr);
+    var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds(), ms = d.getMilliseconds();
+    var ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return (h<10?'0'+h:h)+':'+(m<10?'0'+m:m)+':'+(s<10?'0'+s:s)+'.'+(ms<100?(ms<10?'00'+ms:'0'+ms):ms)+' '+ampm;
+  }
+
+  var _LV_COLOR = {
+    startup: '#2dd4bf',
+    http:    '#94a3b8',
+    info:    '#e2e8f0',
+    warn:    '#fbbf24',
+    error:   '#f87171',
+    debug:   '#475569'
+  };
+  var _LV_BG = {
+    error: 'rgba(248,113,113,0.04)',
+    warn:  'rgba(251,191,36,0.03)'
+  };
 
   function _renderLine(log) {
     var lv = log.level || 'info';
-    var badge = _BADGE[lv] || _BADGE['info'];
-    var color = _MSG_COLOR[lv] || _MSG_COLOR['info'];
-    var ts = log.t ? log.t.replace('T',' ').slice(0,23) : '';
-    var bg = lv === 'error' ? 'rgba(250,80,80,0.04)' : lv === 'warn' ? 'rgba(251,191,36,0.03)' : 'transparent';
-    return '<div style="display:flex;align-items:flex-start;padding:2px 14px;border-bottom:1px solid rgba(255,255,255,0.02);background:'+bg+';min-height:24px;">'
-      + '<span style="color:#4a5568;font-size:10px;white-space:nowrap;padding-top:2px;margin-right:10px;min-width:152px;flex-shrink:0;">'+_escHtml(ts)+'</span>'
-      + badge
-      + '<span style="color:'+color+';word-break:break-all;white-space:pre-wrap;">'+_escHtml(log.msg)+'</span>'
+    var color = _LV_COLOR[lv] || '#e2e8f0';
+    var bg = _LV_BG[lv] || 'transparent';
+    var ts = _fmtTs(log.t);
+    var msg = log.msg || '';
+    var isArrow = msg.startsWith('==>') || msg.startsWith('[STARTUP]');
+    if (isArrow) color = '#2dd4bf';
+    return '<div style="display:flex;align-items:baseline;padding:1px 16px;background:'+bg+';min-height:22px;">'
+      + '<span style="color:#374151;font-size:11px;white-space:nowrap;flex-shrink:0;margin-right:14px;padding-top:1px;">'+_escHtml(ts)+'</span>'
+      + '<span style="color:'+color+';word-break:break-all;white-space:pre-wrap;">'+_escHtml(msg)+'</span>'
       + '</div>';
   }
 
-  function setConsoleFilter(lv) {
-    _consoleFilter = lv;
-    ['all','info','warn','error','debug'].forEach(function(k) {
-      var btn = document.getElementById('cf-'+k);
-      if (!btn) return;
-      btn.style.background = ((lv==='' && k==='all') || lv===k) ? 'rgba(255,255,255,0.12)' : '';
-      btn.style.borderColor = ((lv==='' && k==='all') || lv===k) ? 'rgba(255,255,255,0.25)' : '';
+  function _applyConsoleFilters() {
+    var allowed = Array.from(document.querySelectorAll('.clt-cb:checked')).map(function(cb){ return cb.value; });
+    var search = (document.getElementById('cSearch').value || '').toLowerCase();
+    var cutoff = null;
+    if (_cTimeMinutes > 0) { cutoff = new Date(Date.now() - _cTimeMinutes * 60000).toISOString(); }
+    var lines = _consoleLogs.filter(function(l){
+      if (allowed.indexOf(l.level || 'info') < 0) return false;
+      if (cutoff && l.t < cutoff) return false;
+      if (search && (l.msg || '').toLowerCase().indexOf(search) < 0) return false;
+      return true;
     });
-    _renderConsole();
-  }
-
-  function _renderConsole() {
-    var lines = _consoleLogs;
-    if (_consoleFilter) lines = lines.filter(function(l){ return l.level === _consoleFilter; });
     var el = document.getElementById('consoleLines');
     if (!el) return;
-    el.innerHTML = lines.length ? lines.map(_renderLine).join('') : '<div style="padding:20px 16px;color:#4a5568;font-size:12px;">No logs yet.</div>';
+    if (lines.length) {
+      el.innerHTML = lines.map(_renderLine).join('');
+    } else {
+      el.innerHTML = '<div style="padding:28px 18px;color:#374151;font-size:12px;">No logs match the current filters.</div>';
+    }
     var cnt = document.getElementById('consoleCount');
-    if (cnt) cnt.textContent = lines.length + ' / ' + _consoleLogs.length + ' lines';
+    if (cnt) cnt.textContent = lines.length + ' / ' + _consoleLogs.length + ' entries';
     var box = document.getElementById('consoleBox');
     var autoScroll = document.getElementById('consoleAutoScroll');
     if (box && autoScroll && autoScroll.checked) box.scrollTop = box.scrollHeight;
@@ -879,9 +991,8 @@ function showCustomConfirm(title, message, confirmLabel, confirmColor, onConfirm
 
   function clearConsole() {
     _consoleLogs = [];
-    _consoleClearedAt = new Date().toISOString().replace('T',' ').slice(0,23);
-    _consoleCleared = true;
-    _renderConsole();
+    _consoleSince = '';
+    _applyConsoleFilters();
   }
 
   function _fetchLogs() {
@@ -891,20 +1002,16 @@ function showCustomConfirm(title, message, confirmLabel, confirmColor, onConfirm
       .then(function(d){
         if (!d.success) return;
         var newLogs = d.logs || [];
-        if (newLogs.length) {
-          if (!_consoleSince) {
-            _consoleLogs = newLogs;
-          } else {
-            _consoleLogs = _consoleLogs.concat(newLogs);
-            if (_consoleLogs.length > 1000) _consoleLogs = _consoleLogs.slice(-1000);
-          }
-          if (newLogs.length) {
-            _consoleSince = newLogs[newLogs.length-1].t;
-          }
-          _renderConsole();
+        if (!_consoleSince) {
+          _consoleLogs = newLogs;
+        } else if (newLogs.length) {
+          _consoleLogs = _consoleLogs.concat(newLogs);
+          if (_consoleLogs.length > 1000) _consoleLogs = _consoleLogs.slice(-1000);
         }
+        if (newLogs.length) _consoleSince = newLogs[newLogs.length-1].t;
+        _applyConsoleFilters();
         var upd = document.getElementById('consoleLastUpdate');
-        if (upd) upd.textContent = 'Updated ' + new Date().toLocaleTimeString();
+        if (upd) upd.textContent = 'Live · updated ' + new Date().toLocaleTimeString();
       })
       .catch(function(){});
   }
