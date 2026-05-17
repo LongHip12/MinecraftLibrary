@@ -15,7 +15,7 @@
   </div>
   <div class="user-profile-header">
     <div class="user-avatar-wrap">
-      <img src="{{ profile.avatar if profile.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="{{ profile.display_name }}" class="user-avatar-large">
+      <img src="{{ profile.avatar if profile.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="{{ profile.display_name }}" class="user-avatar-large" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
     </div>
     <div class="user-info-row">
       <div class="user-name-block">
@@ -178,7 +178,7 @@
       <div class="form-group">
         <label class="form-label">Avatar</label>
         <div class="avatar-upload-wrap">
-          <img src="{{ profile.avatar if profile.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="Avatar" class="avatar-preview" id="avatar-preview">
+          <img src="{{ profile.avatar if profile.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="Avatar" class="avatar-preview" id="avatar-preview" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
           <label class="file-upload-btn" for="avatar-file-input">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
             Upload Avatar
