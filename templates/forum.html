@@ -161,7 +161,7 @@
             </div>
             <div class="forum-post-meta">
               <span class="forum-post-meta-item">
-                <img class="forum-post-author-img" src="{{ post.author.avatar if post.author and post.author.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="">
+                <img class="forum-post-author-img" src="{{ post.author.avatar if post.author and post.author.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
                 {{ post.author.display_name if post.author else 'Anonymous' }}
               </span>
               <span class="forum-post-meta-item">
