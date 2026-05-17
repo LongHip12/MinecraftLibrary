@@ -38,6 +38,30 @@
   font-size: 12px;
   color: var(--text3);
 }
+.msg-quote-block {
+  border-left: 3px solid rgba(250,80,80,0.55);
+  background: rgba(255,255,255,0.04);
+  border-radius: 0 5px 5px 0;
+  padding: 5px 10px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--text3);
+  max-width: 100%;
+  cursor: default;
+}
+.msg-quote-author {
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 2px;
+  font-size: 11.5px;
+}
+.msg-quote-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: italic;
+  opacity: 0.85;
+}
 .chat-reply-x {
   background: none;
   border: none;
@@ -432,6 +456,12 @@
               {% if rep.author and rep.author.tag == 'admin' %}<span class="tag tag-admin" style="font-size:9px;">Admin</span>{% endif %}
               <span class="reply-date">{{ rep.created_at[:16].replace('T',' ') }} UTC</span>
             </div>
+            {% if rep.reply_to_content %}
+            <div class="msg-quote-block">
+              <div class="msg-quote-author">↩ {{ rep.reply_to_author or 'User' }}</div>
+              <div class="msg-quote-text">{{ rep.reply_to_content }}</div>
+            </div>
+            {% endif %}
             {% if rep.content %}<div class="reply-body">{{ rep.content }}</div>{% endif %}
             {% if rep.attachments %}
             <div class="attachments-grid" style="margin-top:8px;">
@@ -523,6 +553,12 @@
                     {% if srep.author and srep.author.tag == 'admin' %}<span class="tag tag-admin" style="font-size:9px;">Admin</span>{% endif %}
                     <span class="reply-date">{{ srep.created_at[:16].replace('T',' ') }} UTC</span>
                   </div>
+                  {% if srep.reply_to_content %}
+                  <div class="msg-quote-block">
+                    <div class="msg-quote-author">↩ {{ srep.reply_to_author or 'User' }}</div>
+                    <div class="msg-quote-text">{{ srep.reply_to_content }}</div>
+                  </div>
+                  {% endif %}
                   {% if srep.content %}<div class="reply-body">{{ srep.content }}</div>{% endif %}
                   <div class="msg-reactions" id="srep-reactions-{{ srep.id }}" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;align-items:center;">
                     {% set sreacts = srep.reactions | default({}) %}
@@ -592,6 +628,8 @@
             <input type="hidden" id="chat-reply-to" name="reply_to_msg_id" value="">
             <input type="hidden" id="chat-reply-parent-msg" value="">
             <input type="hidden" id="chat-reply-parent-rep" value="">
+            <input type="hidden" id="chat-reply-quoted-text" value="">
+            <input type="hidden" id="chat-reply-quoted-author" value="">
             <textarea name="content" id="chat-textarea" class="chat-textarea"
               placeholder="{% if user %}Reply as {{ user.display_name }}…{% else %}Reply as Anonymous…{% endif %}"
               rows="1"
@@ -663,6 +701,8 @@ function triggerReply(btn) {
   document.getElementById('chat-reply-parent-rep').value = '';
   document.getElementById('chat-reply-author-name').textContent = '@' + author;
   document.getElementById('chat-reply-preview-text').textContent = preview ? '— ' + preview : '';
+  document.getElementById('chat-reply-quoted-text').value = preview;
+  document.getElementById('chat-reply-quoted-author').value = author;
   document.getElementById('chat-reply-banner').classList.add('visible');
   document.getElementById('chat-form').action = '/forum/message/{{ post.id }}/' + msgId + '/reply';
   var ta = document.getElementById('chat-textarea');
@@ -680,6 +720,8 @@ function triggerSubReply(btn) {
   document.getElementById('chat-reply-parent-rep').value = repId;
   document.getElementById('chat-reply-author-name').textContent = '@' + author;
   document.getElementById('chat-reply-preview-text').textContent = preview ? '— ' + preview : '';
+  document.getElementById('chat-reply-quoted-text').value = preview;
+  document.getElementById('chat-reply-quoted-author').value = author;
   document.getElementById('chat-reply-banner').classList.add('visible');
   document.getElementById('chat-form').action = '/forum/message/{{ post.id }}/' + msgId + '/reply/' + repId + '/subreply';
   var ta = document.getElementById('chat-textarea');
@@ -691,6 +733,8 @@ function cancelReply() {
   document.getElementById('chat-reply-to').value = '';
   document.getElementById('chat-reply-parent-msg').value = '';
   document.getElementById('chat-reply-parent-rep').value = '';
+  document.getElementById('chat-reply-quoted-text').value = '';
+  document.getElementById('chat-reply-quoted-author').value = '';
   document.getElementById('chat-reply-banner').classList.remove('visible');
   document.getElementById('chat-form').action = '/forum/post/{{ post.id }}/message';
 }
@@ -794,7 +838,7 @@ document.addEventListener('click', function(e) {
   if (p && !p.contains(e.target)) p.style.display = 'none';
 });
 
-function _appendReplyToMsg(msgId, content, authorName, authorAvatar) {
+function _appendReplyToMsg(msgId, content, authorName, authorAvatar, quotedText, quotedAuthor) {
   var msgCard = document.getElementById('msg-' + msgId);
   if (!msgCard) return;
 
@@ -846,6 +890,9 @@ function _appendReplyToMsg(msgId, content, authorName, authorAvatar) {
   var card = document.createElement('div');
   card.className = 'reply-card';
   card.style.animation = '_fadeInMsg 0.3s ease';
+  var quoteHtml = quotedText
+    ? '<div class="msg-quote-block"><div class="msg-quote-author">↩ ' + _escHtml(quotedAuthor || 'User') + '</div><div class="msg-quote-text">' + _escHtml(quotedText) + '</div></div>'
+    : '';
   card.innerHTML =
     '<img class="reply-avatar" src="' + (authorAvatar || 'https://i.imgur.com/BCzwCla.png') + '" alt="" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' +
     '<div class="reply-content-wrap">' +
@@ -853,12 +900,13 @@ function _appendReplyToMsg(msgId, content, authorName, authorAvatar) {
         '<span class="reply-author-name">' + _escHtml(authorName) + '</span>' +
         '<span class="reply-date">' + ts + '</span>' +
       '</div>' +
+      quoteHtml +
       '<div class="reply-body">' + _escHtml(content) + '</div>' +
     '</div>';
   repList.appendChild(card);
 }
 
-function _appendSubReplyToRep(msgId, repId, content, authorName, authorAvatar) {
+function _appendSubReplyToRep(msgId, repId, content, authorName, authorAvatar, quotedText, quotedAuthor) {
   var repCard = document.getElementById('rep-' + repId);
   if (!repCard) return;
 
@@ -898,6 +946,9 @@ function _appendSubReplyToRep(msgId, repId, content, authorName, authorAvatar) {
   var card = document.createElement('div');
   card.className = 'subreply-card';
   card.style.cssText = 'display:flex;gap:8px;align-items:flex-start;animation:_fadeInMsg 0.3s ease;';
+  var sqHtml = quotedText
+    ? '<div class="msg-quote-block"><div class="msg-quote-author">↩ ' + _escHtml(quotedAuthor || 'User') + '</div><div class="msg-quote-text">' + _escHtml(quotedText) + '</div></div>'
+    : '';
   card.innerHTML =
     '<img class="reply-avatar" style="width:22px;height:22px;min-width:22px;" src="' + (authorAvatar || 'https://i.imgur.com/BCzwCla.png') + '" alt="" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' +
     '<div style="flex:1;min-width:0;">' +
@@ -905,6 +956,7 @@ function _appendSubReplyToRep(msgId, repId, content, authorName, authorAvatar) {
         '<span class="reply-author-name">' + _escHtml(authorName) + '</span>' +
         '<span class="reply-date">' + ts + '</span>' +
       '</div>' +
+      sqHtml +
       '<div class="reply-body">' + _escHtml(content) + '</div>' +
     '</div>';
   subList.appendChild(card);
@@ -924,9 +976,14 @@ async function sendChatMessage() {
   var parentMsgId = (document.getElementById('chat-reply-parent-msg') || {}).value || '';
   var parentRepId = (document.getElementById('chat-reply-parent-rep') || {}).value || '';
 
+  var quotedText = (document.getElementById('chat-reply-quoted-text') || {}).value || '';
+  var quotedAuthor = (document.getElementById('chat-reply-quoted-author') || {}).value || '';
+
   var fd = new FormData();
   fd.append('content', ta.value);
   if (replyMsgId) fd.append('reply_to_msg_id', replyMsgId);
+  if (quotedText) fd.append('reply_to_content', quotedText);
+  if (quotedAuthor) fd.append('reply_to_author', quotedAuthor);
   files.forEach(function(f) { fd.append('files', f); });
 
   var formEl = document.getElementById('chat-form');
@@ -944,11 +1001,13 @@ async function sendChatMessage() {
       if (parentRepId && sentContent) {
         _appendSubReplyToRep(parentMsgId, parentRepId, sentContent,
           '{{ (user.display_name if user else "Anonymous") | replace("'", "\\'") }}',
-          '{{ (user.avatar if user and user.avatar else "") }}');
+          '{{ (user.avatar if user and user.avatar else "") }}',
+          quotedText, quotedAuthor);
       } else if (parentMsgId && sentContent) {
         _appendReplyToMsg(parentMsgId, sentContent,
           '{{ (user.display_name if user else "Anonymous") | replace("'", "\\'") }}',
-          '{{ (user.avatar if user and user.avatar else "") }}');
+          '{{ (user.avatar if user and user.avatar else "") }}',
+          quotedText, quotedAuthor);
       }
       cancelReply();
       if (!parentMsgId && !parentRepId) {
