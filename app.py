@@ -73,8 +73,11 @@ def load_json(filename):
     path = os.path.join(DATA_DIR, filename)
     try:
         with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
+            result = json.load(f)
+            if not isinstance(result, dict):
+                raise ValueError("Expected dict")
+            return result
+    except (FileNotFoundError, json.JSONDecodeError, ValueError):
         default = DEFAULT_DATA.get(filename, {})
         with open(path, "w", encoding="utf-8") as f:
             json.dump(default, f, ensure_ascii=False, indent=2)
