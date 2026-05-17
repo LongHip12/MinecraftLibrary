@@ -926,7 +926,7 @@ def forgot_password():
     user = get_session_user(request)
     if user:
         return redirect(url_for("index"))
-    return render_template("forgot_password.html", user=None)
+    return render_template("forgot_password.html", user=None, hcaptcha_site_key=HCAPTCHA_SITE_KEY)
 
 
 @app.route("/reset-password", methods=["GET", "POST"])
