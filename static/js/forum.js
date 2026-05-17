@@ -226,8 +226,7 @@
       var span = btn.querySelector('span');
       if (span) {
         var count = list.querySelectorAll('.reply-card').length;
-        var word = count === 1 ? 'reply' : 'replies';
-        span.textContent = isOpen ? 'Show ' + count + ' ' + word : 'Hide ' + count + ' ' + word;
+        span.textContent = isOpen ? count + ' phản hồi' : 'Ẩn ' + count + ' phản hồi';
       }
     });
   });
