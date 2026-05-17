@@ -3322,84 +3322,84 @@ def admin_set_rate_limit():
     _rate_limit_store.clear()
     return jsonify({"success": True, "api_rate_limit": limit})
 
-  @app.route("/api/admin/health", methods=["GET"])
-  def admin_health():
-      current_user = get_session_user(request)
-      if not current_user or not is_admin(current_user):
-          return jsonify({"success": False, "error": "Forbidden"}), 403
-      import sys, platform
-      uptime = datetime.now() - APP_START_TIME
-      hours, remainder = divmod(int(uptime.total_seconds()), 3600)
-      minutes, seconds = divmod(remainder, 60)
-      uptime_str = f"{hours}h {minutes}m {seconds}s"
-      data_files_info = []
-      for fname in DEFAULT_DATA.keys():
-          fpath = os.path.join(DATA_DIR, fname)
-          try:
-              size = os.path.getsize(fpath)
-              data = load_json(fname)
-              records = None
-              if fname == "accounts-data.json":
-                  records = len(data.get("users", []))
-              elif fname == "mods-data.json":
-                  records = len(data.get("mods", []))
-              elif fname == "forum-data.json":
-                  records = len(data.get("posts", []))
-              elif fname == "sessions-data.json":
-                  sessions_d = data.get("sessions", {})
-                  active = sum(1 for s in sessions_d.values() if datetime.fromisoformat(s.get("expires", "1970-01-01")) > datetime.now())
-                  records = f"{active} active / {len(sessions_d)} total"
-              data_files_info.append({"name": fname, "size": f"{size/1024:.1f} KB", "records": records, "ok": True})
-          except Exception as e:
-              data_files_info.append({"name": fname, "size": "—", "records": None, "ok": False, "error": str(e)})
-      env_checks = {
-          "SESSION_SECRET": bool(os.environ.get("SESSION_SECRET")),
-          "SUPABASE_URL": bool(os.environ.get("SUPABASE_URL")),
-          "SUPABASE_SERVICE_KEY": bool(os.environ.get("SUPABASE_SERVICE_KEY")),
-          "BREVO_API_KEY": bool(os.environ.get("BREVO_API_KEY")),
-          "APP_PASSWORD": bool(os.environ.get("APP_PASSWORD")),
-          "GOOGLE_CLIENT_ID": bool(os.environ.get("GOOGLE_CLIENT_ID")),
-          "GOOGLE_CLIENT_SECRET": bool(os.environ.get("GOOGLE_CLIENT_SECRET")),
-          "GOOGLE_REDIRECT_URI": bool(os.environ.get("GOOGLE_REDIRECT_URI")),
-          "DISCORD_CLIENT_ID": bool(os.environ.get("DISCORD_CLIENT_ID")),
-          "DISCORD_CLIENT_SECRET": bool(os.environ.get("DISCORD_CLIENT_SECRET")),
-          "DISCORD_REDIRECT_URI": bool(os.environ.get("DISCORD_REDIRECT_URI")),
-          "DISCORD_GUILD_ID": bool(os.environ.get("DISCORD_GUILD_ID")),
-          "DISCORD_BOT_TOKEN": bool(os.environ.get("DISCORD_BOT_TOKEN")),
-      }
-      services = {
-          "email_brevo": env_checks["BREVO_API_KEY"],
-          "email_smtp": env_checks["APP_PASSWORD"],
-          "google_oauth": env_checks["GOOGLE_CLIENT_ID"] and env_checks["GOOGLE_CLIENT_SECRET"],
-          "discord_oauth": env_checks["DISCORD_CLIENT_ID"] and env_checks["DISCORD_CLIENT_SECRET"],
-          "discord_bot": env_checks["DISCORD_BOT_TOKEN"] and env_checks["DISCORD_GUILD_ID"],
-          "supabase_backup": env_checks["SUPABASE_URL"] and env_checks["SUPABASE_SERVICE_KEY"],
-      }
-      accounts = load_json("accounts-data.json")
-      mods_data = load_json("mods-data.json")
-      sessions = load_json("sessions-data.json")
-      active_sessions = sum(
-          1 for s in sessions.get("sessions", {}).values()
-          if datetime.fromisoformat(s.get("expires", "1970-01-01")) > datetime.now()
-      )
-      return jsonify({
-          "success": True,
-          "uptime": uptime_str,
-          "uptime_seconds": int(uptime.total_seconds()),
-          "started_at": APP_START_TIME.isoformat(),
-          "python_version": sys.version.split()[0],
-          "platform": platform.system(),
-          "data_files": data_files_info,
-          "env_vars": env_checks,
-          "services": services,
-          "stats": {
-              "users": len(accounts.get("users", [])),
-              "mods": len(mods_data.get("mods", [])),
-              "active_sessions": active_sessions,
-              "total_downloads": sum(m.get("downloads", 0) for m in mods_data.get("mods", [])),
-          }
-      })
-  
+@app.route("/api/admin/health", methods=["GET"])
+def admin_health():
+    current_user = get_session_user(request)
+    if not current_user or not is_admin(current_user):
+        return jsonify({"success": False, "error": "Forbidden"}), 403
+    import sys, platform
+    uptime = datetime.now() - APP_START_TIME
+    hours, remainder = divmod(int(uptime.total_seconds()), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    uptime_str = f"{hours}h {minutes}m {seconds}s"
+    data_files_info = []
+    for fname in DEFAULT_DATA.keys():
+        fpath = os.path.join(DATA_DIR, fname)
+        try:
+            size = os.path.getsize(fpath)
+            data = load_json(fname)
+            records = None
+            if fname == "accounts-data.json":
+                records = len(data.get("users", []))
+            elif fname == "mods-data.json":
+                records = len(data.get("mods", []))
+            elif fname == "forum-data.json":
+                records = len(data.get("posts", []))
+            elif fname == "sessions-data.json":
+                sessions_d = data.get("sessions", {})
+                active = sum(1 for s in sessions_d.values() if datetime.fromisoformat(s.get("expires", "1970-01-01")) > datetime.now())
+                records = f"{active} active / {len(sessions_d)} total"
+            data_files_info.append({"name": fname, "size": f"{size/1024:.1f} KB", "records": records, "ok": True})
+        except Exception as e:
+            data_files_info.append({"name": fname, "size": "—", "records": None, "ok": False, "error": str(e)})
+    env_checks = {
+        "SESSION_SECRET": bool(os.environ.get("SESSION_SECRET")),
+        "SUPABASE_URL": bool(os.environ.get("SUPABASE_URL")),
+        "SUPABASE_SERVICE_KEY": bool(os.environ.get("SUPABASE_SERVICE_KEY")),
+        "BREVO_API_KEY": bool(os.environ.get("BREVO_API_KEY")),
+        "APP_PASSWORD": bool(os.environ.get("APP_PASSWORD")),
+        "GOOGLE_CLIENT_ID": bool(os.environ.get("GOOGLE_CLIENT_ID")),
+        "GOOGLE_CLIENT_SECRET": bool(os.environ.get("GOOGLE_CLIENT_SECRET")),
+        "GOOGLE_REDIRECT_URI": bool(os.environ.get("GOOGLE_REDIRECT_URI")),
+        "DISCORD_CLIENT_ID": bool(os.environ.get("DISCORD_CLIENT_ID")),
+        "DISCORD_CLIENT_SECRET": bool(os.environ.get("DISCORD_CLIENT_SECRET")),
+        "DISCORD_REDIRECT_URI": bool(os.environ.get("DISCORD_REDIRECT_URI")),
+        "DISCORD_GUILD_ID": bool(os.environ.get("DISCORD_GUILD_ID")),
+        "DISCORD_BOT_TOKEN": bool(os.environ.get("DISCORD_BOT_TOKEN")),
+    }
+    services = {
+        "email_brevo": env_checks["BREVO_API_KEY"],
+        "email_smtp": env_checks["APP_PASSWORD"],
+        "google_oauth": env_checks["GOOGLE_CLIENT_ID"] and env_checks["GOOGLE_CLIENT_SECRET"],
+        "discord_oauth": env_checks["DISCORD_CLIENT_ID"] and env_checks["DISCORD_CLIENT_SECRET"],
+        "discord_bot": env_checks["DISCORD_BOT_TOKEN"] and env_checks["DISCORD_GUILD_ID"],
+        "supabase_backup": env_checks["SUPABASE_URL"] and env_checks["SUPABASE_SERVICE_KEY"],
+    }
+    accounts = load_json("accounts-data.json")
+    mods_data = load_json("mods-data.json")
+    sessions = load_json("sessions-data.json")
+    active_sessions = sum(
+        1 for s in sessions.get("sessions", {}).values()
+        if datetime.fromisoformat(s.get("expires", "1970-01-01")) > datetime.now()
+    )
+    return jsonify({
+        "success": True,
+        "uptime": uptime_str,
+        "uptime_seconds": int(uptime.total_seconds()),
+        "started_at": APP_START_TIME.isoformat(),
+        "python_version": sys.version.split()[0],
+        "platform": platform.system(),
+        "data_files": data_files_info,
+        "env_vars": env_checks,
+        "services": services,
+        "stats": {
+            "users": len(accounts.get("users", [])),
+            "mods": len(mods_data.get("mods", [])),
+            "active_sessions": active_sessions,
+            "total_downloads": sum(m.get("downloads", 0) for m in mods_data.get("mods", [])),
+        }
+    })
+
 
 @app.route("/api/docs")
 def api_docs():
