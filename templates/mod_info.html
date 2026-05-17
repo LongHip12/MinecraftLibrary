@@ -351,7 +351,7 @@
 
     {% if user %}
     <div class="comment-form">
-      <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="comment-avatar" alt="{{ user.display_name }}">
+      <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="comment-avatar" alt="{{ user.display_name }}" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
       <div class="comment-input-wrap" style="flex:1;">
         <div class="comment-reply-bar" id="comment-reply-bar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
@@ -387,7 +387,7 @@
         {% for c in mod.comments | reverse %}
         {% if not c.reply_to_id %}
         <div class="comment-item" id="comment-{{ c.id }}">
-          <img src="{{ c.avatar if c.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="comment-avatar" alt="{{ c.display_name }}">
+          <img src="{{ c.avatar if c.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="comment-avatar" alt="{{ c.display_name }}" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
           <div class="comment-body">
             <div class="comment-header">
               <a href="/users/{{ c.username }}" class="comment-name">{{ c.display_name }}</a>
@@ -444,7 +444,7 @@
               <div class="cmt-replies-list" id="cmt-rep-{{ c.id }}">
                 {% for r in ns.replies %}
                 <div class="comment-item cmt-reply-item" id="comment-{{ r.id }}">
-                  <img src="{{ r.avatar if r.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="comment-avatar" alt="{{ r.display_name }}">
+                  <img src="{{ r.avatar if r.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="comment-avatar" alt="{{ r.display_name }}" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
                   <div class="comment-body">
                     <div class="comment-header">
                       <a href="/users/{{ r.username }}" class="comment-name">{{ r.display_name }}</a>
@@ -647,7 +647,7 @@ async function submitComment() {
       el.className = 'comment-item';
       el.id = 'comment-' + c.id;
       el.innerHTML = `
-        <img src="${c.avatar || 'https://i.imgur.com/BCzwCla.png'}" class="comment-avatar" alt="${c.display_name}">
+        <img src="${c.avatar || 'https://i.imgur.com/BCzwCla.png'}" class="comment-avatar" alt="${c.display_name}" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
         <div class="comment-body">
           <div class="comment-header">
             <a href="/users/${c.username}" class="comment-name">${c.display_name}</a>
