@@ -3,6 +3,68 @@
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/forum.css">
 <style>
+/* ── 3-dot post menu ── */
+.forum-post-card { position: relative; }
+.fp-dotmenu-wrap {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+}
+.fp-dotmenu-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text3);
+  cursor: pointer;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  padding: 0;
+}
+.fp-dotmenu-btn:hover {
+  border-color: var(--border2);
+  background: rgba(255,255,255,0.07);
+  color: var(--text);
+}
+.fp-dotmenu-drop {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 4px;
+  min-width: 148px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+  display: none;
+  z-index: 200;
+}
+.fp-dotmenu-drop.open { display: block; }
+.fp-dotmenu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text2);
+  text-align: left;
+  transition: background 0.12s, color 0.12s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.fp-dotmenu-item:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+.fp-dotmenu-danger { color: #f87171 !important; }
+.fp-dotmenu-danger:hover { background: rgba(248,113,113,0.1) !important; }
+
 .forum-post-cover {
   width: 56px;
   height: 56px;
@@ -160,7 +222,7 @@
       <!-- Post list -->
       {% if posts %}
         {% for post in posts %}
-        <a class="forum-post-card {% if post.pinned %}pinned{% endif %}" href="/forum/post/{{ post.id }}" style="display:flex;align-items:center;">
+        <a class="forum-post-card {% if post.pinned %}pinned{% endif %}" href="/forum/post/{{ post.id }}" style="display:flex;align-items:center;padding-right:{% if user and (user.tag == 'admin' or (post.author and post.author.id and user.id == post.author.id)) %}44px{% else %}16px{% endif %};">
           <div class="forum-post-left" style="flex:1;min-width:0;">
             <div class="forum-post-title-row">
               {% if post.pinned %}
@@ -204,6 +266,29 @@
               {{ post.views }}
             </span>
           </div>
+          {% if user and (user.tag == 'admin' or (post.author and post.author.id and user.id == post.author.id)) %}
+          <div class="fp-dotmenu-wrap" onclick="event.preventDefault();event.stopPropagation();">
+            <button class="fp-dotmenu-btn" type="button" title="Options" onclick="toggleFpMenu(event,'{{ post.id }}')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+            </button>
+            <div class="fp-dotmenu-drop" id="fp-menu-{{ post.id }}">
+              {% if user.tag == 'admin' %}
+              <button class="fp-dotmenu-item" type="button" onclick="fpPin('{{ post.id }}')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+                {{ 'Unpin' if post.pinned else 'Pin' }}
+              </button>
+              <button class="fp-dotmenu-item" type="button" onclick="fpLock('{{ post.id }}')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                {{ 'Unlock' if post.locked else 'Lock' }}
+              </button>
+              {% endif %}
+              <button class="fp-dotmenu-item fp-dotmenu-danger" type="button" onclick="fpDelete('{{ post.id }}')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+                Delete
+              </button>
+            </div>
+          </div>
+          {% endif %}
         </a>
         {% endfor %}
       {% else %}
@@ -262,6 +347,44 @@ function toggleFsort() {
 document.addEventListener('click', function(e) {
   var dd = document.getElementById('fsort-dd');
   if (dd && !dd.contains(e.target)) dd.classList.remove('open');
+  document.querySelectorAll('.fp-dotmenu-drop.open').forEach(function(m) { m.classList.remove('open'); });
 });
+
+function toggleFpMenu(e, id) {
+  e.stopPropagation();
+  var menu = document.getElementById('fp-menu-' + id);
+  if (!menu) return;
+  var wasOpen = menu.classList.contains('open');
+  document.querySelectorAll('.fp-dotmenu-drop.open').forEach(function(m) { m.classList.remove('open'); });
+  if (!wasOpen) menu.classList.add('open');
+}
+
+async function fpDelete(postId) {
+  if (!confirm('Delete this thread? This cannot be undone.')) return;
+  try {
+    var resp = await fetch('/api/forum/post/' + postId + '/delete', { method: 'POST' });
+    var data = await resp.json();
+    if (data.success) location.reload();
+    else alert(data.error || 'Failed to delete');
+  } catch(e) { alert('Network error'); }
+}
+
+async function fpPin(postId) {
+  try {
+    var resp = await fetch('/api/forum/post/' + postId + '/pin', { method: 'POST' });
+    var data = await resp.json();
+    if (data.success) location.reload();
+    else alert(data.error || 'Failed');
+  } catch(e) { alert('Network error'); }
+}
+
+async function fpLock(postId) {
+  try {
+    var resp = await fetch('/api/forum/post/' + postId + '/lock', { method: 'POST' });
+    var data = await resp.json();
+    if (data.success) location.reload();
+    else alert(data.error || 'Failed');
+  } catch(e) { alert('Network error'); }
+}
 </script>
 {% endblock %}
