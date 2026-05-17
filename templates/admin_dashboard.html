@@ -933,10 +933,35 @@ function showCustomConfirm(title, message, confirmLabel, confirmColor, onConfirm
   function _fmtTs(isoStr) {
     if (!isoStr) return '';
     var d = new Date(isoStr);
-    var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds(), ms = d.getMilliseconds();
-    var ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12 || 12;
-    return (h<10?'0'+h:h)+':'+(m<10?'0'+m:m)+':'+(s<10?'0'+s:s)+'.'+(ms<100?(ms<10?'00'+ms:'0'+ms):ms)+' '+ampm;
+    var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+    return (h<10?'0'+h:h)+':'+(m<10?'0'+m:m)+':'+(s<10?'0'+s:s);
+  }
+
+  function _highlightLog(escaped, lv) {
+    if (lv === 'http') {
+      return escaped
+        .replace(/^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)(\s)/,
+          '<span style="color:#4ade80;font-weight:700;">$1</span>$2')
+        .replace(/\s(2\d\d)\s/, ' <span style="color:#4ade80;font-weight:700;">$1</span> ')
+        .replace(/\s(3\d\d)\s/, ' <span style="color:#38bdf8;font-weight:700;">$1</span> ')
+        .replace(/\s(4\d\d)\s/, ' <span style="color:#fbbf24;font-weight:700;">$1</span> ')
+        .replace(/\s(5\d\d)\s/, ' <span style="color:#f87171;font-weight:700;">$1</span> ')
+        .replace(/(\d+ms)$/, '<span style="color:#818cf8;">$1</span>');
+    }
+    return escaped
+      .replace(/\b(ERROR|CRITICAL|FATAL)\b/g, '<span style="color:#f87171;font-weight:700;">$1</span>')
+      .replace(/\b(WARNING|WARN)\b/g, '<span style="color:#fbbf24;font-weight:700;">$1</span>')
+      .replace(/\b(INFO)\b/g, '<span style="color:#60a5fa;">$1</span>')
+      .replace(/\b(DEBUG)\b/g, '<span style="color:#64748b;">$1</span>')
+      .replace(/(\[[\w._:-]+\])/g, '<span style="color:#64748b;">$1</span>')
+      .replace(/(&quot;[^&]*&quot;)/g, '<span style="color:#86efac;">$1</span>')
+      .replace(/\b(\d{3})\b(?=\s)/g, function(_, code) {
+        var c = parseInt(code);
+        var col = c>=500?'#f87171':c>=400?'#fbbf24':c>=300?'#38bdf8':c>=200?'#4ade80':'#e2e8f0';
+        return '<span style="color:'+col+';font-weight:700;">'+code+'</span>';
+      })
+      .replace(/(\/[\w\-./?=%&+#]+)/g, '<span style="color:#93c5fd;">$1</span>')
+      .replace(/\b(\d+\.\d+\.\d+\.\d+)\b/g, '<span style="color:#c4b5fd;">$1</span>');
   }
 
   var _LV_COLOR = {
@@ -960,9 +985,10 @@ function showCustomConfirm(title, message, confirmLabel, confirmColor, onConfirm
     var msg = log.msg || '';
     var isArrow = msg.startsWith('==>') || msg.startsWith('[STARTUP]');
     if (isArrow) color = '#2dd4bf';
+    var highlighted = _highlightLog(_escHtml(msg), lv);
     return '<div style="display:flex;align-items:baseline;padding:1px 16px;background:'+bg+';min-height:22px;">'
-      + '<span style="color:#374151;font-size:11px;white-space:nowrap;flex-shrink:0;margin-right:14px;padding-top:1px;">'+_escHtml(ts)+'</span>'
-      + '<span style="color:'+color+';white-space:nowrap;">'+_escHtml(msg)+'</span>'
+      + '<span style="color:#374151;font-size:11px;white-space:nowrap;flex-shrink:0;margin-right:14px;padding-top:1px;user-select:none;">'+_escHtml(ts)+'</span>'
+      + '<span style="color:'+color+';white-space:nowrap;">'+highlighted+'</span>'
       + '</div>';
   }
 
@@ -993,7 +1019,7 @@ function showCustomConfirm(title, message, confirmLabel, confirmColor, onConfirm
 
   function clearConsole() {
     _consoleLogs = [];
-    _consoleSince = '';
+    _consoleSince = new Date().toISOString().slice(0, 23);
     _applyConsoleFilters();
   }
 
