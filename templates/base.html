@@ -369,6 +369,43 @@ document.addEventListener('submit', function(e) {
   finishLoader();
 })();
 </script>
+<script>
+(function() {
+  var _MSGS = {
+    'username': 'Please enter a username',
+    'email': 'Please enter your email address',
+    'password': 'Please enter your password',
+    'new-password': 'Please enter a password',
+    'confirm-password': 'Please confirm your password',
+    'default': 'Please fill in this field'
+  };
+  function _msg(input) {
+    var name = (input.name || '').toLowerCase();
+    var id = (input.id || '').toLowerCase();
+    if (_MSGS[name]) return _MSGS[name];
+    if (id.includes('email')) return _MSGS['email'];
+    if (id.includes('password') || id.includes('pw')) return _MSGS['new-password'];
+    if (id.includes('username')) return _MSGS['username'];
+    return input.placeholder || _MSGS['default'];
+  }
+  document.addEventListener('invalid', function(e) {
+    var input = e.target;
+    if (!input || !input.validity) return;
+    if (input.validity.valueMissing) {
+      input.setCustomValidity(_msg(input));
+    } else if (input.validity.typeMismatch && input.type === 'email') {
+      input.setCustomValidity('Please enter a valid email address');
+    } else if (input.validity.tooShort) {
+      input.setCustomValidity('Must be at least ' + input.minLength + ' characters');
+    } else if (input.validity.patternMismatch) {
+      input.setCustomValidity(input.title || 'Invalid format');
+    }
+  }, true);
+  document.addEventListener('input', function(e) {
+    if (e.target && e.target.setCustomValidity) e.target.setCustomValidity('');
+  }, true);
+})();
+</script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>
