@@ -143,15 +143,21 @@ def send_email_html(to, subject, html_body):
     msg["From"] = GMAIL_FROM
     msg["To"] = to
     msg.attach(MIMEText(html_body, "html"))
-    try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(GMAIL_FROM, APP_PASSWORD)
-        server.send_message(msg)
-        server.quit()
-        return True
-    except Exception:
-        return False
+    result = [False]
+    def _do_send():
+        try:
+            server = smtplib.SMTP("smtp.gmail.com", 587)
+            server.starttls()
+            server.login(GMAIL_FROM, APP_PASSWORD)
+            server.send_message(msg)
+            server.quit()
+            result[0] = True
+        except Exception:
+            pass
+    t = threading.Thread(target=_do_send, daemon=True)
+    t.start()
+    t.join(timeout=25)
+    return result[0]
 
 
 def otp_email_html(otp, purpose_text):
@@ -782,11 +788,21 @@ def reset_password():
     if user:
         return redirect(url_for("index"))
     if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        otp_code = request.form.get("otp_code", "").strip()
-        new_password = request.form.get("new_password", "")
+        if request.is_json:
+            body = request.get_json() or {}
+            email = body.get("email", "").strip().lower()
+            otp_code = body.get("otp_code", "").strip()
+            new_password = body.get("new_password", "")
+            confirm_password = body.get("confirm_password", new_password)
+        else:
+            email = request.form.get("email", "").strip().lower()
+            otp_code = request.form.get("otp_code", "").strip()
+            new_password = request.form.get("new_password", "")
+            confirm_password = new_password
         if len(new_password) < 6:
             return jsonify({"success": False, "error": "Password must be at least 6 characters"})
+        if new_password != confirm_password:
+            return jsonify({"success": False, "error": "Passwords do not match"})
         if not verify_otp_code(email, otp_code, "reset"):
             return jsonify({"success": False, "error": "Invalid or expired verification code"})
         accounts = load_json("accounts-data.json")
