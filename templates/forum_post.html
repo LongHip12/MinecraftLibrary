@@ -701,6 +701,36 @@ document.addEventListener('click', function(e) {
   if (p && !p.contains(e.target)) p.style.display = 'none';
 });
 
+function _appendReplyToMsg(msgId, content, authorName, authorAvatar) {
+  var repList = document.getElementById('replies-' + msgId);
+  if (!repList) return;
+  repList.style.display = 'flex';
+  var toggleBtn = document.querySelector('[data-target="replies-' + msgId + '"]');
+  if (toggleBtn) {
+    var count = repList.querySelectorAll('.reply-card').length + 1;
+    var sp = toggleBtn.querySelector('span');
+    if (sp) sp.textContent = 'Hide ' + count + ' ' + (count === 1 ? 'reply' : 'replies');
+    var svg = toggleBtn.querySelector('svg');
+    if (svg) svg.style.transform = 'rotate(180deg)';
+    toggleBtn.style.display = '';
+  }
+  var now = new Date();
+  var ts = now.toISOString().replace('T',' ').slice(0,16) + ' UTC';
+  var card = document.createElement('div');
+  card.className = 'reply-card';
+  card.style.animation = '_fadeInMsg 0.3s ease';
+  card.innerHTML =
+    '<img class="reply-avatar" src="' + (authorAvatar || 'https://i.imgur.com/BCzwCla.png') + '" alt="" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' +
+    '<div class="reply-content-wrap">' +
+      '<div class="reply-author-row">' +
+        '<span class="reply-author-name">' + _escHtml(authorName) + '</span>' +
+        '<span class="reply-date">' + ts + '</span>' +
+      '</div>' +
+      '<div class="reply-body">' + _escHtml(content) + '</div>' +
+    '</div>';
+  repList.appendChild(card);
+}
+
 async function sendChatMessage() {
   var ta = document.getElementById('chat-textarea');
   var content = ta.value.trim();
@@ -710,10 +740,12 @@ async function sendChatMessage() {
   var btn = document.querySelector('.chat-send-btn');
   if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
 
+  var replyTo = document.getElementById('chat-reply-to');
+  var replyMsgId = replyTo ? replyTo.value : '';
+
   var fd = new FormData();
   fd.append('content', ta.value);
-  var replyTo = document.getElementById('chat-reply-to');
-  if (replyTo && replyTo.value) fd.append('reply_to_msg_id', replyTo.value);
+  if (replyMsgId) fd.append('reply_to_msg_id', replyMsgId);
   files.forEach(function(f) { fd.append('files', f); });
 
   var formEl = document.getElementById('chat-form');
@@ -724,12 +756,19 @@ async function sendChatMessage() {
     var data = await resp.json();
     if (btn) { btn.disabled = false; btn.style.opacity = ''; }
     if (data.success) {
+      var sentContent = ta.value.trim();
       ta.value = '';
       ta.style.height = '';
       if (typeof clearChatFiles === 'function') clearChatFiles();
+      if (replyMsgId && sentContent) {
+        _appendReplyToMsg(replyMsgId, sentContent,
+          '{{ (user.display_name if user else "Anonymous") | replace("'", "\\'") }}',
+          '{{ (user.avatar if user and user.avatar else "") }}');
+      }
       cancelReply();
-      if (typeof showToast === 'function') showToast('Message sent!');
-      setTimeout(function() { _pollMessages(true); }, 600);
+      if (!replyMsgId) {
+        setTimeout(function() { _pollMessages(true); }, 400);
+      }
     } else {
       if (typeof showToast === 'function') showToast(data.error || 'Failed to send', 'error');
     }
@@ -741,6 +780,7 @@ async function sendChatMessage() {
 
 // ── Discord-style live message polling ──────────────────
 var _lastMsgTs = '{{ (messages[-1].created_at if messages else "") | replace("'","") }}';
+if (!_lastMsgTs) { _lastMsgTs = new Date().toISOString().slice(0, 23); }
 
 function _escHtml(s) {
   return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -817,7 +857,6 @@ window.addEventListener('scroll', function() {
 }, { passive: true });
 
 function _pollMessages(immediate) {
-  if (!_lastMsgTs) return;
   fetch('/api/forum/post/{{ post.id }}/messages?since=' + encodeURIComponent(_lastMsgTs))
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -828,11 +867,11 @@ function _pollMessages(immediate) {
     }).catch(function() {});
 }
 
-// Start polling every 5 seconds
+// Start polling every 3 seconds
 (function() {
   var msgSection = document.getElementById('messages');
   if (msgSection) {
-    setInterval(function() { _pollMessages(false); }, 5000);
+    setInterval(function() { _pollMessages(false); }, 3000);
   }
 })();
 
@@ -1152,29 +1191,6 @@ function toggleImgMenu(e, btn) {
 document.addEventListener('click', function() { document.querySelectorAll('.img-menu-drop.open').forEach(m => m.classList.remove('open')); });
 document.addEventListener('keydown', function(e) { if(e.key === 'Escape') closeLightbox(); });
 
-// ── Auto-update polling ──────────────────────────────────
-var _pollTotal = {{ post.messages | length }};
-function _pollNewMsgs() {
-  fetch('/api/forum/post/{{ post.id }}/messages')
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      if (d.success && d.total > _pollTotal) {
-        var diff = d.total - _pollTotal;
-        _pollTotal = d.total;
-        var b = document.getElementById('_new-msg-banner');
-        if (!b) {
-          b = document.createElement('div');
-          b.id = '_new-msg-banner';
-          b.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;padding:10px 24px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;z-index:300;box-shadow:0 4px 20px rgba(250,80,80,0.5);';
-          b.onclick = function() { location.reload(); };
-          document.body.appendChild(b);
-        }
-        b.textContent = diff + ' new ' + (diff === 1 ? 'message' : 'messages') + ' — click to load';
-        b.style.display = 'block';
-      }
-    }).catch(function() {});
-}
-setInterval(_pollNewMsgs, 6000);
 
 // ── Attach-button visibility (show + when files queued) ──
 function _updateAttachBtn() {
