@@ -38,6 +38,9 @@ GMAIL_FROM = "lonelyhub12@gmail.com"
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "")
+DISCORD_CLIENT_ID = os.environ.get("DISCORD_CLIENT_ID", "")
+DISCORD_CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET", "")
+DISCORD_REDIRECT_URI = os.environ.get("DISCORD_REDIRECT_URI", "")
 MAX_FILE_SIZE = 10 * 1024 * 1024
 FORUM_MAX_FILE_SIZE = 50 * 1024 * 1024
 
@@ -736,7 +739,7 @@ def api_send_otp():
         elif purpose == "reset":
             if not get_user_by_email(email):
                 return jsonify({"success": False, "error": "No account with that email address"})
-    elif purpose in ("verify_email", "change_password"):
+    elif purpose in ("verify_email", "change_password", "verify_current_email", "remove_email", "unlink_google"):
         logged_user = get_session_user(request)
         if not logged_user:
             return jsonify({"success": False, "error": "Not logged in"})
@@ -745,13 +748,29 @@ def api_send_otp():
             return jsonify({"success": False, "error": "No email linked to your account"})
         if purpose == "change_password" and not logged_user.get("email_verified"):
             return jsonify({"success": False, "error": "Email must be verified first"})
+        if purpose == "verify_current_email" and not logged_user.get("email_verified"):
+            return jsonify({"success": False, "error": "Current email is not verified"})
+    elif purpose == "change_email":
+        logged_user = get_session_user(request)
+        if not logged_user:
+            return jsonify({"success": False, "error": "Not logged in"})
+        email = data.get("email", "").strip().lower()
+        if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+            return jsonify({"success": False, "error": "Invalid email address"})
+        accounts = load_json("accounts-data.json")
+        if any(u.get("email", "").lower() == email and u["id"] != logged_user["id"] for u in accounts["users"]):
+            return jsonify({"success": False, "error": "Email already used by another account"})
     else:
         return jsonify({"success": False, "error": "Invalid purpose"})
     purpose_texts = {
         "register": "to complete your registration",
         "reset": "to reset your password",
         "verify_email": "to verify your email address",
-        "change_password": "to confirm your password change"
+        "change_password": "to confirm your password change",
+        "change_email": "to verify your new email address",
+        "verify_current_email": "to confirm your identity before changing your email",
+        "remove_email": "to confirm removal of your linked email",
+        "unlink_google": "to confirm disconnecting your Google account"
     }
     otp = store_otp(email, purpose)
     sent = send_email_html(email, "Lonely Hub — Verification Code", otp_email_html(otp, purpose_texts.get(purpose, "")))
@@ -1002,8 +1021,8 @@ def google_callback():
             "id": new_id,
             "username": username,
             "display_name": g_name or username,
-            "email": g_email,
-            "email_verified": True,
+            "email": None,
+            "email_verified": False,
             "password": None,
             "google_id": google_id,
             "tag": "user",
@@ -1020,8 +1039,6 @@ def google_callback():
         }
         accounts["users"].append(found_user)
         save_json("accounts-data.json", accounts)
-        if g_email:
-            threading.Thread(target=send_email_html, args=(g_email, "Welcome to Lonely Hub!", welcome_email_html(username)), daemon=True).start()
     session_token, expires = create_session(found_user["id"], True)
     device_token = issue_device_token()
     resp = make_response(redirect(url_for("index")))
@@ -1037,9 +1054,233 @@ def unlink_google():
         return jsonify({"success": False, "error": "Not logged in"})
     accounts = load_json("accounts-data.json")
     target = next((u for u in accounts["users"] if u["id"] == user["id"]), None)
-    if target:
-        target.pop("google_id", None)
+    if not target:
+        return jsonify({"success": False, "error": "User not found"})
+    if not target.get("password") and not target.get("discord_id"):
+        return jsonify({"success": False, "error": "Cannot disconnect Google — you have no other login method"})
+    if target.get("email") and target.get("email_verified"):
+        data = request.get_json() or {}
+        otp_code = data.get("otp_code", "").strip()
+        if not otp_code:
+            return jsonify({"success": False, "error": "Verification code required"})
+        if not verify_otp_code(target["email"].lower(), otp_code, "unlink_google"):
+            return jsonify({"success": False, "error": "Invalid or expired code"})
+    target.pop("google_id", None)
+    save_json("accounts-data.json", accounts)
+    return jsonify({"success": True})
+
+
+@app.route("/api/account/authorize-email-change", methods=["POST"])
+def authorize_email_change():
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Not logged in"})
+    data = request.get_json() or {}
+    otp_code = data.get("otp_code", "").strip()
+    current_email = user.get("email", "").strip().lower()
+    if not current_email:
+        return jsonify({"success": False, "error": "No current email to verify"})
+    if not verify_otp_code(current_email, otp_code, "verify_current_email"):
+        return jsonify({"success": False, "error": "Invalid or expired code"})
+    auth_token = secrets.token_hex(24)
+    sessions = load_json("sessions-data.json")
+    sessions.setdefault("email_change_auths", {})[user["id"]] = {
+        "token": auth_token,
+        "expires": (datetime.now() + timedelta(minutes=15)).isoformat()
+    }
+    save_json("sessions-data.json", sessions)
+    return jsonify({"success": True, "auth_token": auth_token})
+
+
+@app.route("/api/account/remove-email", methods=["POST"])
+def remove_email():
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Not logged in"})
+    data = request.get_json() or {}
+    otp_code = data.get("otp_code", "").strip()
+    current_email = user.get("email", "").strip().lower()
+    if current_email:
+        if not otp_code:
+            return jsonify({"success": False, "error": "Verification code required"})
+        if not verify_otp_code(current_email, otp_code, "remove_email"):
+            return jsonify({"success": False, "error": "Invalid or expired code"})
+    accounts = load_json("accounts-data.json")
+    target = next((u for u in accounts["users"] if u["id"] == user["id"]), None)
+    if not target:
+        return jsonify({"success": False, "error": "User not found"})
+    target["email"] = None
+    target["email_verified"] = False
+    save_json("accounts-data.json", accounts)
+    return jsonify({"success": True})
+
+
+@app.route("/api/account/confirm-change-email", methods=["POST"])
+def confirm_change_email():
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Not logged in"})
+    data = request.get_json() or {}
+    new_email = data.get("email", "").strip().lower()
+    otp_code = data.get("otp_code", "").strip()
+    auth_token = data.get("auth_token", "").strip()
+    if not new_email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', new_email):
+        return jsonify({"success": False, "error": "Invalid email address"})
+    if user.get("email") and user.get("email_verified"):
+        sessions = load_json("sessions-data.json")
+        stored = sessions.get("email_change_auths", {}).get(user["id"])
+        if not stored:
+            return jsonify({"success": False, "error": "Current email not verified — please restart the flow"})
+        if datetime.fromisoformat(stored["expires"]) < datetime.now():
+            return jsonify({"success": False, "error": "Session expired — please restart the flow"})
+        if stored["token"] != auth_token:
+            return jsonify({"success": False, "error": "Invalid authorization token"})
+        sessions["email_change_auths"].pop(user["id"], None)
+        save_json("sessions-data.json", sessions)
+    if not verify_otp_code(new_email, otp_code, "change_email"):
+        return jsonify({"success": False, "error": "Invalid or expired code for new email"})
+    accounts = load_json("accounts-data.json")
+    if any(u.get("email", "").lower() == new_email and u["id"] != user["id"] for u in accounts["users"]):
+        return jsonify({"success": False, "error": "Email already used by another account"})
+    target = next((u for u in accounts["users"] if u["id"] == user["id"]), None)
+    if not target:
+        return jsonify({"success": False, "error": "User not found"})
+    target["email"] = new_email
+    target["email_verified"] = True
+    save_json("accounts-data.json", accounts)
+    return jsonify({"success": True})
+
+
+@app.route("/auth/discord")
+def discord_login():
+    action = request.args.get("action", "login")
+    state_data = secrets.token_hex(16)
+    sessions = load_json("sessions-data.json")
+    sessions.setdefault("oauth_states", {})[state_data] = {
+        "expires": (datetime.now() + timedelta(minutes=10)).isoformat(),
+        "action": action
+    }
+    save_json("sessions-data.json", sessions)
+    redirect_uri = DISCORD_REDIRECT_URI or (request.url_root.rstrip("/") + "/auth/discord/callback")
+    params = urllib.parse.urlencode({
+        "client_id": DISCORD_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "identify email",
+        "state": state_data,
+        "prompt": "consent"
+    })
+    return redirect(f"https://discord.com/api/oauth2/authorize?{params}")
+
+
+@app.route("/auth/discord/callback")
+def discord_callback():
+    code = request.args.get("code")
+    state = request.args.get("state")
+    if not code or not state:
+        return redirect(url_for("login"))
+    sessions = load_json("sessions-data.json")
+    oauth_states = sessions.get("oauth_states", {})
+    state_entry = oauth_states.pop(state, None)
+    sessions["oauth_states"] = oauth_states
+    save_json("sessions-data.json", sessions)
+    if not state_entry:
+        return redirect(url_for("login"))
+    action = state_entry.get("action", "login")
+    redirect_uri = DISCORD_REDIRECT_URI or (request.url_root.rstrip("/") + "/auth/discord/callback")
+    token_resp = requests.post(
+        "https://discord.com/api/oauth2/token",
+        data={
+            "client_id": DISCORD_CLIENT_ID,
+            "client_secret": DISCORD_CLIENT_SECRET,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": redirect_uri
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    if not token_resp.ok:
+        return redirect(url_for("login"))
+    access_token = token_resp.json().get("access_token")
+    user_info_resp = requests.get(
+        "https://discord.com/api/users/@me",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    if not user_info_resp.ok:
+        return redirect(url_for("login"))
+    dinfo = user_info_resp.json()
+    discord_id = dinfo.get("id")
+    d_username = dinfo.get("username", "")
+    d_global_name = dinfo.get("global_name") or d_username
+    d_avatar_hash = dinfo.get("avatar")
+    d_avatar = f"https://cdn.discordapp.com/avatars/{discord_id}/{d_avatar_hash}.png" if d_avatar_hash else ""
+    accounts = load_json("accounts-data.json")
+    if action == "link":
+        current_user = get_session_user(request)
+        if not current_user:
+            return redirect(url_for("login"))
+        if any(u.get("discord_id") == discord_id and u["id"] != current_user["id"] for u in accounts["users"]):
+            return redirect("/dashboard?discord_error=already_linked")
+        target = next((u for u in accounts["users"] if u["id"] == current_user["id"]), None)
+        if target:
+            target["discord_id"] = discord_id
+            target["discord_username"] = d_username
+            save_json("accounts-data.json", accounts)
+        return redirect("/dashboard?discord_linked=1")
+    found_user = next((u for u in accounts["users"] if u.get("discord_id") == discord_id), None)
+    if not found_user:
+        base_username = re.sub(r'[^a-zA-Z0-9_-]', '', d_username)[:20] or "user"
+        username = base_username
+        suffix = 1
+        while any(u["username"].lower() == username.lower() for u in accounts["users"]):
+            username = f"{base_username}{suffix}"
+            suffix += 1
+        new_id = str(uuid.uuid4())
+        found_user = {
+            "id": new_id,
+            "username": username,
+            "display_name": d_global_name or username,
+            "email": None,
+            "email_verified": False,
+            "password": None,
+            "discord_id": discord_id,
+            "discord_username": d_username,
+            "tag": "user",
+            "avatar": d_avatar,
+            "banner": "",
+            "description": "Hello World!",
+            "followers": [],
+            "following": [],
+            "created_at": datetime.now().isoformat(),
+            "username_last_changed": None,
+            "muted_until": None,
+            "banned_until": None,
+            "admin_until": None
+        }
+        accounts["users"].append(found_user)
         save_json("accounts-data.json", accounts)
+    session_token, expires = create_session(found_user["id"], True)
+    device_token = issue_device_token()
+    resp = make_response(redirect(url_for("index")))
+    resp.set_cookie("session_token", session_token, expires=expires, httponly=True, secure=True, samesite="Lax")
+    resp.set_cookie("device_token", device_token, max_age=365 * 24 * 3600, httponly=True, secure=True, samesite="Lax")
+    return resp
+
+
+@app.route("/api/account/unlink-discord", methods=["POST"])
+def unlink_discord():
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Not logged in"})
+    accounts = load_json("accounts-data.json")
+    target = next((u for u in accounts["users"] if u["id"] == user["id"]), None)
+    if not target:
+        return jsonify({"success": False, "error": "User not found"})
+    if not target.get("password") and not target.get("google_id"):
+        return jsonify({"success": False, "error": "Cannot disconnect Discord — you have no other login method"})
+    target.pop("discord_id", None)
+    target.pop("discord_username", None)
+    save_json("accounts-data.json", accounts)
     return jsonify({"success": True})
 
 
