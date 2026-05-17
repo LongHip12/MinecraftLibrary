@@ -392,18 +392,23 @@ def get_user_by_email(email):
 
 
 def verify_hcaptcha(token):
-  if not token:
-      return False
-  try:
-      resp = requests.post("https://hcaptcha.com/siteverify", data={
-          "secret": HCAPTCHA_SECRET,
-          "response": token
-      }, timeout=5)
-      return resp.json().get("success", False)
-  except Exception:
-      return False
-
-
+    if not token:
+        return False
+    if not HCAPTCHA_SECRET:
+        print("[CAPTCHA] HCAPTCHA_SECRET not set — skipping server-side verify")
+        return True
+    try:
+        resp = requests.post("https://hcaptcha.com/siteverify", data={
+            "secret": HCAPTCHA_SECRET,
+            "response": token
+        }, timeout=5)
+        result = resp.json()
+        if not result.get("success", False):
+            print(f"[CAPTCHA] Failed: {result.get('error-codes', [])}")
+        return result.get("success", False)
+    except Exception as ex:
+        print(f"[CAPTCHA] Exception: {ex}")
+        return False
 def is_admin(user):
     if not user or user.get("tag") != "admin":
         return False
@@ -742,7 +747,10 @@ def api_send_otp():
         if purpose in ("register", "reset"):
             email = (data.get("email") or "").strip().lower()
             captcha_token = data.get("captchaToken", "") or data.get("captcha_token", "")
+            if not captcha_token:
+                return jsonify({"success": False, "error": "Please complete the captcha to continue"})
             if not verify_hcaptcha(captcha_token):
+                return jsonify({"success": False, "error": "Captcha verification failed. Please try again."})
                 return jsonify({"success": False, "error": "Please complete the captcha"})
             if not email or not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
                 return jsonify({"success": False, "error": "Invalid email address"})
