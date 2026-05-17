@@ -277,12 +277,17 @@
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
         <input id="bhSearch" type="text" placeholder="Search by label or ID…" oninput="applyBhFilters()"
           style="flex:1;min-width:140px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text);border-radius:8px;padding:7px 12px;font-size:12px;font-family:inherit;outline:none;">
-        <select id="bhType" onchange="applyBhFilters()"
-          style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text2);border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;">
-          <option value="">All types</option>
-          <option value="Auto">Auto</option>
-          <option value="Manual">Manual</option>
-        </select>
+        <div id="bhTypeDropdown" style="position:relative;display:inline-block;">
+          <button id="bhTypeBtn" onclick="toggleBhTypeDropdown(event)" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text2);border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
+            <span id="bhTypeLabel">All types</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+          <div id="bhTypeMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:#1a1a2e;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:4px;min-width:130px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+            <div onclick="setBhType('','All types')" style="padding:7px 12px;font-size:12px;color:var(--text2);cursor:pointer;border-radius:5px;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=''">All types</div>
+            <div onclick="setBhType('Auto','Auto')" style="padding:7px 12px;font-size:12px;color:var(--text2);cursor:pointer;border-radius:5px;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=''">Auto</div>
+            <div onclick="setBhType('Manual','Manual')" style="padding:7px 12px;font-size:12px;color:var(--text2);cursor:pointer;border-radius:5px;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=''">Manual</div>
+          </div>
+        </div>
         <input id="bhDateFrom" type="date" onchange="applyBhFilters()"
           style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text2);border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;">
         <input id="bhDateTo" type="date" onchange="applyBhFilters()"
@@ -598,10 +603,29 @@ function renderBhCharts(backups) {
 }
 
 var bhFiltered = [];
+var _bhTypeVal = '';
+
+function setBhType(val, label) {
+  _bhTypeVal = val;
+  document.getElementById('bhTypeLabel').textContent = label;
+  document.getElementById('bhTypeMenu').style.display = 'none';
+  applyBhFilters();
+}
+
+function toggleBhTypeDropdown(e) {
+  e.stopPropagation();
+  var menu = document.getElementById('bhTypeMenu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+document.addEventListener('click', function() {
+  var menu = document.getElementById('bhTypeMenu');
+  if (menu) menu.style.display = 'none';
+});
 
 function applyBhFilters() {
   var search = (document.getElementById('bhSearch').value || '').toLowerCase();
-  var type   = document.getElementById('bhType').value;
+  var type   = _bhTypeVal;
   var from   = document.getElementById('bhDateFrom').value;
   var to     = document.getElementById('bhDateTo').value;
   bhFiltered = bhAllBackups.filter(function(b) {
@@ -617,7 +641,7 @@ function applyBhFilters() {
 
 function clearBhFilters() {
   document.getElementById('bhSearch').value = '';
-  document.getElementById('bhType').value = '';
+  setBhType('', 'All types');
   document.getElementById('bhDateFrom').value = '';
   document.getElementById('bhDateTo').value = '';
   applyBhFilters();
@@ -644,25 +668,78 @@ function renderBhTable(backups) {
 }
 
 function doRestore(id) {
-  if (!confirm('Restore this backup? Current data will be overwritten.')) return;
-  fetch('/api/admin/restore/' + id, {method:'POST'})
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if (d.success) showBackupMsg('Restored from ' + d.restored, '#22c55e');
-      else showBackupMsg('Error: ' + d.error, '#ef4444');
-    })
-    .catch(function(){ showBackupMsg('Connection error', '#ef4444'); });
+  showCustomConfirm(
+    'Restore backup',
+    'Current data will be overwritten. This cannot be undone.',
+    'Restore',
+    '#60a5fa',
+    function() {
+      fetch('/api/admin/restore/' + id, {method:'POST'})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.success) showBackupMsg('Restored from ' + d.restored, '#22c55e');
+          else showBackupMsg('Error: ' + d.error, '#ef4444');
+        })
+        .catch(function(){ showBackupMsg('Connection error', '#ef4444'); });
+    }
+  );
 }
 
 function doDelete(id) {
-  if (!confirm('Delete this backup permanently?')) return;
-  fetch('/api/admin/backup/' + id, {method:'DELETE'})
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if (d.success) { loadBackupFull(); showBackupMsg('Deleted.', '#4ade80'); }
-      else showBackupMsg('Error: ' + d.error, '#ef4444');
-    })
-    .catch(function(){ showBackupMsg('Connection error', '#ef4444'); });
+  showCustomConfirm(
+    'Delete backup',
+    'This backup will be permanently deleted and cannot be recovered.',
+    'Delete',
+    '#ef4444',
+    function() {
+      fetch('/api/admin/backup/' + id, {method:'DELETE'})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.success) { loadBackupFull(); showBackupMsg('Deleted.', '#4ade80'); }
+          else showBackupMsg('Error: ' + d.error, '#ef4444');
+        })
+        .catch(function(){ showBackupMsg('Connection error', '#ef4444'); });
+    }
+  );
+}
+
+function showCustomConfirm(title, message, confirmLabel, confirmColor, onConfirm) {
+  var overlay = document.getElementById('customConfirmOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'customConfirmOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
+    overlay.innerHTML = '<div id="customConfirmBox" style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:28px 28px 24px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.6);">'
+      + '<div id="customConfirmTitle" style="font-size:16px;font-weight:700;color:#f0f0f8;margin-bottom:10px;"></div>'
+      + '<div id="customConfirmMsg" style="font-size:13px;color:#a0a0b0;line-height:1.6;margin-bottom:22px;"></div>'
+      + '<div style="display:flex;gap:10px;justify-content:flex-end;">'
+      + '<button id="customConfirmCancel" style="padding:9px 20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text2);border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;font-weight:600;">Cancel</button>'
+      + '<button id="customConfirmOk" style="padding:9px 20px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;font-weight:700;"></button>'
+      + '</div></div>';
+    document.body.appendChild(overlay);
+    document.getElementById('customConfirmCancel').addEventListener('click', function() {
+      overlay.style.display = 'none';
+    });
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) overlay.style.display = 'none';
+    });
+  }
+  document.getElementById('customConfirmTitle').textContent = title;
+  document.getElementById('customConfirmMsg').textContent = message;
+  var okBtn = document.getElementById('customConfirmOk');
+  okBtn.textContent = confirmLabel;
+  okBtn.style.background = confirmColor;
+  okBtn.style.color = confirmColor === '#60a5fa' ? '#fff' : '#fff';
+  var newOk = okBtn.cloneNode(true);
+  newOk.textContent = confirmLabel;
+  newOk.style.background = confirmColor;
+  newOk.style.color = '#fff';
+  okBtn.parentNode.replaceChild(newOk, okBtn);
+  newOk.addEventListener('click', function() {
+    overlay.style.display = 'none';
+    onConfirm();
+  });
+  overlay.style.display = 'flex';
 }
 </script>
 {% endblock %}

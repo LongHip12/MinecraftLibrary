@@ -256,6 +256,90 @@ def welcome_email_html(username):
     )
 
 
+def notify_email_html(notification_type, username, **kwargs):
+    def _base(accent, heading, body):
+        return (
+            "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>"
+            "<body style=\"margin:0;padding:0;background:#0f0f1a;font-family:Arial,sans-serif;\">"
+            "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#0f0f1a;padding:40px 0;\">"
+            "<tr><td align=\"center\">"
+            "<table width=\"520\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#1a1a2e;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.07);max-width:520px;width:100%;\">"
+            f"<tr><td style=\"height:3px;background:{accent};\"></td></tr>"
+            "<tr><td style=\"padding:32px 40px 24px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);\">"
+            "<img src=\"https://i.imgur.com/xY7M2iE.jpeg\" width=\"48\" height=\"48\" style=\"border-radius:11px;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;\">"
+            "<div style=\"color:#fff;font-size:18px;font-weight:700;\">Lonely Hub</div>"
+            "<div style=\"color:#606078;font-size:12px;margin-top:2px;\">Minecraft Library</div>"
+            "</td></tr>"
+            f"<tr><td style=\"padding:32px 40px 28px;\"><div style=\"color:#f0f0f8;font-size:17px;font-weight:700;margin-bottom:14px;\">{heading}</div>{body}</div></td></tr>"
+            "<tr><td style=\"padding:16px 40px;border-top:1px solid rgba(255,255,255,0.05);text-align:center;\">"
+            "<div style=\"color:#404050;font-size:12px;\">&copy; 2026 Lonely Hub &middot; Minecraft Library</div>"
+            "</td></tr></table></td></tr></table></body></html>"
+        ).replace("</div></div>", "</div>")
+
+    if notification_type == "verified_granted":
+        body = (
+            f"<div style=\"color:#a0a0b8;font-size:14px;line-height:1.7;margin-bottom:18px;\">Hi <strong style=\"color:#fff;\">{username}</strong>, your account has been granted the <strong style=\"color:#3b82f6;\">Verified</strong> badge by an administrator. The badge will now appear next to your name across the platform.</div>"
+            "<a href=\"https://hubmc.onrender.com\" style=\"display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:13px;\">Visit Lonely Hub</a>"
+        )
+        return _base("linear-gradient(90deg,#3b82f6,#06b6d4)", "Verified badge granted", body)
+
+    elif notification_type == "verified_removed":
+        body = (
+            f"<div style=\"color:#a0a0b8;font-size:14px;line-height:1.7;margin-bottom:8px;\">Hi <strong style=\"color:#fff;\">{username}</strong>, your <strong style=\"color:#ef4444;\">Verified</strong> badge has been removed from your account by an administrator.</div>"
+            "<div style=\"color:#606070;font-size:13px;margin-top:10px;\">If you believe this is a mistake, please contact us.</div>"
+        )
+        return _base("#ef4444", "Verified badge removed", body)
+
+    elif notification_type == "admin_granted":
+        body = (
+            f"<div style=\"color:#a0a0b8;font-size:14px;line-height:1.7;margin-bottom:18px;\">Hi <strong style=\"color:#fff;\">{username}</strong>, you have been granted <strong style=\"color:#4ade80;\">Admin</strong> privileges on Lonely Hub by an administrator. You now have access to the admin control panel.</div>"
+            "<a href=\"https://hubmc.onrender.com/api/v1/auth/admin\" style=\"display:inline-block;background:linear-gradient(135deg,#4ade80,#16a34a);color:#000;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:13px;\">Open Admin Panel</a>"
+        )
+        return _base("linear-gradient(90deg,#4ade80,#22d3ee)", "Admin access granted", body)
+
+    elif notification_type == "admin_removed":
+        body = (
+            f"<div style=\"color:#a0a0b8;font-size:14px;line-height:1.7;margin-bottom:8px;\">Hi <strong style=\"color:#fff;\">{username}</strong>, your <strong style=\"color:#f97316;\">Admin</strong> privileges on Lonely Hub have been revoked by an administrator.</div>"
+            "<div style=\"color:#606070;font-size:13px;margin-top:10px;\">If you believe this is a mistake, please contact us.</div>"
+        )
+        return _base("#f97316", "Admin access revoked", body)
+
+    elif notification_type == "banned":
+        duration_text = kwargs.get("duration_text", "")
+        dur_block = f"<div style=\"background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.18);border-radius:8px;padding:10px 14px;margin:14px 0;font-size:13px;color:#ef4444;font-weight:600;\">Duration: {duration_text}</div>" if duration_text else ""
+        body = (
+            f"<div style=\"color:#a0a0b8;font-size:14px;line-height:1.7;\">Hi <strong style=\"color:#fff;\">{username}</strong>, your account has been <strong style=\"color:#ef4444;\">banned</strong> from Lonely Hub by an administrator.</div>"
+            f"{dur_block}"
+            "<div style=\"color:#606070;font-size:13px;margin-top:8px;\">If you believe this is a mistake, please contact us.</div>"
+        )
+        return _base("#ef4444", "Account banned", body)
+
+    elif notification_type == "muted":
+        duration_text = kwargs.get("duration_text", "")
+        dur_block = f"<div style=\"background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.18);border-radius:8px;padding:10px 14px;margin:14px 0;font-size:13px;color:#fbbf24;font-weight:600;\">Duration: {duration_text}</div>" if duration_text else ""
+        body = (
+            f"<div style=\"color:#a0a0b8;font-size:14px;line-height:1.7;\">Hi <strong style=\"color:#fff;\">{username}</strong>, your account has been <strong style=\"color:#fbbf24;\">muted</strong> on Lonely Hub. You will not be able to upload mods or post in the forum during the mute period.</div>"
+            f"{dur_block}"
+            "<div style=\"color:#606070;font-size:13px;margin-top:8px;\">If you believe this is a mistake, please contact us.</div>"
+        )
+        return _base("#fbbf24", "Account muted", body)
+
+    elif notification_type == "mod_deleted":
+        mod_name = kwargs.get("mod_name", "your content")
+        mod_type = kwargs.get("mod_type", "mod").capitalize()
+        body = (
+            f"<div style=\"color:#a0a0b8;font-size:14px;line-height:1.7;margin-bottom:14px;\">Hi <strong style=\"color:#fff;\">{username}</strong>, your {mod_type.lower()} <strong style=\"color:#fff;\">\"{mod_name}\"</strong> has been removed from Lonely Hub by an administrator.</div>"
+            "<div style=\"color:#606070;font-size:13px;\">If you believe this is a mistake or need more information, please contact us.</div>"
+        )
+        return _base("#ef4444", f"{mod_type} removed by admin", body)
+
+    return ""
+
+
+def _send_notify_bg(to_email, subject, html_body):
+    threading.Thread(target=lambda: send_email_html(to_email, subject, html_body), daemon=True).start()
+
+
 def generate_otp():
     return str(secrets.randbelow(900000) + 100000)
 
@@ -1337,6 +1421,10 @@ def admin_mute_route():
             return jsonify({"success": False}), 404
         user["muted_until"] = (datetime.now() + timedelta(hours=hours)).isoformat()
         save_json("accounts-data.json", accounts)
+        if user.get("email"):
+            _send_notify_bg(user["email"], "Your account has been muted — Lonely Hub",
+                notify_email_html("muted", user.get("display_name") or user.get("username", "User"),
+                    duration_text=f"{hours} hour{'s' if hours != 1 else ''}"))
         return redirect(url_for("admin_panel"))
     uid = request.args.get("user", "")
     target = get_user_by_id(uid)
@@ -1359,6 +1447,10 @@ def admin_ban_route():
             return jsonify({"success": False}), 404
         user["banned_until"] = (datetime.now() + timedelta(hours=hours)).isoformat()
         save_json("accounts-data.json", accounts)
+        if user.get("email"):
+            _send_notify_bg(user["email"], "Your account has been banned — Lonely Hub",
+                notify_email_html("banned", user.get("display_name") or user.get("username", "User"),
+                    duration_text=f"{hours} hour{'s' if hours != 1 else ''}"))
         return redirect(url_for("admin_panel"))
     uid = request.args.get("user", "")
     target = get_user_by_id(uid)
@@ -1387,6 +1479,9 @@ def admin_perm_route():
             h = int(hours) if hours else 24
             user["admin_until"] = (datetime.now() + timedelta(hours=h)).isoformat()
         save_json("accounts-data.json", accounts)
+        if user.get("email"):
+            _send_notify_bg(user["email"], "You have been granted Admin access — Lonely Hub",
+                notify_email_html("admin_granted", user.get("display_name") or user.get("username", "User")))
         return redirect(url_for("admin_panel"))
     uid = request.args.get("user", "")
     target = get_user_by_id(uid)
@@ -1457,8 +1552,22 @@ def admin_delete_mod(mod_id):
     if not current_user or not is_admin(current_user):
         return jsonify({"success": False}), 403
     mods_data = load_json("mods-data.json")
+    deleted_mod = next((m for m in mods_data["mods"] if m["id"] == mod_id), None)
     mods_data["mods"] = [m for m in mods_data["mods"] if m["id"] != mod_id]
     save_json("mods-data.json", mods_data)
+    if deleted_mod:
+        uploader_id = deleted_mod.get("uploader_id")
+        if uploader_id and uploader_id != current_user["id"]:
+            accounts = load_json("accounts-data.json")
+            uploader = next((u for u in accounts["users"] if u["id"] == uploader_id), None)
+            if uploader and uploader.get("email"):
+                mod_type = deleted_mod.get("type", "mod")
+                _send_notify_bg(uploader["email"],
+                    f"Your {mod_type} was removed — Lonely Hub",
+                    notify_email_html("mod_deleted",
+                        uploader.get("display_name") or uploader.get("username", "User"),
+                        mod_name=deleted_mod.get("name", "Unknown"),
+                        mod_type=mod_type))
     return redirect(url_for("admin_pages"))
 
 
@@ -2281,6 +2390,11 @@ def admin_verify_user():
             return jsonify({"success": False, "error": "User not found"}), 404
         user["verified"] = not bool(user.get("verified", False))
         save_json("accounts-data.json", accounts)
+        if user.get("email"):
+            ntype = "verified_granted" if user["verified"] else "verified_removed"
+            subj = ("You've been verified on Lonely Hub" if user["verified"] else "Verified badge removed — Lonely Hub")
+            _send_notify_bg(user["email"], subj,
+                notify_email_html(ntype, user.get("display_name") or user.get("username", "User")))
         return jsonify({"success": True, "verified": user["verified"]})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -2703,16 +2817,28 @@ def api_v3_user():
         if not target:
             return jsonify({"success": False, "error": "User not found"}), 404
         result = {}
+        _tname = target.get("display_name") or target.get("username", "User")
+        _temail = target.get("email", "")
         if action == "verify":
             target["verified"] = not bool(target.get("verified", False))
             result["verified"] = target["verified"]
+            if _temail:
+                ntype = "verified_granted" if target["verified"] else "verified_removed"
+                subj = ("You've been verified on Lonely Hub" if target["verified"] else "Verified badge removed — Lonely Hub")
+                _send_notify_bg(_temail, subj, notify_email_html(ntype, _tname))
         elif action == "ban":
             target["banned"] = not bool(target.get("banned", False))
             result["banned"] = target["banned"]
+            if _temail and target["banned"]:
+                _send_notify_bg(_temail, "Your account has been banned — Lonely Hub",
+                    notify_email_html("banned", _tname, duration_text="Permanent"))
         elif action == "mute":
             hours = int(gh("X-Hours") or data.get("hours", 24) or 24)
             target["muted_until"] = (datetime.now() + timedelta(hours=hours)).isoformat()
             result["muted_until"] = target["muted_until"]
+            if _temail:
+                _send_notify_bg(_temail, "Your account has been muted — Lonely Hub",
+                    notify_email_html("muted", _tname, duration_text=f"{hours} hour{'s' if hours != 1 else ''}"))
         elif action == "unmute":
             target.pop("muted_until", None)
             result["unmuted"] = True
@@ -2723,11 +2849,22 @@ def api_v3_user():
         elif action == "grant_perm":
             perm = gh("X-Perm") or data.get("perm", "")
             if perm:
+                prev_tag = target.get("tag", "user")
                 target["tag"] = perm
                 result["tag"] = perm
+                if _temail:
+                    if perm == "admin" and prev_tag != "admin":
+                        _send_notify_bg(_temail, "You have been granted Admin access — Lonely Hub",
+                            notify_email_html("admin_granted", _tname))
+                    elif perm != "admin" and prev_tag == "admin":
+                        _send_notify_bg(_temail, "Admin access revoked — Lonely Hub",
+                            notify_email_html("admin_removed", _tname))
         elif action == "grant_verify":
             target["verified"] = True
             result["verified"] = True
+            if _temail:
+                _send_notify_bg(_temail, "You've been verified on Lonely Hub",
+                    notify_email_html("verified_granted", _tname))
         else:
             return jsonify({"success": False, "error": "Unknown action. Use: verify, ban, mute, unmute, delete, grant_perm, grant_verify"}), 400
         save_json("accounts-data.json", accounts)
