@@ -861,10 +861,7 @@ def register():
         password = request.form.get("password", "")
         remember = request.form.get("remember") == "on"
         otp_code = request.form.get("otp_code", "").strip()
-        captcha_token = request.form.get("h-captcha-response", "")
-        if not verify_hcaptcha(captcha_token):
-            error = "Please complete the captcha"
-        elif len(username) < 3 or len(username) > 20:
+        if len(username) < 3 or len(username) > 20:
             error = "Username must be 3-20 characters"
         elif not username.replace("_", "").replace("-", "").isalnum():
             error = "Username can only contain letters, numbers, - and _"
