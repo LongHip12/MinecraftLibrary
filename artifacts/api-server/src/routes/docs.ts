@@ -227,11 +227,11 @@ input{font-family:inherit;color:inherit;-webkit-appearance:none}
 .ai-reasoning-btn.active{background:var(--reasoning-dim);border-color:rgba(167,139,250,.3);color:var(--reasoning)}
 
 /* ── Messages area ────────────── */
-.ai-msgs{flex:1;overflow-y:auto;padding:20px 16px 8px}
+.ai-msgs{flex:1;min-height:0;overflow-y:auto;padding:20px 16px 8px}
 .ai-msgs-inner{display:flex;flex-direction:column;gap:18px;max-width:760px;width:100%;margin:0 auto}
 
 /* ── Welcome ────────────────────── */
-.ai-welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px 20px;min-height:calc(100vh - 52px - 52px - 120px)}
+.ai-welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;min-height:calc(100svh - 52px - 52px - 100px)}
 .ai-welcome-icon{width:72px;height:72px;border-radius:20px;background:var(--primary-dim);border:1px solid var(--primary-border);display:flex;align-items:center;justify-content:center;margin-bottom:20px;flex-shrink:0}
 .ai-welcome-title{font-size:26px;font-weight:800;margin-bottom:6px;text-align:center}
 .ai-welcome-sub{font-size:14px;color:var(--text2);margin-bottom:32px;text-align:center}
