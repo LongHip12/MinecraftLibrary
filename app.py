@@ -2983,6 +2983,33 @@ def api_forum_messages(post_id):
     return jsonify({"success": True, "messages": [msg_to_dict(m) for m in msgs], "total": len(post.get("messages", []))})
 
 
+_typing_state = {}
+
+@app.route("/api/forum/post/<post_id>/typing", methods=["POST"])
+def api_forum_post_typing_post(post_id):
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False}), 401
+    if post_id not in _typing_state:
+        _typing_state[post_id] = {}
+    _typing_state[post_id][user["id"]] = {
+        "name": user.get("display_name") or user.get("username", "Anonymous"),
+        "ts": time.time(),
+    }
+    return jsonify({"success": True})
+
+@app.route("/api/forum/post/<post_id>/typing", methods=["GET"])
+def api_forum_post_typing_get(post_id):
+    user = get_session_user(request)
+    uid = user["id"] if user else None
+    now = time.time()
+    state = _typing_state.get(post_id, {})
+    stale = [k for k, v in state.items() if now - v["ts"] >= 5]
+    for k in stale:
+        del state[k]
+    typers = [v["name"] for k, v in state.items() if k != uid]
+    return jsonify({"success": True, "typers": typers})
+
 @app.route("/api/forum/post/<post_id>/state", methods=["GET"])
 def api_forum_post_state(post_id):
     forum = load_forum()
