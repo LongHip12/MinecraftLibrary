@@ -1,377 +1,830 @@
-<!DOCTYPE html>
-  <html lang="en">
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Lonely Hub — AI API Docs</title>
-  <link rel="icon" href="/static/img/favicon.ico">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  *:focus{outline:none}
-  button,a,input,textarea,select{-webkit-tap-highlight-color:transparent;outline:none}
-  :root{--bg:#0c0e11;--bg2:#111419;--bg3:#171b22;--border:rgba(255,255,255,.07);--txt:#c9cdd6;--txt2:#8b929e;--red:#e05252;--red2:rgba(224,82,82,.12)}
-  html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;font-size:14px;line-height:1.6}
-  a{color:var(--red);text-decoration:none}
-  a:hover{text-decoration:underline}
-  /* Nav */
-  .nav{position:sticky;top:0;z-index:100;height:52px;background:rgba(12,14,17,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:2px}
-  .nav-logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;color:#e2e5ea;text-decoration:none;margin-right:8px;flex-shrink:0}
-  .nav-logo img{width:28px;height:28px;border-radius:7px;object-fit:cover}
-  .nav-link{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:9px;font-size:13px;font-weight:500;color:#8b929e;text-decoration:none;transition:background .13s,color .13s}
-  .nav-link:hover{background:#191d24;color:#e2e5ea}
-  .nav-link.active{color:var(--red)}
-  /* Layout */
-  .page{max-width:900px;margin:0 auto;padding:48px 24px 80px}
-  h1{font-size:28px;font-weight:700;color:#e2e5ea;margin-bottom:6px}
-  .subtitle{color:var(--txt2);font-size:14px;margin-bottom:40px}
-  h2{font-size:17px;font-weight:600;color:#e2e5ea;margin:36px 0 14px;padding-top:10px;border-top:1px solid var(--border)}
-  h3{font-size:14px;font-weight:600;color:#e2e5ea;margin:20px 0 8px}
-  p{color:var(--txt2);margin-bottom:10px}
-  /* Endpoint badge */
-  .endpoint{display:inline-flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-family:'Courier New',monospace;font-size:13px;margin-bottom:16px}
-  .method{background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px}
-  /* Tables */
-  .tbl{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px}
-  .tbl th{text-align:left;padding:9px 12px;background:var(--bg2);color:var(--txt2);font-weight:600;border-bottom:1px solid var(--border)}
-  .tbl td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top}
-  .tbl tr:last-child td{border-bottom:none}
-  .tbl code{background:rgba(255,255,255,.07);border-radius:5px;padding:2px 6px;font-family:'Courier New',monospace;font-size:12px}
-  .req{color:#60a5fa;font-weight:600;font-size:11px}
-  .opt{color:var(--txt2);font-size:11px}
-  /* Code blocks */
-  .code-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
-  .code-hd{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border)}
-  .code-lang{font-size:12px;font-weight:600;color:var(--txt2)}
-  .code-copy{background:none;border:1px solid var(--border);border-radius:7px;padding:4px 10px;font-size:12px;color:var(--txt2);cursor:pointer;transition:background .12s,color .12s}
-  .code-copy:hover{background:rgba(255,255,255,.07);color:#e2e5ea}
-  .code-body{padding:16px 18px;overflow-x:auto}
-  .code-body pre{font-family:'Courier New',monospace;font-size:13px;line-height:1.65;color:#c9cdd6;white-space:pre}
-  /* Model cards */
-  .model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:20px}
-  .model-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
-  .model-card img{width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0}
-  .model-card-info{min-width:0}
-  .model-card-name{font-weight:600;font-size:13px;color:#e2e5ea;margin-bottom:3px}
-  .model-card-id{font-family:'Courier New',monospace;font-size:11px;color:var(--red);background:var(--red2);border-radius:5px;padding:2px 6px;display:inline-block;word-break:break-all}
-  .model-card-tag{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--txt2);background:rgba(255,255,255,.05);border-radius:5px;padding:2px 7px}
-  /* Env table */
-  .env-key{font-family:'Courier New',monospace;font-size:12px;color:#a78bfa}
-  .badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
-  .badge-req{background:rgba(96,165,250,.15);color:#60a5fa}
-  .badge-opt{background:rgba(255,255,255,.06);color:var(--txt2)}
-  </style>
-  </head>
-  <body>
-  <nav class="nav">
-    <a href="/" class="nav-logo">
-      <img src="https://i.imgur.com/xY7M2iE.jpeg" alt="Lonely Hub">
-      <span>Lonely Hub</span>
-    </a>
-    <a href="/" class="nav-link">Home</a>
-    <a href="/mods" class="nav-link">Mods</a>
-    <a href="/clients" class="nav-link">Clients</a>
-    <a href="/forum" class="nav-link">Forum</a>
-    <a href="/ai-chat" class="nav-link">AI Chat</a>
-    <a href="/api/docs" class="nav-link active">API Docs</a>
+{% extends "base.html" %}
+{% block title %}API Docs — Lonely Hub{% endblock %}
+{% block extra_css %}
+<style>
+.api-page code {
+  font-family: 'Fira Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12.5px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 5px;
+  padding: 1px 7px;
+  color: #c0d0f0;
+  white-space: nowrap;
+}
+.api-hero { padding: 48px 0 32px; text-align: center; }
+.api-hero-title {
+  font-size: clamp(26px, 5vw, 40px);
+  font-weight: 900;
+  letter-spacing: -.02em;
+  background: linear-gradient(135deg, #ffffff 0%, #8899cc 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+.api-hero-sub { font-size: 14px; color: var(--text3); max-width: 480px; margin: 0 auto; line-height: 1.65; }
+.api-base-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 36px;
+}
+.api-base-label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; }
+.api-base-url-val {
+  font-family: 'Fira Mono', monospace;
+  font-size: 13px;
+  color: #7dd3fc;
+  font-weight: 600;
+  background: rgba(125,211,252,0.07);
+  border: 1px solid rgba(125,211,252,0.15);
+  border-radius: 6px;
+  padding: 3px 10px;
+}
+.api-base-note { margin-left: auto; font-size: 11px; color: var(--text3); }
+.api-page { padding-bottom: 80px; }
+.api-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 36px;
+  align-items: start;
+}
+@media(max-width: 900px) { .api-layout { grid-template-columns: 1fr; } .api-toc-col { display: none; } }
+.api-layout > main { min-width: 0; overflow-x: hidden; }
+.api-layout > main > * { max-width: 100%; }
+.api-page { overflow-x: hidden; }
+.api-toc-col { position: sticky; top: 84px; }
+.api-toc-inner {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 14px 0;
+  overflow: hidden;
+}
+.api-toc-title {
+  font-size: 10px; font-weight: 800; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .1em;
+  padding: 0 14px 10px;
+}
+.api-toc-link {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px;
+  font-size: 12.5px; color: var(--text3);
+  text-decoration: none;
+  transition: color .14s, background .14s;
+  border-left: 2px solid transparent;
+  margin-left: -1px;
+}
+.api-toc-link:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.api-toc-link.toc-active { color: #fff; border-left-color: var(--primary); font-weight: 600; background: rgba(250,80,80,0.06); }
+.api-toc-sub { padding-left: 28px; font-size: 11.5px; }
+.api-section { margin-bottom: 52px; }
+.api-section-head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px; padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.api-section-title { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+.section-badge {
+  font-size: 10px; font-weight: 800;
+  padding: 3px 9px; border-radius: 999px;
+  letter-spacing: .05em;
+}
+.badge-auth { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+.badge-admin { background: rgba(250,80,80,0.15); color: #ff6060; border: 1px solid rgba(250,80,80,0.25); }
+.api-auth-note {
+  background: rgba(96,165,250,0.06);
+  border: 1px solid rgba(96,165,250,0.18);
+  border-left: 3px solid #60a5fa;
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+}
+.api-auth-note strong { color: #93c5fd; }
+.api-auth-note a { color: var(--primary); text-decoration: none; }
+.api-auth-note a:hover { text-decoration: underline; }
+.ep-card {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  transition: border-color .18s;
+  overflow: hidden;
+  min-width: 0;
+}
+.ep-card:hover { border-color: rgba(255,255,255,0.12); }
+.ep-card.is-open { border-color: rgba(255,255,255,0.12); }
+.ep-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 15px 18px;
+  cursor: pointer; user-select: none;
+  transition: background .15s;
+}
+.ep-header:hover { background: rgba(255,255,255,0.025); }
+.ep-method {
+  font-size: 10px; font-weight: 900;
+  padding: 4px 10px; border-radius: 6px;
+  letter-spacing: .08em;
+  flex-shrink: 0;
+  font-family: 'Fira Mono', monospace;
+}
+.m-get  { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+.m-post { background: rgba(96,165,250,0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); }
+.ep-path {
+  font-family: 'Fira Mono', 'Consolas', monospace;
+  font-size: 13px; font-weight: 600;
+  color: #e2e8f0;
+  flex-shrink: 0;
+}
+.ep-desc {
+  font-size: 12.5px; color: var(--text3);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  min-width: 0;
+}
+.ep-chevron { margin-left: auto; color: var(--text3); transition: transform .25s ease; flex-shrink: 0; }
+.ep-card.is-open .ep-chevron { transform: rotate(180deg); }
+.ep-body-wrap {
+  max-height: 0; overflow: hidden;
+  transition: max-height .35s cubic-bezier(.4,0,.2,1);
+}
+.ep-card.is-open .ep-body-wrap { max-height: 4000px; transition: max-height .5s cubic-bezier(.4,0,.2,1); }
+.ep-body { padding: 0 18px 20px; border-top: 1px solid rgba(255,255,255,0.06); overflow: hidden; }
+.param-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 16px 0 10px;
+  max-width: 100%;
+}
+.param-table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 460px; }
+.param-table thead th {
+  text-align: left; color: var(--text3); font-weight: 700;
+  font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
+  padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.param-table tbody td {
+  padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: top; color: var(--text2);
+}
+.param-table tbody tr:last-child td { border-bottom: none; }
+.p-name { font-family: 'Fira Mono', monospace; color: #93c5fd; font-size: 12.5px; font-weight: 600; }
+.p-type { color: var(--text3); font-size: 11px; font-family: 'Fira Mono', monospace; }
+.p-req  { color: #fb923c; font-size: 10px; font-weight: 700; }
+.p-opt  { color: var(--text3); font-size: 10px; }
+.api-code-block { margin: 10px 0 14px; }
+.api-code-label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.api-code-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 800; letter-spacing: .05em;
+  padding: 3px 10px; border-radius: 999px;
+}
+.tag-success { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.22); }
+.tag-error   { background: rgba(250,80,80,0.12); color: #ff6b6b; border: 1px solid rgba(250,80,80,0.22); }
+.tag-request { background: rgba(96,165,250,0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.22); }
+.api-pre-wrap {
+  position: relative;
+}
+.api-pre-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 10px;
+}
+pre.api-pre {
+  background: #0d1117;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 16px 52px 16px 18px;
+  font-family: 'Fira Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.75;
+  white-space: pre;
+  word-break: normal;
+  word-wrap: normal;
+  min-width: max-content;
+  color: #c9d1d9;
+  margin: 0;
+  overflow: visible;
+}
+pre.api-pre code { all: unset; font-family: inherit; font-size: inherit; color: inherit; background: none; border: none; padding: 0; }
+.api-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 11px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(14,17,23,0.9);
+  color: var(--text2);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+  white-space: nowrap;
+  z-index: 2;
+  backdrop-filter: blur(4px);
+}
+.api-copy-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+.api-copy-btn.copied { color: #34d399; border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.07); }
+.jk { color: #79b8ff; }
+.js { color: #9ecbff; }
+.jn { color: #f8c555; }
+.jb { color: #f47067; }
+.jc { color: #6b7280; font-style: italic; }
+.api-note-box {
+  background: rgba(96,165,250,0.06);
+  border: 1px solid rgba(96,165,250,0.18);
+  border-left: 3px solid #60a5fa;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 12.5px; color: var(--text2);
+  line-height: 1.65; margin: 12px 0;
+}
+@media(max-width: 540px) {
+  .ep-header { flex-wrap: wrap; gap: 8px; }
+  .ep-desc { order: 3; width: 100%; white-space: normal; }
+  .ep-path { font-size: 12px; }
+  .ep-body { padding: 0 12px 16px; }
+  pre.api-pre { font-size: 11px; padding: 12px 48px 12px 14px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content api-page">
+<div class="container">
+
+<div class="api-hero">
+  <h1 class="api-hero-title">Lonely Hub API Docs</h1>
+  <p class="api-hero-sub">Integrate mods, clients, forum, and user data into your own bots, tools, and apps.</p>
+</div>
+
+<div class="api-base-bar">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+  <span class="api-base-label">Base URL</span>
+  <span class="api-base-url-val">https://lonelyhubmc.onrender.com</span>
+  <span class="api-base-note">All endpoints return JSON</span>
+</div>
+
+<div class="api-layout">
+
+  <nav class="api-toc-col" aria-label="Contents">
+    <div class="api-toc-inner">
+      <div class="api-toc-title">Contents</div>
+      <a class="api-toc-link" href="#auth">Authentication</a>
+      <a class="api-toc-link" href="#user-api">User API</a>
+      <a class="api-toc-link api-toc-sub" href="#v2-upload">Upload</a>
+      <a class="api-toc-link api-toc-sub" href="#v2-edit">Edit</a>
+      <a class="api-toc-link api-toc-sub" href="#v2-delete">Delete</a>
+      <a class="api-toc-link api-toc-sub" href="#v2-dashboard">Dashboard Data</a>
+      <a class="api-toc-link api-toc-sub" href="#v2-profile">Edit Profile</a>
+      <a class="api-toc-link" href="#admin-api">
+        Admin API
+        <span class="section-badge badge-admin" style="font-size:9px;padding:2px 7px;">Admin</span>
+      </a>
+      <a class="api-toc-link api-toc-sub" href="#v3-edit">Admin Edit</a>
+      <a class="api-toc-link api-toc-sub" href="#v3-user">Manage Users</a>
+      <a class="api-toc-link api-toc-sub" href="#v3-data">Site Stats</a>
+    </div>
   </nav>
-  <div class="page">
-    <h1>AI Chat API</h1>
-    <p class="subtitle">REST API for the Lonely Hub AI Chat — send messages to any of the 7 supported models.</p>
 
-    <h2>Endpoint</h2>
-    <div class="endpoint"><span class="method">POST</span>/api/ai/send</div>
-    <p>Requires authentication. The user must be logged in (session cookie). Returns the AI response, chat ID, and optional reasoning block.</p>
+  <main>
 
-    <h2>Request Body</h2>
-    <table class="tbl">
-      <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td><code>model</code></td><td>string</td><td><span class="req">Required</span></td><td>Model ID (see list below). Defaults to <code>gpt-4o-mini</code>.</td></tr>
-        <tr><td><code>message</code></td><td>string</td><td><span class="req">Required</span></td><td>The user's message text.</td></tr>
-        <tr><td><code>chat_id</code></td><td>string</td><td><span class="opt">Optional</span></td><td>Continue an existing chat. Omit to start a new one.</td></tr>
-        <tr><td><code>thinking</code></td><td>boolean</td><td><span class="opt">Optional</span></td><td>Enable reasoning/thinking mode (only for models that support it).</td></tr>
-        <tr><td><code>files</code></td><td>array</td><td><span class="opt">Optional</span></td><td>Array of file objects: <code>{name, type, data (base64), text_content}</code>.</td></tr>
-      </tbody>
-    </table>
+    <section class="api-section" id="auth">
+      <div class="api-section-head">
+        <div class="api-section-title">Authentication</div>
+      </div>
+      <div class="api-auth-note">
+        <strong>API tokens</strong> identify you to the API. Get yours from your
+        <a href="/dashboard">Dashboard</a>.
+        Send the token in the <code>X-Token</code> header for endpoints that require it.<br><br>
+        Some endpoints also accept the token as a <code>token</code> query parameter.
+      </div>
+    </section>
 
-    <h2>Response</h2>
-    <table class="tbl">
-      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td><code>success</code></td><td>boolean</td><td>Whether the request succeeded.</td></tr>
-        <tr><td><code>output</code></td><td>string</td><td>The AI's response text (Markdown).</td></tr>
-        <tr><td><code>chat_id</code></td><td>string</td><td>The chat session UUID (use for follow-up messages).</td></tr>
-        <tr><td><code>title</code></td><td>string</td><td>Auto-generated chat title.</td></tr>
-        <tr><td><code>thinking</code></td><td>string|null</td><td>Reasoning block text (if thinking was enabled).</td></tr>
-        <tr><td><code>thinking_time</code></td><td>integer</td><td>Seconds spent reasoning.</td></tr>
-        <tr><td><code>model_name</code></td><td>string</td><td>Display name of the model used.</td></tr>
-      </tbody>
-    </table>
+    <section class="api-section" id="user-api">
+      <div class="api-section-head">
+        <div class="api-section-title">User API</div>
+        <span class="section-badge badge-auth">Token required</span>
+      </div>
+      <div class="api-auth-note" style="margin-bottom:20px;">
+        All User API endpoints require the header <code>X-Token: your_api_token</code>.
+      </div>
 
-    <h2>Available Models</h2>
-    <div class="model-grid">
-      <div class="model-card"><img src="https://i.imgur.com/0DwnmdY.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">GPT-4o-mini</div><code class="model-card-id">gpt-4o-mini</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/xY7M2iE.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Lonely AI</div><code class="model-card-id">lonely-ai</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/DJgiwrh.png" alt=""><div class="model-card-info"><div class="model-card-name">Nvidia Nemotron</div><code class="model-card-id">nvidia-nemotron</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/0BQqhba.png" alt=""><div class="model-card-info"><div class="model-card-name">DeepSeek V4 Flash</div><code class="model-card-id">deepseek-v4-flash</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/pESTVyY.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Meta Llama-3.3-70b</div><code class="model-card-id">llama-3.3-70b</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/GdLBseU.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Gemini Flash</div><code class="model-card-id">gemini</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/placeholder.png" alt=""><div class="model-card-info"><div class="model-card-name">Kimi K2.6</div><code class="model-card-id">kimi-k2.6</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
-    </div>
+      <div class="ep-card" id="v2-upload">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/v2/upload</span>
+          <span class="ep-desc">Upload a new mod or client</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Header</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">X-Token</td><td class="p-type">string</td><td class="p-req">required</td><td>Your API token</td></tr>
+                  <tr><td class="p-name">X-Type</td><td class="p-type">string</td><td class="p-req">required</td><td><code>Mods</code> or <code>Clients</code></td></tr>
+                  <tr><td class="p-name">X-Name</td><td class="p-type">string</td><td class="p-req">required</td><td>Name of the mod/client</td></tr>
+                  <tr><td class="p-name">X-Description</td><td class="p-type">string</td><td class="p-req">required</td><td>Description</td></tr>
+                  <tr><td class="p-name">X-DownloadLink</td><td class="p-type">string</td><td class="p-req">required</td><td>Direct download URL</td></tr>
+                  <tr><td class="p-name">X-MCVersion</td><td class="p-type">string</td><td class="p-opt">optional</td><td><code>Java</code>, <code>Bedrock</code>, or <code>All</code></td></tr>
+                  <tr><td class="p-name">X-Version</td><td class="p-type">string</td><td class="p-opt">optional</td><td>MC versions, comma-separated (e.g. <code>1.20.1, 1.20.4</code>)</td></tr>
+                  <tr><td class="p-name">X-Tag</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Tags, comma-separated (max 10)</td></tr>
+                  <tr><td class="p-name">X-Image</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Image URLs, comma-separated (first = banner)</td></tr>
+                  <tr><td class="p-name">X-Loaders</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Loaders, comma-separated (mods only, e.g. <code>Fabric, Forge</code>)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"id"</span>: <span class="jn">42</span>,
+  <span class="jk">"url"</span>: <span class="js">"/mods/42/info"</span>,
+  <span class="jk">"name"</span>: <span class="js">"My Mod"</span>,
+  <span class="jk">"type"</span>: <span class="js">"mod"</span>
+}</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-error">&#10005; Error</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">false</span>, <span class="jk">"error"</span>: <span class="js">"X-Name is required"</span> }</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <h2>Python Examples</h2>
-    <h3>Start a new chat</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>import requests
+      <div class="ep-card" id="v2-edit">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/v2/edit</span>
+          <span class="ep-desc">Edit your mod or client</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Header</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">X-Token</td><td class="p-type">string</td><td class="p-req">required</td><td>Your API token</td></tr>
+                  <tr><td class="p-name">X-Type</td><td class="p-type">string</td><td class="p-req">required</td><td><code>Mods</code> or <code>Clients</code></td></tr>
+                  <tr><td class="p-name">X-IdProduct</td><td class="p-type">integer</td><td class="p-req">required</td><td>ID of the mod/client to edit</td></tr>
+                  <tr><td class="p-name">X-Name</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New name</td></tr>
+                  <tr><td class="p-name">X-Description</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New description</td></tr>
+                  <tr><td class="p-name">X-Tag</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New tags (replaces all existing)</td></tr>
+                  <tr><td class="p-name">X-Image</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New images (replaces all existing)</td></tr>
+                  <tr><td class="p-name">X-DownloadLink</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New download link</td></tr>
+                  <tr><td class="p-name">X-Version</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New MC versions</td></tr>
+                  <tr><td class="p-name">X-MCVersion</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New edition</td></tr>
+                  <tr><td class="p-name">X-Loaders</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New loaders (mods only)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"id"</span>: <span class="jn">42</span>, <span class="jk">"name"</span>: <span class="js">"Updated Mod Name"</span> }</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-  session = requests.Session()
-  # You must be logged in — copy your session cookie from the browser
-  session.cookies.set("session", "YOUR_SESSION_COOKIE", domain="lonelyhub.net")
+      <div class="ep-card" id="v2-delete">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/v2/delete</span>
+          <span class="ep-desc">Delete your mod or client</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Header</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">X-Token</td><td class="p-type">string</td><td class="p-req">required</td><td>Your API token</td></tr>
+                  <tr><td class="p-name">X-Type</td><td class="p-type">string</td><td class="p-req">required</td><td><code>Mods</code> or <code>Clients</code></td></tr>
+                  <tr><td class="p-name">X-PostId</td><td class="p-type">integer</td><td class="p-req">required</td><td>ID of the mod/client to delete</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"deleted"</span>: <span class="jn">42</span> }</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-  resp = session.post("https://lonelyhub.net/api/ai/send", json={
-      "model": "gpt-4o-mini",
-      "message": "How do I create a Minecraft mod in Java?"
-  })
-  data = resp.json()
-  print(data["output"])
-  print("Chat ID:", data["chat_id"])</pre></div>
-    </div>
+      <div class="ep-card" id="v2-dashboard">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-get">GET</span>
+          <span class="ep-path">/api/v2/dashboard-data</span>
+          <span class="ep-desc">Get your dashboard statistics</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">token</td><td class="p-type">string</td><td class="p-req">required</td><td>Your API token (query param)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"username"</span>: <span class="js">"CoolPlayer"</span>,
+  <span class="jk">"display_name"</span>: <span class="js">"Cool Player"</span>,
+  <span class="jk">"TotalViews"</span>: <span class="jn">5420</span>,
+  <span class="jk">"TotalDownloads"</span>: <span class="jn">382</span>,
+  <span class="jk">"ViewsToday"</span>: <span class="jn">104</span>,
+  <span class="jk">"DownloadsToday"</span>: <span class="jn">12</span>,
+  <span class="jk">"TotalMods"</span>: <span class="jn">3</span>,
+  <span class="jk">"Followers"</span>: <span class="jn">48</span>,
+  <span class="jk">"Following"</span>: <span class="jn">12</span>,
+  <span class="jk">"TopMods"</span>: [
+    { <span class="jk">"id"</span>: <span class="jn">5</span>, <span class="jk">"name"</span>: <span class="js">"My Mod"</span>, <span class="jk">"views"</span>: <span class="jn">3200</span>, <span class="jk">"downloads"</span>: <span class="jn">240</span> }
+  ]
+}</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <h3>Continue a chat</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>resp = session.post("https://lonelyhub.net/api/ai/send", json={
-      "model": "gpt-4o-mini",
-      "message": "Can you show me a full example?",
-      "chat_id": data["chat_id"]   # reuse the ID from the first response
-  })
-  print(resp.json()["output"])</pre></div>
-    </div>
+      <div class="ep-card" id="v2-profile">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/v2/profile-edit</span>
+          <span class="ep-desc">Edit your profile</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Header</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">X-Token</td><td class="p-type">string</td><td class="p-req">required</td><td>Your API token</td></tr>
+                  <tr><td class="p-name">X-Username</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New username (once per 24h)</td></tr>
+                  <tr><td class="p-name">X-DisplayName</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New display name (max 32 chars)</td></tr>
+                  <tr><td class="p-name">X-Avatar</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New avatar URL</td></tr>
+                  <tr><td class="p-name">X-Banner</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New banner URL</td></tr>
+                  <tr><td class="p-name">X-Password</td><td class="p-type">string</td><td class="p-opt">optional</td><td>New password (min 6 chars)</td></tr>
+                  <tr><td class="p-name">X-HideFollowers</td><td class="p-type">boolean</td><td class="p-opt">optional</td><td><code>true</code> to hide followers count</td></tr>
+                  <tr><td class="p-name">X-HideFollowing</td><td class="p-type">boolean</td><td class="p-opt">optional</td><td><code>true</code> to hide following count</td></tr>
+                  <tr><td class="p-name">showfollow</td><td class="p-type">boolean</td><td class="p-opt">optional</td><td>Include follower/following lists (<code>true</code> / <code>false</code>)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"username"</span>: <span class="js">"NewName"</span>,
+  <span class="jk">"display_name"</span>: <span class="js">"New Display Name"</span>
+}</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <h3>Use a reasoning model</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>resp = session.post("https://lonelyhub.net/api/ai/send", json={
-      "model": "nvidia-nemotron",
-      "message": "Explain how Minecraft chunk loading works",
-      "thinking": True    # enable reasoning/thinking mode
-  })
-  result = resp.json()
-  if result.get("thinking"):
-      print(f"[Reasoned for {result['thinking_time']}s]")
-      print(result["thinking"])
-      print("---")
-  print(result["output"])</pre></div>
-    </div>
+    <section class="api-section" id="admin-api">
+      <div class="api-section-head">
+        <div class="api-section-title">Admin API</div>
+        <span class="section-badge badge-admin">Admin only</span>
+      </div>
+      <div class="api-auth-note" style="margin-bottom:20px;">
+        <strong>Admin endpoints</strong> require an API token that belongs to an admin account.
+        Non-admin tokens will receive a <code>403</code> error.
+      </div>
 
-    <h3>List all chats</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>resp = session.get("https://lonelyhub.net/api/ai/chats")
-  for chat in resp.json()["chats"]:
-      print(chat["id"], chat["title"])</pre></div>
-    </div>
+      <div class="ep-card" id="v3-edit">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/v3/edit</span>
+          <span class="ep-desc">Admin edit any mod or client</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <p style="color:var(--text2);font-size:13px;margin:14px 0 10px;">Same headers as <code>/api/v2/edit</code> but works on any mod/client regardless of ownership.</p>
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Header</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">X-Token</td><td class="p-type">string</td><td class="p-req">required</td><td>Admin API token</td></tr>
+                  <tr><td class="p-name">X-Type</td><td class="p-type">string</td><td class="p-req">required</td><td><code>Mods</code> or <code>Clients</code></td></tr>
+                  <tr><td class="p-name">X-PostId</td><td class="p-type">integer</td><td class="p-req">required</td><td>ID of the product to edit</td></tr>
+                  <tr><td class="p-name">X-Name, X-Description, X-Tag, X-Image, X-DownloadLink</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Fields to update</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{ <span class="jk">"success"</span>: <span class="jb">true</span>, <span class="jk">"id"</span>: <span class="jn">42</span>, <span class="jk">"name"</span>: <span class="js">"Updated Name"</span> }</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <h3>Delete a chat</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>resp = session.delete(f"https://lonelyhub.net/api/ai/chats/{chat_id}")
-  print(resp.json())  # {"success": true}</pre></div>
-    </div>
+      <div class="ep-card" id="v3-user">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/v3/user</span>
+          <span class="ep-desc">Manage users — ban, mute, verify, promote &amp; more</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Header</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">X-Token</td><td class="p-type">string</td><td class="p-req">required</td><td>Admin API token</td></tr>
+                  <tr><td class="p-name">X-UserId</td><td class="p-type">string</td><td class="p-req">required</td><td>Target user's ID (UUID)</td></tr>
+                  <tr><td class="p-name">X-Action</td><td class="p-type">string</td><td class="p-req">required</td><td>See action reference below</td></tr>
+                </tbody>
+              </table>
+            </div>
 
-    <h2 id="v2">/api/v2/chat/ai</h2>
-    <div class="endpoint"><span class="method">POST</span>/api/v2/chat/ai</div>
-    <p>Stateless public API. Authenticate with your personal API token — find it in your profile settings under <strong>API Token</strong>. No session cookie required. Messages do not persist to any chat history.</p>
+            <div style="margin:20px 0 10px;">
+              <div style="font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Available Actions</div>
+              <div class="param-table-wrap">
+                <table class="param-table" style="min-width:420px;">
+                  <thead><tr><th>X-Action value</th><th>Effect</th></tr></thead>
+                  <tbody>
+                    <tr><td class="p-name" style="color:#f87171;">ban</td><td>Block user from logging in and accessing the site</td></tr>
+                    <tr><td class="p-name" style="color:#34d399;">unban</td><td>Lift an existing ban</td></tr>
+                    <tr><td class="p-name" style="color:#f59e0b;">mute</td><td>Prevent user from posting, commenting, or uploading</td></tr>
+                    <tr><td class="p-name" style="color:#34d399;">unmute</td><td>Lift an existing mute</td></tr>
+                    <tr><td class="p-name" style="color:#a78bfa;">verify</td><td>Grant the verified badge (&#10003;) to the user's profile</td></tr>
+                    <tr><td class="p-name" style="color:#6b7280;">unverify</td><td>Remove the verified badge from the user's profile</td></tr>
+                    <tr><td class="p-name" style="color:#60a5fa;">promote</td><td>Promote user to admin role</td></tr>
+                    <tr><td class="p-name" style="color:#6b7280;">demote</td><td>Remove admin role, revert to regular user</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-    <h3>Request headers</h3>
-    <table class="tbl">
-      <thead><tr><th>Header</th><th>Required</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td><code>X-Token</code></td><td><span class="req">Required</span></td><td>Your personal API token (from profile settings)</td></tr>
-        <tr><td><code>Content-Type</code></td><td><span class="req">Required</span></td><td><code>application/json</code></td></tr>
-      </tbody>
-    </table>
+            <div style="margin:24px 0 10px;font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;">Examples</div>
 
-    <h3>Request body</h3>
-    <table class="tbl">
-      <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td><code>model</code></td><td>string</td><td><span class="opt">Optional</span></td><td>Model ID (see list below). Defaults to <code>gpt-4o-mini</code>.</td></tr>
-        <tr><td><code>messages</code></td><td>array</td><td><span class="req">Required</span></td><td>OpenAI-style message array: <code>[{"role":"user","content":"..."}]</code>. Supports <code>user</code>, <code>assistant</code>, and <code>system</code> roles.</td></tr>
-        <tr><td><code>thinking</code></td><td>boolean</td><td><span class="opt">Optional</span></td><td>Enable reasoning mode for models that support it.</td></tr>
-        <tr><td><code>stream</code></td><td>boolean</td><td><span class="opt">Optional</span></td><td>Stream response as Server-Sent Events.</td></tr>
-      </tbody>
-    </table>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-request">Ban a user</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code><span class="jc">// Request headers</span>
+<span class="jk">X-Token</span>: your_admin_token
+<span class="jk">X-UserId</span>: <span class="js">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>
+<span class="jk">X-Action</span>: <span class="js">"ban"</span>
 
-    <h3>Response (non-streaming)</h3>
-    <table class="tbl">
-      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td><code>success</code></td><td>boolean</td><td>Whether the request succeeded.</td></tr>
-        <tr><td><code>output</code></td><td>string</td><td>The AI's response text (Markdown).</td></tr>
-        <tr><td><code>thinking</code></td><td>string|null</td><td>Reasoning block (if reasoning was enabled and the model supports it).</td></tr>
-        <tr><td><code>model</code></td><td>string</td><td>Model key used for this request.</td></tr>
-      </tbody>
-    </table>
+<span class="jc">// Response</span>
+{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"action"</span>: <span class="js">"ban"</span>,
+  <span class="jk">"user_id"</span>: <span class="js">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>,
+  <span class="jk">"username"</span>: <span class="js">"BadPlayer99"</span>
+}</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
 
-    <h3>SSE event types (stream mode)</h3>
-    <table class="tbl">
-      <thead><tr><th>type</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td><code>thinking</code></td><td>Reasoning block chunk (reasoning-capable models only)</td></tr>
-        <tr><td><code>content</code></td><td>Response text chunk</td></tr>
-        <tr><td><code>error</code></td><td>Error message</td></tr>
-        <tr><td><code>[DONE]</code></td><td>Stream finished</td></tr>
-      </tbody>
-    </table>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-request">Mute a user</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code><span class="jc">// Request headers</span>
+<span class="jk">X-Token</span>: your_admin_token
+<span class="jk">X-UserId</span>: <span class="js">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>
+<span class="jk">X-Action</span>: <span class="js">"mute"</span>
 
-    <h3>Available models for /api/v2/chat/ai</h3>
-    <div class="model-grid">
-      <div class="model-card"><img src="https://i.imgur.com/0DwnmdY.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">GPT-4o-mini</div><code class="model-card-id">gpt-4o-mini</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/xY7M2iE.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Lonely AI</div><code class="model-card-id">lonely-ai</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/DJgiwrh.png" alt=""><div class="model-card-info"><div class="model-card-name">Nvidia Nemotron</div><code class="model-card-id">nvidia-nemotron</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/0BQqhba.png" alt=""><div class="model-card-info"><div class="model-card-name">DeepSeek V4 Flash</div><code class="model-card-id">deepseek-v4-flash</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/pESTVyY.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Meta Llama-3.3-70b</div><code class="model-card-id">llama-3.3-70b</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/GdLBseU.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Gemini Flash</div><code class="model-card-id">gemini</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/COgMkUi.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Kimi K2.6</div><code class="model-card-id">kimi-k2.6</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
-    </div>
+<span class="jc">// Response</span>
+{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"action"</span>: <span class="js">"mute"</span>,
+  <span class="jk">"user_id"</span>: <span class="js">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>,
+  <span class="jk">"username"</span>: <span class="js">"SpammerUser"</span>
+}</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
 
-    <h3>Python examples — /api/v2/chat/ai</h3>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-request">Grant verified badge</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code><span class="jc">// Request headers</span>
+<span class="jk">X-Token</span>: your_admin_token
+<span class="jk">X-UserId</span>: <span class="js">"b9c8d7e6-f5a4-3210-bcde-fa0987654321"</span>
+<span class="jk">X-Action</span>: <span class="js">"verify"</span>
 
-    <h3 style="margin-top:14px">Basic request</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>import requests
+<span class="jc">// Response</span>
+{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"action"</span>: <span class="js">"verify"</span>,
+  <span class="jk">"user_id"</span>: <span class="js">"b9c8d7e6-f5a4-3210-bcde-fa0987654321"</span>,
+  <span class="jk">"username"</span>: <span class="js">"TrustedCreator"</span>,
+  <span class="jk">"badge"</span>: <span class="js">"verified"</span>
+}</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
 
-resp = requests.post(
-    "https://lonelyhub.net/api/v2/chat/ai",
-    headers={
-        "X-Token": "YOUR_API_TOKEN",
-        "Content-Type": "application/json",
-    },
-    json={
-        "model": "gpt-4o-mini",
-        "messages": [
-            {"role": "user", "content": "How do I create a Minecraft mod in Java?"}
-        ],
-    },
-)
-data = resp.json()
-print(data["output"])</pre></div>
-    </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-request">Promote to admin</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code><span class="jc">// Request headers</span>
+<span class="jk">X-Token</span>: your_admin_token
+<span class="jk">X-UserId</span>: <span class="js">"c3d4e5f6-a7b8-9012-cdef-ab3456789012"</span>
+<span class="jk">X-Action</span>: <span class="js">"promote"</span>
 
-    <h3>Multi-turn conversation</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>import requests
+<span class="jc">// Response</span>
+{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"action"</span>: <span class="js">"promote"</span>,
+  <span class="jk">"user_id"</span>: <span class="js">"c3d4e5f6-a7b8-9012-cdef-ab3456789012"</span>,
+  <span class="jk">"username"</span>: <span class="js">"NewModerator"</span>,
+  <span class="jk">"role"</span>: <span class="js">"admin"</span>
+}</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
 
-API_URL = "https://lonelyhub.net/api/v2/chat/ai"
-HEADERS = {"X-Token": "YOUR_API_TOKEN", "Content-Type": "application/json"}
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-error">&#10005; Error (invalid action)</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{
+  <span class="jk">"success"</span>: <span class="jb">false</span>,
+  <span class="jk">"error"</span>: <span class="js">"Invalid action. Must be one of: ban, unban, mute, unmute, verify, unverify, promote, demote"</span>
+}</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
 
-history = []
+          </div>
+        </div>
+      </div>
 
-def chat(user_message, model="gpt-4o-mini"):
-    history.append({"role": "user", "content": user_message})
-    resp = requests.post(API_URL, headers=HEADERS, json={
-        "model": model,
-        "messages": history,
-    })
-    data = resp.json()
-    reply = data["output"]
-    history.append({"role": "assistant", "content": reply})
-    return reply
+      <div class="ep-card" id="v3-data">
+        <div class="ep-header" onclick="_toggleEp(this)">
+          <span class="ep-method m-get">GET</span>
+          <span class="ep-path">/api/v3/data</span>
+          <span class="ep-desc">Get site-wide statistics</span>
+          <svg class="ep-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="ep-body-wrap">
+          <div class="ep-body">
+            <div class="param-table-wrap">
+              <table class="param-table">
+                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="p-name">token</td><td class="p-type">string</td><td class="p-req">required</td><td>Admin API token (query param)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="api-code-block">
+              <div class="api-code-label-row">
+                <span class="api-code-tag tag-success">&#10003; Response success</span>
+              </div>
+              <div class="api-pre-wrap">
+                <div class="api-pre-scroll">
+                  <pre class="api-pre"><code>{
+  <span class="jk">"success"</span>: <span class="jb">true</span>,
+  <span class="jk">"total_users"</span>: <span class="jn">1284</span>,
+  <span class="jk">"total_mods"</span>: <span class="jn">342</span>,
+  <span class="jk">"total_clients"</span>: <span class="jn">58</span>,
+  <span class="jk">"total_views"</span>: <span class="jn">98421</span>,
+  <span class="jk">"total_downloads"</span>: <span class="jn">24890</span>
+}</code></pre>
+                </div>
+                <button class="api-copy-btn" onclick="_copyPre(this)">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-print(chat("What is the best way to start modding Minecraft?"))
-print(chat("Can you show me a simple example?"))</pre></div>
-    </div>
+  </main>
+</div>
 
-    <h3>Reasoning model with thinking enabled</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>import requests
+</div>
+</div>
+{% endblock %}
 
-resp = requests.post(
-    "https://lonelyhub.net/api/v2/chat/ai",
-    headers={"X-Token": "YOUR_API_TOKEN", "Content-Type": "application/json"},
-    json={
-        "model": "nvidia-nemotron",
-        "messages": [
-            {"role": "user", "content": "Explain how Minecraft chunk loading works"}
-        ],
-        "thinking": True,
-    },
-)
-data = resp.json()
-if data.get("thinking"):
-    print("[Reasoning]")
-    print(data["thinking"])
-    print("---")
-print(data["output"])</pre></div>
-    </div>
+{% block extra_js %}
+<script>
+function _toggleEp(header) {
+  var card = header.closest('.ep-card');
+  card.classList.toggle('is-open');
+}
 
-    <h3>Streaming response</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>import requests, json
+function _copyPre(btn) {
+  var pre = btn.closest('.api-pre-wrap').querySelector('pre');
+  var text = pre ? pre.innerText : '';
+  navigator.clipboard.writeText(text).then(function() {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  }).catch(function() {
+    btn.textContent = 'Error';
+    setTimeout(function() { btn.textContent = 'Copy'; }, 1500);
+  });
+}
 
-resp = requests.post(
-    "https://lonelyhub.net/api/v2/chat/ai",
-    headers={"X-Token": "YOUR_API_TOKEN", "Content-Type": "application/json"},
-    json={
-        "model": "gpt-4o-mini",
-        "messages": [{"role": "user", "content": "Tell me about Minecraft redstone"}],
-        "stream": True,
-    },
-    stream=True,
-)
-for line in resp.iter_lines():
-    if not line:
-        continue
-    text = line.decode() if isinstance(line, bytes) else line
-    if text == "data: [DONE]":
-        break
-    if text.startswith("data: "):
-        event = json.loads(text[6:])
-        if event["type"] == "thinking":
-            print(f"[Reasoning] {event['content']}")
-        elif event["type"] == "content":
-            print(event["content"], end="", flush=True)
-        elif event["type"] == "error":
-            print(f"Error: {event['error']}")
-print()</pre></div>
-    </div>
-
-    <h2>Environment Variables</h2>
-    <p>Set these in your server's <code>.env</code> file. Each model uses its own dedicated API key.</p>
-    <table class="tbl">
-      <thead><tr><th>Variable</th><th>Required</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td><span class="env-key">SECRET_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>Flask session secret key</td></tr>
-        <tr><td><span class="env-key">OPENROUTER_API_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>Fallback OpenRouter key</td></tr>
-        <tr><td><span class="env-key">OPENROUTER_GPT4O_MINI_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>OpenRouter key for GPT-4o-mini</td></tr>
-        <tr><td><span class="env-key">OPENROUTER_LONELY_AI_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>OpenRouter/Poolside key for Lonely AI</td></tr>
-        <tr><td><span class="env-key">NVIDIA_NEMOTRON_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>NVIDIA NIM key for Nemotron</td></tr>
-        <tr><td><span class="env-key">NVIDIA_DEEPSEEK_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>NVIDIA NIM key for DeepSeek V4 Flash</td></tr>
-        <tr><td><span class="env-key">NVIDIA_LLAMA_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>NVIDIA NIM key for Llama-3.3-70b</td></tr>
-        <tr><td><span class="env-key">NVIDIA_KIMI_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>NVIDIA NIM key for Kimi K2.6</td></tr>
-        <tr><td><span class="env-key">GOOGLE_GEMINI_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>Google AI Studio key for Gemini Flash</td></tr>
-        <tr><td><span class="env-key">POOLSIDE_API_KEY</span></td><td><span class="badge badge-opt">Optional</span></td><td>Fallback Poolside key for Lonely AI</td></tr>
-        <tr><td><span class="env-key">DISCORD_CLIENT_ID</span></td><td><span class="badge badge-opt">Optional</span></td><td>Discord OAuth client ID</td></tr>
-        <tr><td><span class="env-key">DISCORD_CLIENT_SECRET</span></td><td><span class="badge badge-opt">Optional</span></td><td>Discord OAuth client secret</td></tr>
-        <tr><td><span class="env-key">DISCORD_REDIRECT_URI</span></td><td><span class="badge badge-opt">Optional</span></td><td>Discord OAuth redirect URI</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <script>
-  function copyCode(btn) {
-    var pre = btn.closest('.code-wrap').querySelector('pre');
-    navigator.clipboard.writeText(pre.innerText).then(function() {
-      btn.textContent = 'Copied!';
-      setTimeout(function() { btn.textContent = 'Copy'; }, 1500);
+(function() {
+  var links = document.querySelectorAll('.api-toc-link[href^="#"]');
+  var sections = Array.from(links).map(function(l) {
+    return document.querySelector(l.getAttribute('href'));
+  }).filter(Boolean);
+  function updateActive() {
+    var scrollY = window.scrollY + 120;
+    var active = sections[0];
+    sections.forEach(function(s) { if (s.offsetTop <= scrollY) active = s; });
+    links.forEach(function(l) {
+      var target = document.querySelector(l.getAttribute('href'));
+      l.classList.toggle('toc-active', target === active);
     });
   }
-  </script>
-  </body>
-  </html>
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+{% endblock %}
