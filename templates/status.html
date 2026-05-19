@@ -16,6 +16,11 @@ a{color:inherit;text-decoration:none}
 .nav-title{font-size:17px;font-weight:700;color:#fff}
 .nav-bell{margin-left:auto;width:36px;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#94a3b8;transition:background .15s}
 .nav-bell:hover{background:rgba(255,255,255,.08)}
+.nav-refresh{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:#475569}
+.nav-refresh-ring{width:28px;height:28px;position:relative;flex-shrink:0}
+.nav-refresh-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.nav-refresh-ring .ring-bg{stroke:rgba(255,255,255,.07)}
+.nav-refresh-ring .ring-fg{stroke:#10b981;stroke-dasharray:75.4;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear}
 .hero{border-radius:20px;padding:36px 32px 32px;margin-bottom:28px;text-align:center;border:1px solid rgba(255,255,255,.07)}
 .hero.ok{background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(5,150,105,.07))}
 .hero.deg{background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(217,119,6,.07))}
@@ -80,8 +85,14 @@ canvas{display:block;width:100%!important}
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>
     </div>
     <span class="nav-title">Lonely Hub Status</span>
-    <div class="nav-bell">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    <div class="nav-refresh" id="nav-refresh">
+      <span id="refresh-lbl">Refreshing in 60s</span>
+      <div class="nav-refresh-ring">
+        <svg viewBox="0 0 28 28" fill="none" stroke-width="2.5" stroke-linecap="round">
+          <circle class="ring-bg" cx="14" cy="14" r="12"/>
+          <circle class="ring-fg" id="refresh-ring" cx="14" cy="14" r="12"/>
+        </svg>
+      </div>
     </div>
   </div>
 
@@ -294,6 +305,23 @@ function toggleSec(hd) {
       }
     }
   });
+})();
+
+(function autoRefresh() {
+  var TOTAL = 60;
+  var left = TOTAL;
+  var circ = 2 * Math.PI * 12;
+  var ring = document.getElementById('refresh-ring');
+  var lbl = document.getElementById('refresh-lbl');
+  function tick() {
+    left--;
+    if (left <= 0) { window.location.reload(); return; }
+    lbl.textContent = 'Refreshing in ' + left + 's';
+    if (ring) ring.style.strokeDashoffset = circ * (1 - left / TOTAL);
+    setTimeout(tick, 1000);
+  }
+  if (ring) ring.style.strokeDashoffset = 0;
+  setTimeout(tick, 1000);
 })();
 </script>
 </body>
