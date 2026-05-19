@@ -1,377 +1,552 @@
 <!DOCTYPE html>
-  <html lang="en">
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Lonely Hub — AI API Docs</title>
-  <link rel="icon" href="/static/img/favicon.ico">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  *:focus{outline:none}
-  button,a,input,textarea,select{-webkit-tap-highlight-color:transparent;outline:none}
-  :root{--bg:#0c0e11;--bg2:#111419;--bg3:#171b22;--border:rgba(255,255,255,.07);--txt:#c9cdd6;--txt2:#8b929e;--red:#e05252;--red2:rgba(224,82,82,.12)}
-  html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;font-size:14px;line-height:1.6}
-  a{color:var(--red);text-decoration:none}
-  a:hover{text-decoration:underline}
-  /* Nav */
-  .nav{position:sticky;top:0;z-index:100;height:52px;background:rgba(12,14,17,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:2px}
-  .nav-logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;color:#e2e5ea;text-decoration:none;margin-right:8px;flex-shrink:0}
-  .nav-logo img{width:28px;height:28px;border-radius:7px;object-fit:cover}
-  .nav-link{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:9px;font-size:13px;font-weight:500;color:#8b929e;text-decoration:none;transition:background .13s,color .13s}
-  .nav-link:hover{background:#191d24;color:#e2e5ea}
-  .nav-link.active{color:var(--red)}
-  /* Layout */
-  .page{max-width:900px;margin:0 auto;padding:48px 24px 80px}
-  h1{font-size:28px;font-weight:700;color:#e2e5ea;margin-bottom:6px}
-  .subtitle{color:var(--txt2);font-size:14px;margin-bottom:40px}
-  h2{font-size:17px;font-weight:600;color:#e2e5ea;margin:36px 0 14px;padding-top:10px;border-top:1px solid var(--border)}
-  h3{font-size:14px;font-weight:600;color:#e2e5ea;margin:20px 0 8px}
-  p{color:var(--txt2);margin-bottom:10px}
-  /* Endpoint badge */
-  .endpoint{display:inline-flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-family:'Courier New',monospace;font-size:13px;margin-bottom:16px}
-  .method{background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px}
-  /* Tables */
-  .tbl{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px}
-  .tbl th{text-align:left;padding:9px 12px;background:var(--bg2);color:var(--txt2);font-weight:600;border-bottom:1px solid var(--border)}
-  .tbl td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top}
-  .tbl tr:last-child td{border-bottom:none}
-  .tbl code{background:rgba(255,255,255,.07);border-radius:5px;padding:2px 6px;font-family:'Courier New',monospace;font-size:12px}
-  .req{color:#60a5fa;font-weight:600;font-size:11px}
-  .opt{color:var(--txt2);font-size:11px}
-  /* Code blocks */
-  .code-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
-  .code-hd{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border)}
-  .code-lang{font-size:12px;font-weight:600;color:var(--txt2)}
-  .code-copy{background:none;border:1px solid var(--border);border-radius:7px;padding:4px 10px;font-size:12px;color:var(--txt2);cursor:pointer;transition:background .12s,color .12s}
-  .code-copy:hover{background:rgba(255,255,255,.07);color:#e2e5ea}
-  .code-body{padding:16px 18px;overflow-x:auto}
-  .code-body pre{font-family:'Courier New',monospace;font-size:13px;line-height:1.65;color:#c9cdd6;white-space:pre}
-  /* Model cards */
-  .model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:20px}
-  .model-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
-  .model-card img{width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0}
-  .model-card-info{min-width:0}
-  .model-card-name{font-weight:600;font-size:13px;color:#e2e5ea;margin-bottom:3px}
-  .model-card-id{font-family:'Courier New',monospace;font-size:11px;color:var(--red);background:var(--red2);border-radius:5px;padding:2px 6px;display:inline-block;word-break:break-all}
-  .model-card-tag{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--txt2);background:rgba(255,255,255,.05);border-radius:5px;padding:2px 7px}
-  /* Env table */
-  .env-key{font-family:'Courier New',monospace;font-size:12px;color:#a78bfa}
-  .badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
-  .badge-req{background:rgba(96,165,250,.15);color:#60a5fa}
-  .badge-opt{background:rgba(255,255,255,.06);color:var(--txt2)}
-  </style>
-  </head>
-  <body>
-  <nav class="nav">
-    <a href="/" class="nav-logo">
-      <img src="https://i.imgur.com/xY7M2iE.jpeg" alt="Lonely Hub">
-      <span>Lonely Hub</span>
-    </a>
-    <a href="/" class="nav-link">Home</a>
-    <a href="/mods" class="nav-link">Mods</a>
-    <a href="/clients" class="nav-link">Clients</a>
-    <a href="/forum" class="nav-link">Forum</a>
-    <a href="/ai-chat" class="nav-link">AI Chat</a>
-    <a href="/api/docs" class="nav-link active">API Docs</a>
-  </nav>
-  <div class="page">
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lonely Hub — AI API Docs</title>
+<link rel="icon" href="/static/img/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*:focus{outline:none}
+button,a,input,textarea,select{-webkit-tap-highlight-color:transparent;outline:none}
+:root{
+  --bg:#0c0e11;--bg2:#111419;--bg3:#171b22;--bg4:#1e2229;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.11);
+  --txt:#c9cdd6;--txt2:#8b929e;--txt3:#555d6b;
+  --red:#e05252;--red2:rgba(224,82,82,.12);--red3:rgba(224,82,82,.06);
+  --blue:#60a5fa;--purple:#a78bfa;--green:#4ade80;
+}
+html,body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;font-size:14px;line-height:1.6;min-height:100%}
+a{color:var(--red);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Nav */
+.nav{position:sticky;top:0;z-index:100;height:52px;background:rgba(12,14,17,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:2px}
+.nav-logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;color:#e2e5ea;text-decoration:none;margin-right:8px;flex-shrink:0}
+.nav-logo img{width:28px;height:28px;border-radius:7px;object-fit:cover}
+.nav-link{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:9px;font-size:13px;font-weight:500;color:#8b929e;text-decoration:none;transition:background .13s,color .13s}
+.nav-link:hover{background:#191d24;color:#e2e5ea}
+.nav-link.active{color:var(--red)}
+@media(max-width:600px){.nav-link span{display:none}.nav-link{padding:6px 8px}}
+
+/* Layout */
+.page{max-width:860px;margin:0 auto;padding:44px 20px 80px}
+
+/* Hero */
+.hero{margin-bottom:44px}
+h1{font-size:26px;font-weight:700;color:#e2e5ea;margin-bottom:6px}
+.subtitle{color:var(--txt2);font-size:14px}
+
+/* Featured v2 card */
+.v2-card{
+  background:linear-gradient(135deg,rgba(224,82,82,.08) 0%,rgba(167,139,250,.06) 100%);
+  border:1px solid rgba(224,82,82,.25);border-radius:16px;padding:24px 24px 20px;
+  margin-bottom:44px;
+}
+.v2-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(224,82,82,.15);border:1px solid rgba(224,82,82,.3);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+.v2-title{font-size:18px;font-weight:700;color:#e2e5ea;margin-bottom:6px}
+.v2-desc{color:var(--txt2);font-size:13px;line-height:1.65;margin-bottom:18px}
+.v2-endpoint{display:inline-flex;align-items:center;gap:9px;background:rgba(0,0,0,.3);border:1px solid var(--border2);border-radius:9px;padding:8px 14px;font-family:'Courier New',monospace;font-size:13px;margin-bottom:18px}
+.method-post{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+.method-get{background:#1d4ed8;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+.method-patch{background:#d97706;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+.method-delete{background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+
+/* Tables */
+.tbl{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:13px}
+.tbl th{text-align:left;padding:8px 11px;background:var(--bg3);color:var(--txt2);font-weight:600;border-bottom:1px solid var(--border)}
+.tbl td{padding:8px 11px;border-bottom:1px solid rgba(255,255,255,.035);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl code{background:rgba(255,255,255,.07);border-radius:4px;padding:1px 5px;font-family:'Courier New',monospace;font-size:12px}
+.req{color:#60a5fa;font-weight:600;font-size:11px}
+.opt{color:var(--txt3);font-size:11px}
+
+/* Code blocks */
+.code-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:16px}
+.code-hd{display:flex;align-items:center;justify-content:space-between;padding:8px 13px;border-bottom:1px solid var(--border)}
+.code-lang{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px}
+.code-copy{background:none;border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-size:11px;color:var(--txt2);cursor:pointer;transition:background .12s,color .12s}
+.code-copy:hover{background:rgba(255,255,255,.07);color:#e2e5ea}
+.code-body{padding:14px 16px;overflow-x:auto}
+.code-body pre{font-family:'Courier New',monospace;font-size:13px;line-height:1.65;color:#c9cdd6;white-space:pre}
+
+/* Model cards */
+.model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:16px}
+.model-card{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+.model-card img{width:34px;height:34px;border-radius:7px;object-fit:cover;flex-shrink:0}
+.model-card-info{min-width:0}
+.model-card-name{font-weight:600;font-size:13px;color:#e2e5ea;margin-bottom:3px}
+.model-card-id{font-family:'Courier New',monospace;font-size:11px;color:var(--red);background:var(--red2);border-radius:4px;padding:1px 5px;display:inline-block;word-break:break-all}
+.model-card-tag{display:inline-flex;align-items:center;gap:3px;margin-top:5px;font-size:11px;color:var(--txt2);background:rgba(255,255,255,.05);border-radius:4px;padding:1px 6px}
+.model-card-tag.think{color:var(--purple);background:rgba(167,139,250,.1)}
+
+/* Section headings */
+.section-label{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin:40px 0 12px}
+
+/* Accordion */
+.acc{border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.acc-hd{
+  display:flex;align-items:center;gap:10px;padding:14px 16px;
+  cursor:pointer;transition:background .13s;user-select:none;
+}
+.acc-hd:hover{background:var(--bg3)}
+.acc-hd-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.acc-hd-path{font-family:'Courier New',monospace;font-size:13px;color:#e2e5ea;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-hd-desc{font-size:12px;color:var(--txt2);margin-left:4px;flex-shrink:0}
+.acc-chev{flex-shrink:0;color:var(--txt3);transition:transform .2s}
+.acc.open .acc-chev{transform:rotate(90deg)}
+.acc-body{display:none;padding:16px 18px 18px;border-top:1px solid var(--border);background:var(--bg3)}
+.acc.open .acc-body{display:block}
+.acc-body h4{font-size:12px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px}
+.acc-body h4:first-child{margin-top:0}
+.acc-body p{color:var(--txt2);margin-bottom:10px;font-size:13px}
+
+/* Env table */
+.env-key{font-family:'Courier New',monospace;font-size:12px;color:var(--purple)}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px}
+.badge-req{background:rgba(96,165,250,.15);color:var(--blue)}
+.badge-opt{background:rgba(255,255,255,.06);color:var(--txt2)}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="https://i.imgur.com/xY7M2iE.jpeg" alt="Lonely Hub">
+    <span>Lonely Hub</span>
+  </a>
+  <a href="/" class="nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a>
+  <a href="/mods" class="nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span>Mods</span></a>
+  <a href="/clients" class="nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg><span>Clients</span></a>
+  <a href="/forum" class="nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Forum</span></a>
+  <a href="/ai-chat" class="nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg><span>AI Chat</span></a>
+  <a href="/api/docs" class="nav-link active"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>API</span></a>
+</nav>
+
+<div class="page">
+
+  <div class="hero">
     <h1>AI Chat API</h1>
-    <p class="subtitle">REST API for the Lonely Hub AI Chat — send messages to any of the 7 supported models.</p>
+    <p class="subtitle">REST API for Lonely Hub AI Chat — 7 models, session-based or token-based access.</p>
+  </div>
 
-    <h2>Endpoint</h2>
-    <div class="endpoint"><span class="method">POST</span>/api/ai/send</div>
-    <p>Requires authentication. The user must be logged in (session cookie). Returns the AI response, chat ID, and optional reasoning block.</p>
+  <!-- ── Featured: /api/v2/chat/ai ── -->
+  <div class="v2-card">
+    <div class="v2-badge">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+      Unified API
+    </div>
+    <div class="v2-title">Single endpoint — all 7 models</div>
+    <div class="v2-desc">Send messages to any model through one endpoint. Authenticate with your personal API token (no session cookie needed). Works exactly like calling NVIDIA NIM or OpenRouter — just swap the base URL and use your Lonely Hub token.</div>
 
-    <h2>Request Body</h2>
+    <div class="v2-endpoint">
+      <span class="method-post">POST</span>
+      /api/v2/chat/ai
+    </div>
+
+    <h4 style="font-size:12px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Request</h4>
     <table class="tbl">
-      <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+      <thead><tr><th>Header / Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
       <tbody>
-        <tr><td><code>model</code></td><td>string</td><td><span class="req">Required</span></td><td>Model ID (see list below). Defaults to <code>gpt-4o-mini</code>.</td></tr>
-        <tr><td><code>message</code></td><td>string</td><td><span class="req">Required</span></td><td>The user's message text.</td></tr>
-        <tr><td><code>chat_id</code></td><td>string</td><td><span class="opt">Optional</span></td><td>Continue an existing chat. Omit to start a new one.</td></tr>
-        <tr><td><code>thinking</code></td><td>boolean</td><td><span class="opt">Optional</span></td><td>Enable reasoning/thinking mode (only for models that support it).</td></tr>
-        <tr><td><code>files</code></td><td>array</td><td><span class="opt">Optional</span></td><td>Array of file objects: <code>{name, type, data (base64), text_content}</code>.</td></tr>
+        <tr><td><code>X-Token</code> <small style="color:var(--txt3)">(header)</small></td><td>string</td><td><span class="req">Required</span></td><td>Your API token from profile settings</td></tr>
+        <tr><td><code>model</code></td><td>string</td><td><span class="opt">Optional</span></td><td>Model key — see list below. Default: <code>gpt-4o-mini</code></td></tr>
+        <tr><td><code>messages</code></td><td>array</td><td><span class="req">Required</span></td><td>OpenAI-style array: <code>[{"role":"user","content":"..."}]</code></td></tr>
+        <tr><td><code>thinking</code></td><td>boolean</td><td><span class="opt">Optional</span></td><td>Enable reasoning output (models with reasoning support only)</td></tr>
+        <tr><td><code>stream</code></td><td>boolean</td><td><span class="opt">Optional</span></td><td>Stream via Server-Sent Events</td></tr>
       </tbody>
     </table>
 
-    <h2>Response</h2>
+    <h4 style="font-size:12px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">Response</h4>
     <table class="tbl">
       <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
       <tbody>
-        <tr><td><code>success</code></td><td>boolean</td><td>Whether the request succeeded.</td></tr>
-        <tr><td><code>output</code></td><td>string</td><td>The AI's response text (Markdown).</td></tr>
-        <tr><td><code>chat_id</code></td><td>string</td><td>The chat session UUID (use for follow-up messages).</td></tr>
-        <tr><td><code>title</code></td><td>string</td><td>Auto-generated chat title.</td></tr>
-        <tr><td><code>thinking</code></td><td>string|null</td><td>Reasoning block text (if thinking was enabled).</td></tr>
-        <tr><td><code>thinking_time</code></td><td>integer</td><td>Seconds spent reasoning.</td></tr>
-        <tr><td><code>model_name</code></td><td>string</td><td>Display name of the model used.</td></tr>
+        <tr><td><code>success</code></td><td>boolean</td><td>Whether the request succeeded</td></tr>
+        <tr><td><code>output</code></td><td>string</td><td>AI response text (Markdown)</td></tr>
+        <tr><td><code>thinking</code></td><td>string|null</td><td>Reasoning block (if enabled and supported)</td></tr>
+        <tr><td><code>model</code></td><td>string</td><td>Model key used</td></tr>
       </tbody>
     </table>
 
-    <h2>Available Models</h2>
-    <div class="model-grid">
-      <div class="model-card"><img src="https://i.imgur.com/0DwnmdY.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">GPT-4o-mini</div><code class="model-card-id">gpt-4o-mini</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/xY7M2iE.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Lonely AI</div><code class="model-card-id">lonely-ai</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/DJgiwrh.png" alt=""><div class="model-card-info"><div class="model-card-name">Nvidia Nemotron</div><code class="model-card-id">nvidia-nemotron</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/0BQqhba.png" alt=""><div class="model-card-info"><div class="model-card-name">DeepSeek V4 Flash</div><code class="model-card-id">deepseek-v4-flash</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/pESTVyY.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Meta Llama-3.3-70b</div><code class="model-card-id">llama-3.3-70b</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/GdLBseU.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Gemini Flash</div><code class="model-card-id">gemini</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/placeholder.png" alt=""><div class="model-card-info"><div class="model-card-name">Kimi K2.6</div><code class="model-card-id">kimi-k2.6</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
-    </div>
-
-    <h2>Python Examples</h2>
-    <h3>Start a new chat</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>import requests
-
-  session = requests.Session()
-  # You must be logged in — copy your session cookie from the browser
-  session.cookies.set("session", "YOUR_SESSION_COOKIE", domain="lonelyhub.net")
-
-  resp = session.post("https://lonelyhub.net/api/ai/send", json={
-      "model": "gpt-4o-mini",
-      "message": "How do I create a Minecraft mod in Java?"
-  })
-  data = resp.json()
-  print(data["output"])
-  print("Chat ID:", data["chat_id"])</pre></div>
-    </div>
-
-    <h3>Continue a chat</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>resp = session.post("https://lonelyhub.net/api/ai/send", json={
-      "model": "gpt-4o-mini",
-      "message": "Can you show me a full example?",
-      "chat_id": data["chat_id"]   # reuse the ID from the first response
-  })
-  print(resp.json()["output"])</pre></div>
-    </div>
-
-    <h3>Use a reasoning model</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>resp = session.post("https://lonelyhub.net/api/ai/send", json={
-      "model": "nvidia-nemotron",
-      "message": "Explain how Minecraft chunk loading works",
-      "thinking": True    # enable reasoning/thinking mode
-  })
-  result = resp.json()
-  if result.get("thinking"):
-      print(f"[Reasoned for {result['thinking_time']}s]")
-      print(result["thinking"])
-      print("---")
-  print(result["output"])</pre></div>
-    </div>
-
-    <h3>List all chats</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>resp = session.get("https://lonelyhub.net/api/ai/chats")
-  for chat in resp.json()["chats"]:
-      print(chat["id"], chat["title"])</pre></div>
-    </div>
-
-    <h3>Delete a chat</h3>
-    <div class="code-wrap">
-      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
-      <div class="code-body"><pre>resp = session.delete(f"https://lonelyhub.net/api/ai/chats/{chat_id}")
-  print(resp.json())  # {"success": true}</pre></div>
-    </div>
-
-    <h2 id="v2">/api/v2/chat/ai</h2>
-    <div class="endpoint"><span class="method">POST</span>/api/v2/chat/ai</div>
-    <p>Stateless public API. Authenticate with your personal API token — find it in your profile settings under <strong>API Token</strong>. No session cookie required. Messages do not persist to any chat history.</p>
-
-    <h3>Request headers</h3>
-    <table class="tbl">
-      <thead><tr><th>Header</th><th>Required</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td><code>X-Token</code></td><td><span class="req">Required</span></td><td>Your personal API token (from profile settings)</td></tr>
-        <tr><td><code>Content-Type</code></td><td><span class="req">Required</span></td><td><code>application/json</code></td></tr>
-      </tbody>
-    </table>
-
-    <h3>Request body</h3>
-    <table class="tbl">
-      <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td><code>model</code></td><td>string</td><td><span class="opt">Optional</span></td><td>Model ID (see list below). Defaults to <code>gpt-4o-mini</code>.</td></tr>
-        <tr><td><code>messages</code></td><td>array</td><td><span class="req">Required</span></td><td>OpenAI-style message array: <code>[{"role":"user","content":"..."}]</code>. Supports <code>user</code>, <code>assistant</code>, and <code>system</code> roles.</td></tr>
-        <tr><td><code>thinking</code></td><td>boolean</td><td><span class="opt">Optional</span></td><td>Enable reasoning mode for models that support it.</td></tr>
-        <tr><td><code>stream</code></td><td>boolean</td><td><span class="opt">Optional</span></td><td>Stream response as Server-Sent Events.</td></tr>
-      </tbody>
-    </table>
-
-    <h3>Response (non-streaming)</h3>
-    <table class="tbl">
-      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td><code>success</code></td><td>boolean</td><td>Whether the request succeeded.</td></tr>
-        <tr><td><code>output</code></td><td>string</td><td>The AI's response text (Markdown).</td></tr>
-        <tr><td><code>thinking</code></td><td>string|null</td><td>Reasoning block (if reasoning was enabled and the model supports it).</td></tr>
-        <tr><td><code>model</code></td><td>string</td><td>Model key used for this request.</td></tr>
-      </tbody>
-    </table>
-
-    <h3>SSE event types (stream mode)</h3>
-    <table class="tbl">
+    <h4 style="font-size:12px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">SSE events (stream mode)</h4>
+    <table class="tbl" style="margin-bottom:18px">
       <thead><tr><th>type</th><th>Description</th></tr></thead>
       <tbody>
-        <tr><td><code>thinking</code></td><td>Reasoning block chunk (reasoning-capable models only)</td></tr>
+        <tr><td><code>thinking</code></td><td>Reasoning chunk</td></tr>
         <tr><td><code>content</code></td><td>Response text chunk</td></tr>
         <tr><td><code>error</code></td><td>Error message</td></tr>
-        <tr><td><code>[DONE]</code></td><td>Stream finished</td></tr>
+        <tr><td><code>[DONE]</code></td><td>Stream complete</td></tr>
       </tbody>
     </table>
 
-    <h3>Available models for /api/v2/chat/ai</h3>
+    <h4 style="font-size:12px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Available models</h4>
     <div class="model-grid">
       <div class="model-card"><img src="https://i.imgur.com/0DwnmdY.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">GPT-4o-mini</div><code class="model-card-id">gpt-4o-mini</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/xY7M2iE.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Lonely AI</div><code class="model-card-id">lonely-ai</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/DJgiwrh.png" alt=""><div class="model-card-info"><div class="model-card-name">Nvidia Nemotron</div><code class="model-card-id">nvidia-nemotron</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
+      <div class="model-card"><img src="https://i.imgur.com/xY7M2iE.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Lonely AI</div><code class="model-card-id">lonely-ai</code><div class="model-card-tag think">&#x2728; Reasoning</div></div></div>
+      <div class="model-card"><img src="https://i.imgur.com/DJgiwrh.png" alt=""><div class="model-card-info"><div class="model-card-name">Nvidia Nemotron</div><code class="model-card-id">nvidia-nemotron</code><div class="model-card-tag think">&#x2728; Reasoning</div></div></div>
       <div class="model-card"><img src="https://i.imgur.com/0BQqhba.png" alt=""><div class="model-card-info"><div class="model-card-name">DeepSeek V4 Flash</div><code class="model-card-id">deepseek-v4-flash</code><div class="model-card-tag">Standard</div></div></div>
       <div class="model-card"><img src="https://i.imgur.com/pESTVyY.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Meta Llama-3.3-70b</div><code class="model-card-id">llama-3.3-70b</code><div class="model-card-tag">Standard</div></div></div>
       <div class="model-card"><img src="https://i.imgur.com/GdLBseU.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Gemini Flash</div><code class="model-card-id">gemini</code><div class="model-card-tag">Standard</div></div></div>
-      <div class="model-card"><img src="https://i.imgur.com/COgMkUi.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Kimi K2.6</div><code class="model-card-id">kimi-k2.6</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
+      <div class="model-card"><img src="https://i.imgur.com/COgMkUi.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Kimi K2.6</div><code class="model-card-id">kimi-k2.6</code><div class="model-card-tag think">&#x2728; Reasoning</div></div></div>
     </div>
 
-    <h3>Python examples — /api/v2/chat/ai</h3>
+    <h4 style="font-size:12px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Python examples</h4>
 
-    <h3 style="margin-top:14px">Basic request</h3>
+    <div style="margin-bottom:4px;font-size:12px;font-weight:600;color:var(--txt2)">Basic request</div>
     <div class="code-wrap">
       <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
       <div class="code-body"><pre>import requests
 
 resp = requests.post(
     "https://lonelyhub.net/api/v2/chat/ai",
-    headers={
-        "X-Token": "YOUR_API_TOKEN",
-        "Content-Type": "application/json",
-    },
+    headers={"X-Token": "YOUR_API_TOKEN", "Content-Type": "application/json"},
     json={
         "model": "gpt-4o-mini",
-        "messages": [
-            {"role": "user", "content": "How do I create a Minecraft mod in Java?"}
-        ],
+        "messages": [{"role": "user", "content": "How do I make a Minecraft mod?"}],
     },
 )
 data = resp.json()
 print(data["output"])</pre></div>
     </div>
 
-    <h3>Multi-turn conversation</h3>
+    <div style="margin-bottom:4px;font-size:12px;font-weight:600;color:var(--txt2)">Multi-turn conversation</div>
     <div class="code-wrap">
       <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
       <div class="code-body"><pre>import requests
 
-API_URL = "https://lonelyhub.net/api/v2/chat/ai"
+URL = "https://lonelyhub.net/api/v2/chat/ai"
 HEADERS = {"X-Token": "YOUR_API_TOKEN", "Content-Type": "application/json"}
-
 history = []
 
-def chat(user_message, model="gpt-4o-mini"):
-    history.append({"role": "user", "content": user_message})
-    resp = requests.post(API_URL, headers=HEADERS, json={
-        "model": model,
-        "messages": history,
-    })
-    data = resp.json()
-    reply = data["output"]
+def chat(msg, model="gpt-4o-mini"):
+    history.append({"role": "user", "content": msg})
+    r = requests.post(URL, headers=HEADERS, json={"model": model, "messages": history})
+    reply = r.json()["output"]
     history.append({"role": "assistant", "content": reply})
     return reply
 
-print(chat("What is the best way to start modding Minecraft?"))
-print(chat("Can you show me a simple example?"))</pre></div>
+print(chat("What is the best Minecraft modding framework?"))
+print(chat("Can you show me an example mod?"))</pre></div>
     </div>
 
-    <h3>Reasoning model with thinking enabled</h3>
+    <div style="margin-bottom:4px;font-size:12px;font-weight:600;color:var(--txt2)">Reasoning model</div>
     <div class="code-wrap">
       <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
       <div class="code-body"><pre>import requests
 
-resp = requests.post(
+r = requests.post(
     "https://lonelyhub.net/api/v2/chat/ai",
     headers={"X-Token": "YOUR_API_TOKEN", "Content-Type": "application/json"},
     json={
         "model": "nvidia-nemotron",
-        "messages": [
-            {"role": "user", "content": "Explain how Minecraft chunk loading works"}
-        ],
+        "messages": [{"role": "user", "content": "Explain Minecraft chunk loading"}],
         "thinking": True,
     },
 )
-data = resp.json()
-if data.get("thinking"):
-    print("[Reasoning]")
-    print(data["thinking"])
-    print("---")
-print(data["output"])</pre></div>
+d = r.json()
+if d.get("thinking"):
+    print(f"[Reasoned]\n{d['thinking']}\n---")
+print(d["output"])</pre></div>
     </div>
 
-    <h3>Streaming response</h3>
+    <div style="margin-bottom:4px;font-size:12px;font-weight:600;color:var(--txt2)">Streaming response</div>
     <div class="code-wrap">
       <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
       <div class="code-body"><pre>import requests, json
 
-resp = requests.post(
+r = requests.post(
     "https://lonelyhub.net/api/v2/chat/ai",
     headers={"X-Token": "YOUR_API_TOKEN", "Content-Type": "application/json"},
     json={
         "model": "gpt-4o-mini",
-        "messages": [{"role": "user", "content": "Tell me about Minecraft redstone"}],
+        "messages": [{"role": "user", "content": "Tell me about redstone"}],
         "stream": True,
     },
     stream=True,
 )
-for line in resp.iter_lines():
-    if not line:
-        continue
+for line in r.iter_lines():
+    if not line: continue
     text = line.decode() if isinstance(line, bytes) else line
-    if text == "data: [DONE]":
-        break
+    if text == "data: [DONE]": break
     if text.startswith("data: "):
-        event = json.loads(text[6:])
-        if event["type"] == "thinking":
-            print(f"[Reasoning] {event['content']}")
-        elif event["type"] == "content":
-            print(event["content"], end="", flush=True)
-        elif event["type"] == "error":
-            print(f"Error: {event['error']}")
+        ev = json.loads(text[6:])
+        if ev["type"] == "content":
+            print(ev["content"], end="", flush=True)
 print()</pre></div>
     </div>
-
-    <h2>Environment Variables</h2>
-    <p>Set these in your server's <code>.env</code> file. Each model uses its own dedicated API key.</p>
-    <table class="tbl">
-      <thead><tr><th>Variable</th><th>Required</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td><span class="env-key">SECRET_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>Flask session secret key</td></tr>
-        <tr><td><span class="env-key">OPENROUTER_API_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>Fallback OpenRouter key</td></tr>
-        <tr><td><span class="env-key">OPENROUTER_GPT4O_MINI_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>OpenRouter key for GPT-4o-mini</td></tr>
-        <tr><td><span class="env-key">OPENROUTER_LONELY_AI_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>OpenRouter/Poolside key for Lonely AI</td></tr>
-        <tr><td><span class="env-key">NVIDIA_NEMOTRON_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>NVIDIA NIM key for Nemotron</td></tr>
-        <tr><td><span class="env-key">NVIDIA_DEEPSEEK_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>NVIDIA NIM key for DeepSeek V4 Flash</td></tr>
-        <tr><td><span class="env-key">NVIDIA_LLAMA_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>NVIDIA NIM key for Llama-3.3-70b</td></tr>
-        <tr><td><span class="env-key">NVIDIA_KIMI_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>NVIDIA NIM key for Kimi K2.6</td></tr>
-        <tr><td><span class="env-key">GOOGLE_GEMINI_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>Google AI Studio key for Gemini Flash</td></tr>
-        <tr><td><span class="env-key">POOLSIDE_API_KEY</span></td><td><span class="badge badge-opt">Optional</span></td><td>Fallback Poolside key for Lonely AI</td></tr>
-        <tr><td><span class="env-key">DISCORD_CLIENT_ID</span></td><td><span class="badge badge-opt">Optional</span></td><td>Discord OAuth client ID</td></tr>
-        <tr><td><span class="env-key">DISCORD_CLIENT_SECRET</span></td><td><span class="badge badge-opt">Optional</span></td><td>Discord OAuth client secret</td></tr>
-        <tr><td><span class="env-key">DISCORD_REDIRECT_URI</span></td><td><span class="badge badge-opt">Optional</span></td><td>Discord OAuth redirect URI</td></tr>
-      </tbody>
-    </table>
   </div>
-  <script>
-  function copyCode(btn) {
-    var pre = btn.closest('.code-wrap').querySelector('pre');
-    navigator.clipboard.writeText(pre.innerText).then(function() {
-      btn.textContent = 'Copied!';
-      setTimeout(function() { btn.textContent = 'Copy'; }, 1500);
-    });
-  }
-  </script>
-  </body>
-  </html>
+
+  <!-- ── Session-based endpoints ── -->
+  <div class="section-label">Session-based endpoints (requires login cookie)</div>
+
+  <!-- /api/ai/send -->
+  <div class="acc" id="acc-send">
+    <div class="acc-hd" onclick="toggleAcc('acc-send')">
+      <div class="acc-hd-left">
+        <span class="method-post">POST</span>
+        <span class="acc-hd-path">/api/ai/send</span>
+        <span class="acc-hd-desc">Send message, get AI reply</span>
+      </div>
+      <svg class="acc-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="acc-body">
+      <p>Requires an active login session. Stores the message in chat history and returns the AI reply. Creates a new chat if no <code>chat_id</code> is provided.</p>
+      <h4>Request body</h4>
+      <table class="tbl">
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>model</code></td><td>string</td><td><span class="opt">Optional</span></td><td>Model key. Default: <code>gpt-4o-mini</code></td></tr>
+          <tr><td><code>message</code></td><td>string</td><td><span class="req">Required</span></td><td>User message text</td></tr>
+          <tr><td><code>chat_id</code></td><td>string</td><td><span class="opt">Optional</span></td><td>Continue an existing chat. Omit to start new.</td></tr>
+          <tr><td><code>thinking</code></td><td>boolean</td><td><span class="opt">Optional</span></td><td>Enable reasoning (reasoning models only)</td></tr>
+          <tr><td><code>files</code></td><td>array</td><td><span class="opt">Optional</span></td><td>File objects: <code>{"name","type","data"(base64),"text_content"}</code></td></tr>
+        </tbody>
+      </table>
+      <h4>Response</h4>
+      <table class="tbl">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>success</code></td><td>boolean</td><td>Request status</td></tr>
+          <tr><td><code>chat_id</code></td><td>string</td><td>Chat UUID — reuse for follow-up messages</td></tr>
+          <tr><td><code>title</code></td><td>string</td><td>Auto-generated chat title</td></tr>
+          <tr><td><code>output</code></td><td>string</td><td>AI response (Markdown)</td></tr>
+          <tr><td><code>thinking</code></td><td>string|null</td><td>Reasoning block</td></tr>
+          <tr><td><code>thinking_time</code></td><td>integer</td><td>Seconds spent reasoning</td></tr>
+          <tr><td><code>model_name</code></td><td>string</td><td>Display name of model used</td></tr>
+          <tr><td><code>model_image</code></td><td>string</td><td>Model avatar URL</td></tr>
+        </tbody>
+      </table>
+      <h4>Python example</h4>
+      <div class="code-wrap">
+        <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body"><pre>import requests
+
+session = requests.Session()
+# Copy your session cookie from browser DevTools
+session.cookies.set("session", "YOUR_SESSION_COOKIE", domain="lonelyhub.net")
+
+resp = session.post("https://lonelyhub.net/api/ai/send", json={
+    "model": "gpt-4o-mini",
+    "message": "How do I create a Minecraft mod in Java?",
+})
+data = resp.json()
+chat_id = data["chat_id"]
+print(data["output"])
+
+# Continue the chat
+resp2 = session.post("https://lonelyhub.net/api/ai/send", json={
+    "model": "gpt-4o-mini",
+    "message": "Can you show a full example?",
+    "chat_id": chat_id,
+})
+print(resp2.json()["output"])</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- /api/ai/send/{id}/retry -->
+  <div class="acc" id="acc-retry">
+    <div class="acc-hd" onclick="toggleAcc('acc-retry')">
+      <div class="acc-hd-left">
+        <span class="method-post">POST</span>
+        <span class="acc-hd-path">/api/ai/send/{chat_id}/retry</span>
+        <span class="acc-hd-desc">Retry last response</span>
+      </div>
+      <svg class="acc-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="acc-body">
+      <p>Removes the last assistant message and regenerates a response from the same conversation history.</p>
+      <h4>Request body</h4>
+      <table class="tbl">
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>thinking</code></td><td>boolean</td><td><span class="opt">Optional</span></td><td>Enable reasoning on retry</td></tr>
+        </tbody>
+      </table>
+      <h4>Response</h4>
+      <table class="tbl">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>success</code></td><td>boolean</td><td>Request status</td></tr>
+          <tr><td><code>output</code></td><td>string</td><td>New AI response</td></tr>
+          <tr><td><code>thinking</code></td><td>string|null</td><td>Reasoning block</td></tr>
+          <tr><td><code>thinking_time</code></td><td>integer</td><td>Seconds spent reasoning</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- /api/ai/chats GET -->
+  <div class="acc" id="acc-chats-list">
+    <div class="acc-hd" onclick="toggleAcc('acc-chats-list')">
+      <div class="acc-hd-left">
+        <span class="method-get">GET</span>
+        <span class="acc-hd-path">/api/ai/chats</span>
+        <span class="acc-hd-desc">List all chats</span>
+      </div>
+      <svg class="acc-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="acc-body">
+      <p>Returns a summary list of all chats for the logged-in user (no messages, just metadata).</p>
+      <h4>Response</h4>
+      <table class="tbl">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>success</code></td><td>boolean</td><td>Request status</td></tr>
+          <tr><td><code>chats</code></td><td>array</td><td>List of chat objects: <code>id</code>, <code>title</code>, <code>pinned</code>, <code>updated_at</code>, <code>model</code></td></tr>
+        </tbody>
+      </table>
+      <h4>Python example</h4>
+      <div class="code-wrap">
+        <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body"><pre>resp = session.get("https://lonelyhub.net/api/ai/chats")
+for chat in resp.json()["chats"]:
+    print(chat["id"], chat["title"])</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- /api/ai/chats/{id} GET -->
+  <div class="acc" id="acc-chat-get">
+    <div class="acc-hd" onclick="toggleAcc('acc-chat-get')">
+      <div class="acc-hd-left">
+        <span class="method-get">GET</span>
+        <span class="acc-hd-path">/api/ai/chats/{chat_id}</span>
+        <span class="acc-hd-desc">Get full chat with messages</span>
+      </div>
+      <svg class="acc-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="acc-body">
+      <p>Returns the full chat object including all messages.</p>
+      <h4>Response</h4>
+      <table class="tbl">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>success</code></td><td>boolean</td><td>Request status</td></tr>
+          <tr><td><code>chat</code></td><td>object</td><td>Full chat: <code>id</code>, <code>title</code>, <code>model</code>, <code>pinned</code>, <code>messages[]</code></td></tr>
+        </tbody>
+      </table>
+      <h4>Python example</h4>
+      <div class="code-wrap">
+        <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body"><pre>resp = session.get(f"https://lonelyhub.net/api/ai/chats/{chat_id}")
+chat = resp.json()["chat"]
+for msg in chat["messages"]:
+    print(f"[{msg['role']}]", msg["content"][:80])</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- /api/ai/chats/{id} PATCH -->
+  <div class="acc" id="acc-chat-patch">
+    <div class="acc-hd" onclick="toggleAcc('acc-chat-patch')">
+      <div class="acc-hd-left">
+        <span class="method-patch">PATCH</span>
+        <span class="acc-hd-path">/api/ai/chats/{chat_id}</span>
+        <span class="acc-hd-desc">Rename or pin a chat</span>
+      </div>
+      <svg class="acc-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="acc-body">
+      <h4>Request body</h4>
+      <table class="tbl">
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>title</code></td><td>string</td><td><span class="opt">Optional</span></td><td>New chat title</td></tr>
+          <tr><td><code>pinned</code></td><td>boolean</td><td><span class="opt">Optional</span></td><td>Pin or unpin the chat</td></tr>
+        </tbody>
+      </table>
+      <h4>Python example</h4>
+      <div class="code-wrap">
+        <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body"><pre># Rename
+session.patch(f"https://lonelyhub.net/api/ai/chats/{chat_id}",
+    json={"title": "My new chat name"})
+
+# Pin
+session.patch(f"https://lonelyhub.net/api/ai/chats/{chat_id}",
+    json={"pinned": True})</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- /api/ai/chats/{id} DELETE -->
+  <div class="acc" id="acc-chat-delete">
+    <div class="acc-hd" onclick="toggleAcc('acc-chat-delete')">
+      <div class="acc-hd-left">
+        <span class="method-delete">DELETE</span>
+        <span class="acc-hd-path">/api/ai/chats/{chat_id}</span>
+        <span class="acc-hd-desc">Delete a chat</span>
+      </div>
+      <svg class="acc-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="acc-body">
+      <p>Permanently deletes the chat and all its messages.</p>
+      <h4>Python example</h4>
+      <div class="code-wrap">
+        <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body"><pre>resp = session.delete(f"https://lonelyhub.net/api/ai/chats/{chat_id}")
+print(resp.json())  # {"success": true}</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- /api/ai/models -->
+  <div class="acc" id="acc-models">
+    <div class="acc-hd" onclick="toggleAcc('acc-models')">
+      <div class="acc-hd-left">
+        <span class="method-get">GET</span>
+        <span class="acc-hd-path">/api/ai/models</span>
+        <span class="acc-hd-desc">List available models</span>
+      </div>
+      <svg class="acc-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="acc-body">
+      <p>Returns the full model configuration object (public, no auth required).</p>
+      <h4>Python example</h4>
+      <div class="code-wrap">
+        <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+        <div class="code-body"><pre>import requests
+models = requests.get("https://lonelyhub.net/api/ai/models").json()["models"]
+for key, cfg in models.items():
+    print(key, "—", cfg["name"], "reasoning:" if cfg["thinking"] else "")</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Environment Variables -->
+  <div class="section-label" style="margin-top:44px">Environment Variables</div>
+  <p style="color:var(--txt2);margin-bottom:14px;font-size:13px">Each model uses its own dedicated API key. Set these in your <code>.env</code> file.</p>
+  <table class="tbl">
+    <thead><tr><th>Variable</th><th>Required</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><span class="env-key">SECRET_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>Flask session secret</td></tr>
+      <tr><td><span class="env-key">OPENROUTER_GPT4O_MINI_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>OpenRouter key for GPT-4o-mini</td></tr>
+      <tr><td><span class="env-key">NVIDIA_NEMOTRON_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>NVIDIA NIM key for Nemotron</td></tr>
+      <tr><td><span class="env-key">NVIDIA_DEEPSEEK_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>NVIDIA NIM key for DeepSeek V4 Flash</td></tr>
+      <tr><td><span class="env-key">NVIDIA_LLAMA_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>NVIDIA NIM key for Llama-3.3-70b</td></tr>
+      <tr><td><span class="env-key">NVIDIA_KIMI_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>NVIDIA NIM key for Kimi K2.6</td></tr>
+      <tr><td><span class="env-key">POOLSIDE_API_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>Poolside key for Lonely AI</td></tr>
+      <tr><td><span class="env-key">GOOGLE_GEMINI_KEY</span></td><td><span class="badge badge-req">Required</span></td><td>Google AI Studio key for Gemini Flash</td></tr>
+      <tr><td><span class="env-key">OPENROUTER_API_KEY</span></td><td><span class="badge badge-opt">Optional</span></td><td>Fallback OpenRouter key</td></tr>
+      <tr><td><span class="env-key">DISCORD_CLIENT_ID</span></td><td><span class="badge badge-opt">Optional</span></td><td>Discord OAuth client ID</td></tr>
+      <tr><td><span class="env-key">DISCORD_CLIENT_SECRET</span></td><td><span class="badge badge-opt">Optional</span></td><td>Discord OAuth client secret</td></tr>
+      <tr><td><span class="env-key">DISCORD_REDIRECT_URI</span></td><td><span class="badge badge-opt">Optional</span></td><td>Discord OAuth redirect URI</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<script>
+function toggleAcc(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+function copyCode(btn) {
+  var pre = btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(function() {
+    btn.textContent = 'Copied!';
+    setTimeout(function() { btn.textContent = 'Copy'; }, 1500);
+  });
+}
+</script>
+</body>
+</html>

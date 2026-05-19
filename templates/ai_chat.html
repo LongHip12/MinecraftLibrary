@@ -5,474 +5,392 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lonely AI — Lonely Hub</title>
 <link rel="icon" type="image/jpeg" href="https://i.imgur.com/xY7M2iE.jpeg">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-*{-webkit-tap-highlight-color:transparent!important;-webkit-focus-ring-color:transparent!important}
+*{-webkit-tap-highlight-color:transparent!important}
 *:focus{outline:none!important;box-shadow:none!important}
-button,a,input,textarea,select{-webkit-tap-highlight-color:transparent!important;outline:none!important;-webkit-appearance:none}
-input[type="text"]:focus,textarea:focus{outline:none!important;box-shadow:none!important}
+button,a,input,textarea,select{-webkit-tap-highlight-color:transparent!important;outline:none!important}
 :root{
-  --bg:#0c0e11;--bg2:#111418;--bg3:#191d24;--bg4:#20242d;--bg5:#272c36;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
-  --text:#e2e5ea;--text2:#8b929e;--text3:#555d6b;
-  --primary:#e05252;--primary-dim:rgba(224,82,82,0.12);--primary-border:rgba(224,82,82,0.25);
-  --think:#a78bfa;--think-dim:rgba(167,139,250,0.1);
-  --radius:14px;--sb:260px;--topbar:52px;
+  --primary:rgb(250,80,80);--primary-dark:rgb(200,50,50);
+  --primary-light:rgba(250,80,80,0.15);--primary-glow:rgba(250,80,80,0.4);
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--bg4:#20202e;--bg5:#272736;
+  --card:rgba(20,20,32,0.9);
+  --border:rgba(250,80,80,0.2);--border2:rgba(255,255,255,0.06);
+  --text:#f0f0f5;--text2:#a0a0b0;--text3:#606070;
+  --green:#4ade80;--red:rgb(250,80,80);--blue:#60a5fa;--yellow:#fbbf24;
+  --radius:12px;--radius-sm:8px;
+  --shadow:0 4px 24px rgba(0,0,0,0.5);
+  --sb-w:240px;--rnav-w:220px;--topbar-h:52px;
 }
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px}
-button{cursor:pointer;background:none;border:none;color:inherit;font-family:inherit;font-size:inherit;-webkit-tap-highlight-color:transparent}
-a{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
-textarea{font-family:inherit;font-size:inherit;color:inherit}
-input{font-family:inherit;color:inherit}
-::-webkit-scrollbar{width:5px;height:5px}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Inter','Segoe UI',system-ui,sans-serif;font-size:14px}
+button{cursor:pointer;background:none;border:none;color:inherit;font-family:inherit}
+a{color:inherit;text-decoration:none}
+textarea,input{font-family:inherit;color:inherit}
+::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:6px}
+::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:4px}
 
-.site-nav{position:fixed;top:0;left:0;right:0;z-index:300;height:52px;background:rgba(12,14,17,.95);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;padding:0 16px;gap:2px}
-.site-nav-logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;color:#e2e5ea;text-decoration:none;margin-right:8px;flex-shrink:0}
-.site-nav-logo img{width:28px;height:28px;border-radius:7px;object-fit:cover}
-.site-nav-link{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:9px;font-size:13px;font-weight:500;color:#8b929e;text-decoration:none;transition:background .13s,color .13s;flex-shrink:0;-webkit-tap-highlight-color:transparent}
-.site-nav-link:hover{background:#191d24;color:#e2e5ea}
-.site-nav-link:focus{outline:none}
-.site-nav-link.active{color:#e05252}
-.site-nav-link svg{flex-shrink:0;opacity:.75}
-.site-nav-right{margin-left:auto;display:flex;align-items:center;gap:6px}
-.site-nav-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.1);flex-shrink:0}
-@media(max-width:640px){
-  .site-nav-link span{display:none}
-  .site-nav-link{padding:6px 8px}
-  .site-nav-link svg{opacity:.85}
-}
-@media(max-width:400px){
-  .site-nav-link.nav-hide-xs{display:none}
-}
-
-.ai-sb-new-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;background:rgba(224,82,82,.12);border:1px solid rgba(224,82,82,.25);border-radius:10px;color:#e05252;font-size:13px;font-weight:600;cursor:pointer;transition:background .13s,border-color .13s;-webkit-tap-highlight-color:transparent}
-.ai-sb-new-btn:hover{background:rgba(224,82,82,.2);border-color:#e05252}
-.ai-sb-search-wrap{position:relative;margin-top:8px}
-.ai-sb-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#555d6b;pointer-events:none}
-.ai-sb-search{width:100%;background:#191d24;border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:7px 10px 7px 32px;font-size:13px;color:#e2e5ea;font-family:inherit;transition:border-color .15s;-webkit-appearance:none}
-.ai-sb-search::placeholder{color:#555d6b}
-.ai-sb-search:focus{border-color:rgba(255,255,255,.15);outline:none}
-.ai-chat-del{opacity:0;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#555d6b;transition:background .12s,color .12s,opacity .12s;flex-shrink:0;margin-left:auto;-webkit-tap-highlight-color:transparent}
-@media(hover:hover){.ai-chat-item:hover .ai-chat-del{opacity:1}}
-@media(hover:none){.ai-chat-del{opacity:.45}}
-.ai-chat-del:hover{background:rgba(248,113,113,.12);color:#f87171}
-
-.ai-layout{display:flex;height:100vh;height:100dvh;overflow:hidden;position:relative;padding-top:52px}
-
-.ai-sb{
-  width:var(--sb);flex-shrink:0;background:var(--bg2);
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;overflow:hidden;
-  transition:transform .22s cubic-bezier(.4,0,.2,1),width .22s cubic-bezier(.4,0,.2,1);
-  z-index:20;
-}
-.ai-sb.closed{width:0;transform:translateX(-100%)}
-.ai-sb-head{
-  padding:12px 10px 10px;display:flex;flex-direction:column;gap:0;
-  flex-shrink:0;border-bottom:1px solid var(--border);
-}
-.ai-sb-list{flex:1;overflow-y:auto;padding:8px 6px}
-.ai-sb-section{font-size:10.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;padding:6px 8px 4px}
-.ai-chat-item{
-  display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:10px;
-  cursor:pointer;color:var(--text2);font-size:13px;position:relative;
-  margin:1px 0;transition:background .13s,color .13s;user-select:none;
-}
-.ai-chat-item:hover{background:var(--bg3);color:var(--text)}
-.ai-chat-item.active{background:var(--bg4);color:var(--text)}
-.ai-chat-pin{width:7px;height:7px;background:var(--primary);border-radius:50%;flex-shrink:0}
-.ai-chat-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
-.ai-sb-empty{padding:24px 12px;text-align:center;color:var(--text3);font-size:13px}
-
-.ai-overlay{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:19;
-}
+/* ─── Overlay ─── */
+.ai-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40}
 .ai-overlay.on{display:block}
 
-.ai-ctx{
-  position:fixed;background:var(--bg3);border:1px solid var(--border2);
-  border-radius:12px;padding:6px;min-width:160px;z-index:1000;
-  box-shadow:0 12px 40px rgba(0,0,0,.6);display:none;
-}
-.ai-ctx.on{display:block}
-.ai-ctx-item{
-  display:flex;align-items:center;gap:9px;padding:9px 12px;
-  border-radius:8px;font-size:13px;color:var(--text);cursor:pointer;
-  transition:background .12s;-webkit-tap-highlight-color:transparent;
-}
-.ai-ctx-item:hover{background:var(--bg4)}
-.ai-ctx-item.danger{color:#f87171}
-.ai-ctx-item svg{flex-shrink:0;opacity:.75}
+/* ─── Root layout ─── */
+.ai-root{display:flex;height:100vh;height:100dvh;overflow:hidden}
 
-.ai-modal-bg{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);
-  z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(4px);
+/* ─── LEFT sidebar — chat history ─── */
+.ai-sb{
+  width:var(--sb-w);flex-shrink:0;
+  background:var(--bg2);border-right:1px solid var(--border2);
+  display:flex;flex-direction:column;overflow:hidden;z-index:30;
+  transition:transform .22s cubic-bezier(.4,0,.2,1),width .22s cubic-bezier(.4,0,.2,1);
 }
-.ai-modal-bg.on{display:flex}
-.ai-modal-box{
-  background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);
-  padding:28px 28px 24px;min-width:320px;max-width:90vw;
+.ai-sb.closed{width:0;transform:translateX(-100%);border-right:none}
+.ai-sb-head{padding:12px 10px 10px;flex-shrink:0;border-bottom:1px solid var(--border2);display:flex;flex-direction:column;gap:0}
+.ai-sb-new-btn{
+  display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;
+  background:rgba(250,80,80,.12);border:1px solid rgba(250,80,80,.25);
+  border-radius:10px;color:var(--primary);font-size:13px;font-weight:600;
+  cursor:pointer;transition:background .13s,border-color .13s;
 }
-.ai-modal-title{font-size:16px;font-weight:700;margin-bottom:16px}
-.ai-modal-input{
-  width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:10px;
-  padding:10px 14px;font-size:14px;outline:none;color:var(--text);
+.ai-sb-new-btn:hover{background:rgba(250,80,80,.22);border-color:var(--primary)}
+.ai-sb-search-wrap{position:relative;margin-top:8px}
+.ai-sb-search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
+.ai-sb-search{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:8px;padding:7px 10px 7px 30px;font-size:13px;color:var(--text);
+  transition:border-color .15s;
 }
-.ai-modal-input:focus{border-color:var(--primary);outline:none}
-.ai-modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
-.ai-modal-cancel{padding:8px 18px;border-radius:8px;font-size:13px;color:var(--text2);border:1px solid var(--border2);-webkit-tap-highlight-color:transparent}
-.ai-modal-cancel:hover{background:var(--bg4)}
-.ai-modal-ok{padding:8px 18px;border-radius:8px;font-size:13px;background:var(--primary);color:#fff;font-weight:600;-webkit-tap-highlight-color:transparent}
-.ai-modal-ok:hover{opacity:.88}
+.ai-sb-search::placeholder{color:var(--text3)}
+.ai-sb-search:focus{border-color:rgba(255,255,255,.14)}
+.ai-sb-list{flex:1;overflow-y:auto;padding:6px}
+.ai-sb-section{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;padding:8px 8px 4px}
+.ai-chat-item{
+  display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:9px;
+  cursor:pointer;color:var(--text2);font-size:13px;margin:1px 0;
+  transition:background .13s,color .13s;user-select:none;
+}
+.ai-chat-item:hover{background:var(--bg3);color:var(--text)}
+.ai-chat-item.active{background:rgba(250,80,80,.1);color:var(--text);border:1px solid rgba(250,80,80,.15)}
+.ai-chat-item.active{margin:0}
+.ai-chat-pin{width:6px;height:6px;background:var(--primary);border-radius:50%;flex-shrink:0}
+.ai-chat-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai-chat-del{
+  opacity:0;width:20px;height:20px;border-radius:5px;display:flex;align-items:center;
+  justify-content:center;color:var(--text3);transition:background .12s,color .12s,opacity .12s;flex-shrink:0;
+}
+@media(hover:hover){.ai-chat-item:hover .ai-chat-del{opacity:1}}
+@media(hover:none){.ai-chat-del{opacity:.5}}
+.ai-chat-del:hover{background:rgba(248,113,113,.15);color:#f87171}
+.ai-sb-empty{padding:28px 12px;text-align:center;color:var(--text3);font-size:13px;line-height:1.6}
 
+/* ─── RIGHT sidebar — site navigation ─── */
+.ai-rnav{
+  width:var(--rnav-w);flex-shrink:0;
+  background:var(--bg2);border-left:1px solid var(--border2);
+  display:flex;flex-direction:column;overflow:hidden;z-index:30;
+  transition:transform .22s cubic-bezier(.4,0,.2,1),width .22s cubic-bezier(.4,0,.2,1);
+}
+.ai-rnav.closed{width:0;transform:translateX(100%);border-left:none}
+.ai-rnav-logo{
+  display:flex;align-items:center;gap:10px;padding:16px 14px 12px;
+  font-size:17px;font-weight:800;flex-shrink:0;border-bottom:1px solid var(--border2);
+}
+.ai-rnav-logo img{width:32px;height:32px;border-radius:9px;object-fit:cover;box-shadow:0 0 0 1.5px rgba(250,80,80,.3);flex-shrink:0}
+.ai-rnav-logo span{
+  background:linear-gradient(135deg,#ff7070,var(--primary));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.ai-rnav-nav{flex:1;overflow-y:auto;padding:8px 8px}
+.ai-rnav-link{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);
+  font-size:14px;font-weight:500;color:var(--text2);transition:color .2s,background .2s;
+  margin:1px 0;
+}
+.ai-rnav-link:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.ai-rnav-link.active{color:var(--text);background:rgba(250,80,80,.1)}
+.ai-rnav-link svg{flex-shrink:0;opacity:.8}
+.ai-rnav-link.discord-link{color:#7289da}
+.ai-rnav-link.discord-link:hover{color:#fff;background:rgba(88,101,242,.15)}
+.ai-rnav-link.admin-link{color:var(--yellow)}
+.ai-rnav-footer{
+  border-top:1px solid var(--border2);padding:10px 8px;flex-shrink:0;
+}
+.ai-rnav-user{
+  display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);
+  transition:background .2s;text-decoration:none;
+}
+.ai-rnav-user:hover{background:rgba(255,255,255,.04)}
+.ai-rnav-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid var(--border2)}
+.ai-rnav-user-info{min-width:0;flex:1}
+.ai-rnav-user-name{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai-rnav-user-sub{font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai-rnav-auth-btns{display:flex;gap:6px;padding:4px 2px}
+.ai-rnav-btn-ghost{
+  flex:1;padding:8px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;
+  color:var(--text2);border:1px solid var(--border2);text-align:center;
+  transition:background .15s,color .15s;
+}
+.ai-rnav-btn-ghost:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.ai-rnav-btn-primary{
+  flex:1;padding:8px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;
+  background:var(--primary);color:#fff;text-align:center;
+  transition:opacity .15s;
+}
+.ai-rnav-btn-primary:hover{opacity:.85}
+
+/* ─── Main content ─── */
 .ai-main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
 
+/* ─── Topbar — only model selector + toggles ─── */
 .ai-topbar{
-  height:var(--topbar);display:flex;align-items:center;padding:0 10px;gap:6px;
-  border-bottom:1px solid var(--border);flex-shrink:0;
+  height:var(--topbar-h);display:flex;align-items:center;padding:0 10px;gap:6px;
+  border-bottom:1px solid var(--border2);flex-shrink:0;
+  background:rgba(10,10,15,.85);backdrop-filter:blur(20px) saturate(160%);
 }
 .ai-icon-btn{
-  width:34px;height:34px;border-radius:8px;display:flex;align-items:center;
+  width:34px;height:34px;border-radius:var(--radius-sm);display:flex;align-items:center;
   justify-content:center;color:var(--text2);transition:background .13s,color .13s;flex-shrink:0;
-  -webkit-tap-highlight-color:transparent;
 }
-.ai-icon-btn:hover{background:var(--bg3);color:var(--text)}
-.ai-topbar-right{margin-left:auto}
+.ai-icon-btn:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.ai-topbar-center{flex:1;display:flex;justify-content:center}
 
+/* ─── Model selector ─── */
 .ai-model-sel{position:relative}
 .ai-model-btn{
   display:flex;align-items:center;gap:7px;padding:6px 10px 6px 8px;
-  background:var(--bg3);border:1px solid var(--border);border-radius:20px;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:20px;
   cursor:pointer;color:var(--text);font-size:13px;font-weight:500;
-  transition:background .13s,border-color .13s;-webkit-tap-highlight-color:transparent;
+  transition:background .13s,border-color .13s;
 }
-.ai-model-btn:hover{background:var(--bg4);border-color:var(--border2)}
+.ai-model-btn:hover{background:var(--bg4);border-color:rgba(255,255,255,.12)}
 .ai-model-btn img{width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0}
-.ai-model-chevron{opacity:.5;transition:transform .2s}
+.ai-model-chevron{opacity:.5;transition:transform .2s;flex-shrink:0}
 .ai-model-chevron.open{transform:rotate(180deg)}
 .ai-model-dd{
-  position:absolute;top:calc(100% + 6px);right:0;
-  background:var(--bg3);border:1px solid var(--border2);border-radius:14px;
-  padding:6px;min-width:230px;z-index:200;
-  box-shadow:0 16px 48px rgba(0,0,0,.6);
-  display:none;
+  position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:var(--bg3);border:1px solid rgba(255,255,255,.1);border-radius:14px;
+  padding:6px;min-width:240px;z-index:200;
+  box-shadow:0 16px 48px rgba(0,0,0,.7);display:none;
 }
 .ai-model-dd.open{display:block}
 .ai-model-item{
   display:flex;align-items:center;gap:10px;padding:9px 10px;
-  border-radius:9px;cursor:pointer;transition:background .12s;-webkit-tap-highlight-color:transparent;
+  border-radius:9px;cursor:pointer;transition:background .12s;
 }
 .ai-model-item:hover{background:var(--bg4)}
-.ai-model-item.active{background:var(--primary-dim)}
+.ai-model-item.active{background:rgba(250,80,80,.12)}
 .ai-model-item img{width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0}
 .ai-model-item-info{flex:1;min-width:0}
 .ai-model-item-name{font-size:13px;font-weight:500;color:var(--text)}
-.ai-model-item-tag{
-  font-size:11px;color:var(--text3);display:flex;align-items:center;
-  gap:4px;margin-top:1px;
-}
-.ai-model-item-tag.think{color:var(--think)}
+.ai-model-item-tag{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;margin-top:1px}
+.ai-model-item-tag.think{color:#a78bfa}
 .ai-model-item-check{color:var(--primary);opacity:0}
 .ai-model-item.active .ai-model-item-check{opacity:1}
 
-.ai-msgs{
-  flex:1;overflow-y:auto;padding:20px 16px 12px;
-  display:flex;flex-direction:column;gap:18px;
+/* ─── Context menu ─── */
+.ai-ctx{
+  position:fixed;background:var(--bg3);border:1px solid rgba(255,255,255,.1);
+  border-radius:12px;padding:5px;min-width:155px;z-index:1000;
+  box-shadow:0 12px 40px rgba(0,0,0,.7);display:none;
 }
+.ai-ctx.on{display:block}
+.ai-ctx-item{
+  display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:7px;
+  font-size:13px;color:var(--text);cursor:pointer;transition:background .12s;
+}
+.ai-ctx-item:hover{background:var(--bg4)}
+.ai-ctx-item.danger{color:#f87171}
+.ai-ctx-item svg{opacity:.7;flex-shrink:0}
+
+/* ─── Rename modal ─── */
+.ai-modal-bg{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:2000;align-items:center;justify-content:center;
+}
+.ai-modal-bg.on{display:flex}
+.ai-modal-box{
+  background:var(--bg3);border:1px solid rgba(255,255,255,.1);border-radius:14px;
+  padding:26px 26px 22px;min-width:300px;max-width:90vw;
+}
+.ai-modal-title{font-size:16px;font-weight:700;margin-bottom:14px}
+.ai-modal-input{
+  width:100%;background:var(--bg4);border:1px solid rgba(255,255,255,.1);border-radius:9px;
+  padding:10px 13px;font-size:14px;color:var(--text);transition:border-color .15s;
+}
+.ai-modal-input:focus{border-color:var(--primary)}
+.ai-modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.ai-modal-cancel{
+  padding:7px 16px;border-radius:7px;font-size:13px;color:var(--text2);
+  border:1px solid var(--border2);transition:background .12s;
+}
+.ai-modal-cancel:hover{background:var(--bg4)}
+.ai-modal-ok{
+  padding:7px 16px;border-radius:7px;font-size:13px;background:var(--primary);
+  color:#fff;font-weight:600;transition:opacity .12s;
+}
+.ai-modal-ok:hover{opacity:.85}
+
+/* ─── Messages ─── */
+.ai-msgs{flex:1;overflow-y:auto;padding:20px 16px 12px;display:flex;flex-direction:column}
 .ai-msgs-inner{display:flex;flex-direction:column;gap:18px;max-width:760px;width:100%;margin:0 auto}
 
-.ai-welcome{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;padding:40px 20px 20px;
-}
+.ai-welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px 20px}
 .ai-welcome-icon{
-  width:72px;height:72px;border-radius:20px;
-  background:var(--primary-dim);border:1px solid var(--primary-border);
-  display:flex;align-items:center;justify-content:center;margin-bottom:20px;
-  flex-shrink:0;
+  width:68px;height:68px;border-radius:18px;
+  background:rgba(250,80,80,.12);border:1px solid rgba(250,80,80,.25);
+  display:flex;align-items:center;justify-content:center;margin-bottom:18px;
 }
-.ai-welcome-title{font-size:26px;font-weight:800;margin-bottom:6px;text-align:center}
-.ai-welcome-sub{font-size:14px;color:var(--text2);margin-bottom:32px;text-align:center}
-.ai-suggestions{
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:500px;width:100%;
-}
+.ai-welcome-title{font-size:24px;font-weight:800;margin-bottom:6px;text-align:center}
+.ai-welcome-sub{font-size:14px;color:var(--text2);margin-bottom:28px;text-align:center}
+.ai-suggestions{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:480px;width:100%}
 .ai-sug-card{
-  background:var(--bg3);border:1px solid var(--border);border-radius:14px;
-  padding:16px 16px 14px;cursor:pointer;text-align:left;
-  transition:background .15s,border-color .15s,transform .12s;-webkit-tap-highlight-color:transparent;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:12px;
+  padding:14px;cursor:pointer;text-align:left;transition:background .15s,border-color .15s,transform .12s;
 }
-.ai-sug-card:hover{background:var(--bg4);border-color:var(--border2);transform:translateY(-1px)}
-.ai-sug-card svg{display:block;margin-bottom:10px;opacity:.8}
+.ai-sug-card:hover{background:var(--bg4);border-color:rgba(255,255,255,.1);transform:translateY(-1px)}
+.ai-sug-card svg{display:block;margin-bottom:9px;opacity:.75}
 .ai-sug-card-text{font-size:13px;color:var(--text);line-height:1.5}
 
 .ai-msg{display:flex;gap:10px;max-width:760px;width:100%;margin:0 auto;position:relative}
 .ai-msg.user{flex-direction:row-reverse;align-self:flex-end}
 .ai-msg.assistant{align-self:flex-start}
-.ai-msg-avatar{
-  width:28px;height:28px;border-radius:50%;object-fit:cover;
-  flex-shrink:0;margin-top:2px;
-}
+.ai-msg-avatar{width:27px;height:27px;border-radius:50%;object-fit:cover;flex-shrink:0;margin-top:2px}
 .ai-msg-body{display:flex;flex-direction:column;gap:4px;min-width:0;max-width:680px}
 .ai-msg.user .ai-msg-body{align-items:flex-end}
-.ai-msg-meta{
-  display:flex;align-items:center;gap:6px;font-size:11.5px;
-  color:var(--text3);padding:0 4px;
-}
+.ai-msg-meta{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);padding:0 2px}
 .ai-msg.user .ai-msg-meta{flex-direction:row-reverse}
-.ai-msg-meta img{width:16px;height:16px;border-radius:50%;object-fit:cover}
-.ai-msg-bubble{
-  padding:12px 16px;border-radius:16px;font-size:14px;
-  line-height:1.7;word-break:break-word;
-}
+.ai-msg-meta img{width:15px;height:15px;border-radius:50%;object-fit:cover}
+.ai-msg-bubble{padding:11px 15px;border-radius:16px;font-size:14px;line-height:1.7;word-break:break-word}
 .ai-msg.user .ai-msg-bubble{
-  background:var(--primary-dim);border:1px solid var(--primary-border);
-  border-radius:18px 4px 18px 18px;color:var(--text);
+  background:rgba(250,80,80,.13);border:1px solid rgba(250,80,80,.2);
+  border-radius:17px 4px 17px 17px;color:var(--text);
 }
 .ai-msg.assistant .ai-msg-bubble{
-  background:var(--bg3);border:1px solid var(--border);
-  border-radius:4px 18px 18px 18px;color:var(--text);
+  background:var(--bg3);border:1px solid var(--border2);
+  border-radius:4px 17px 17px 17px;color:var(--text);
 }
-.ai-msg-file-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.ai-msg-file-thumb{
-  border-radius:8px;overflow:hidden;max-width:200px;max-height:150px;
-  border:1px solid var(--border);
-}
+.ai-msg-file-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.ai-msg-file-thumb{border-radius:8px;overflow:hidden;max-width:180px;max-height:130px;border:1px solid var(--border2)}
 .ai-msg-file-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.ai-msg-file-chip{
-  display:flex;align-items:center;gap:6px;background:var(--bg4);
-  border:1px solid var(--border);border-radius:8px;padding:6px 10px;
-  font-size:12px;color:var(--text2);
-}
+.ai-msg-file-chip{display:flex;align-items:center;gap:5px;background:var(--bg4);border:1px solid var(--border2);border-radius:7px;padding:5px 9px;font-size:12px;color:var(--text2)}
 
-.ai-thinking{
-  background:var(--think-dim);border:1px solid rgba(167,139,250,.2);
-  border-radius:12px;margin-bottom:6px;overflow:hidden;
-}
-.ai-thinking-hd{
-  display:flex;align-items:center;gap:7px;padding:9px 13px;
-  cursor:pointer;font-size:13px;color:var(--think);user-select:none;-webkit-tap-highlight-color:transparent;
-}
+.ai-thinking{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.18);border-radius:11px;margin-bottom:5px;overflow:hidden}
+.ai-thinking-hd{display:flex;align-items:center;gap:7px;padding:8px 12px;cursor:pointer;font-size:13px;color:#a78bfa;user-select:none}
 .ai-thinking-hd svg{flex-shrink:0}
-.ai-thinking-hd .ai-think-chev{transition:transform .2s;margin-left:auto;opacity:.6}
+.ai-think-chev{transition:transform .2s;margin-left:auto;opacity:.6}
 .ai-thinking-hd.open .ai-think-chev{transform:rotate(90deg)}
-.ai-thinking-bd{
-  display:none;padding:10px 14px 13px;
-  font-size:12.5px;color:var(--text2);line-height:1.7;
-  border-top:1px solid rgba(167,139,250,.15);
-  white-space:pre-wrap;word-break:break-word;
-}
+.ai-thinking-bd{display:none;padding:9px 13px 12px;font-size:12.5px;color:var(--text2);line-height:1.7;border-top:1px solid rgba(167,139,250,.12);white-space:pre-wrap;word-break:break-word}
 .ai-thinking-bd.open{display:block}
 
-@keyframes _aidot{0%,60%,100%{transform:translateY(0);opacity:.3}30%{transform:translateY(-5px);opacity:1}}
-.ai-dots{display:flex;align-items:center;gap:4px;padding:14px 16px}
-.ai-dots span{
-  width:7px;height:7px;background:var(--text3);border-radius:50%;
-  animation:_aidot 1.2s infinite;
-}
+@keyframes _dot{0%,60%,100%{transform:translateY(0);opacity:.3}30%{transform:translateY(-4px);opacity:1}}
+.ai-dots{display:flex;align-items:center;gap:4px;padding:13px 15px}
+.ai-dots span{width:6px;height:6px;background:var(--text3);border-radius:50%;animation:_dot 1.2s infinite}
 .ai-dots span:nth-child(2){animation-delay:.15s}
 .ai-dots span:nth-child(3){animation-delay:.3s}
 
-.ai-msg-actions{
-  display:flex;align-items:center;gap:2px;margin-top:4px;padding:0 2px;
-  opacity:0;transition:opacity .15s;
-}
+.ai-msg-actions{display:flex;align-items:center;gap:2px;margin-top:3px;padding:0 2px;opacity:0;transition:opacity .15s}
 .ai-msg:hover .ai-msg-actions{opacity:1}
-.ai-msg-action-btn{
-  width:28px;height:28px;border-radius:7px;display:flex;align-items:center;
-  justify-content:center;color:var(--text3);transition:background .12s,color .12s;-webkit-tap-highlight-color:transparent;
-}
+.ai-msg-action-btn{width:27px;height:27px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:background .12s,color .12s}
 .ai-msg-action-btn:hover{background:var(--bg4);color:var(--text2)}
 
-.ai-code-wrap{
-  background:#13151a;border:1px solid rgba(255,255,255,.09);
-  border-radius:12px;margin:10px 0;overflow:hidden;
-}
-.ai-code-hd{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:8px 14px;background:#1a1d24;
-  border-bottom:1px solid rgba(255,255,255,.07);
-}
-.ai-code-lang{
-  font-size:11px;font-weight:600;color:#8b929e;
-  text-transform:uppercase;letter-spacing:.6px;
-}
-.ai-code-copy{
-  display:flex;align-items:center;gap:5px;font-size:11px;
-  color:#8b929e;padding:3px 8px;border-radius:6px;
-  transition:background .12s,color .12s;-webkit-tap-highlight-color:transparent;
-}
+.ai-code-wrap{background:#0d1117;border:1px solid rgba(255,255,255,.08);border-radius:11px;margin:9px 0;overflow:hidden}
+.ai-code-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 13px;background:#161b22;border-bottom:1px solid rgba(255,255,255,.07)}
+.ai-code-lang{font-size:11px;font-weight:600;color:#8b929e;text-transform:uppercase;letter-spacing:.5px}
+.ai-code-copy{display:flex;align-items:center;gap:4px;font-size:11px;color:#8b929e;padding:2px 7px;border-radius:5px;transition:background .12s,color .12s}
 .ai-code-copy:hover{background:rgba(255,255,255,.07);color:#c9d1d9}
 .ai-code-body{overflow-x:auto}
 .ai-code-body pre{margin:0}
-.ai-code-body code.hljs{background:transparent;padding:14px 16px;font-size:13px;line-height:1.6}
+.ai-code-body code.hljs{background:transparent;padding:13px 15px;font-size:13px;line-height:1.6}
 
-.ai-input-section{
-  flex-shrink:0;padding:8px 16px;
-  padding-bottom:max(14px, env(safe-area-inset-bottom, 14px));
-  border-top:1px solid var(--border);background:var(--bg);
-}
-.ai-file-prevs{
-  display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;
-  max-width:760px;margin-left:auto;margin-right:auto;
-}
-.ai-file-prev-item{
-  position:relative;border-radius:9px;overflow:hidden;
-  border:1px solid var(--border);background:var(--bg3);
-}
-.ai-file-prev-item img{width:64px;height:64px;object-fit:cover;display:block}
-.ai-file-prev-chip{
-  display:flex;align-items:center;gap:6px;padding:7px 10px;
-  font-size:12px;color:var(--text2);
-}
-.ai-file-prev-rm{
-  position:absolute;top:3px;right:3px;width:18px;height:18px;
-  background:rgba(0,0,0,.7);border-radius:50%;display:flex;
-  align-items:center;justify-content:center;color:#fff;font-size:11px;-webkit-tap-highlight-color:transparent;
-}
-.ai-input-bar{
-  display:flex;align-items:flex-end;gap:6px;
-  background:var(--bg3);border:1px solid var(--border);border-radius:16px;
-  padding:10px 10px 10px 16px;max-width:760px;margin:0 auto;
-  transition:border-color .15s;
-}
-.ai-input-bar:focus-within{border-color:var(--border2)}
-.ai-ta{
-  flex:1;background:none;border:none;outline:none;resize:none;
-  font-size:14px;line-height:1.6;color:var(--text);
-  max-height:200px;overflow-y:auto;min-height:24px;
-}
-.ai-ta::placeholder{color:var(--text3)}
-.ai-input-btns{display:flex;align-items:center;gap:3px;flex-shrink:0}
-.ai-attach-lbl{
-  width:34px;height:34px;border-radius:8px;display:flex;align-items:center;
-  justify-content:center;color:var(--text3);cursor:pointer;
-  transition:background .12s,color .12s;-webkit-tap-highlight-color:transparent;
-}
-.ai-attach-lbl:hover{background:var(--bg4);color:var(--text2)}
-.ai-think-btn{
-  width:34px;height:34px;border-radius:8px;display:flex;align-items:center;
-  justify-content:center;color:var(--text3);transition:background .12s,color .12s;-webkit-tap-highlight-color:transparent;
-}
-.ai-think-btn.active{
-  color:var(--think);background:var(--think-dim);
-}
-.ai-think-btn:hover{background:var(--bg4);color:var(--text2)}
-.ai-think-btn.active:hover{background:rgba(167,139,250,.18);color:var(--think)}
-@keyframes _spinElectron{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-.ai-think-btn.active svg{animation:_spinElectron 4s linear infinite}
-.ai-send-btn{
-  width:34px;height:34px;border-radius:9px;background:var(--primary);
-  display:flex;align-items:center;justify-content:center;color:#fff;
-  transition:opacity .13s,transform .13s;flex-shrink:0;-webkit-tap-highlight-color:transparent;
-}
-.ai-send-btn:hover{opacity:.85;transform:scale(1.04)}
-.ai-send-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
-.ai-disclaimer{
-  font-size:11.5px;color:var(--text3);text-align:center;
-  margin-top:8px;max-width:760px;margin-left:auto;margin-right:auto;
-}
-
-.ai-msg-bubble h1,.ai-msg-bubble h2,.ai-msg-bubble h3{font-weight:700;margin:14px 0 6px;line-height:1.3}
+.ai-msg-bubble h1,.ai-msg-bubble h2,.ai-msg-bubble h3{font-weight:700;margin:12px 0 5px;line-height:1.3}
 .ai-msg-bubble h1{font-size:18px}.ai-msg-bubble h2{font-size:16px}.ai-msg-bubble h3{font-size:14px}
-.ai-msg-bubble p{margin:6px 0}
-.ai-msg-bubble p:first-child{margin-top:0}
-.ai-msg-bubble p:last-child{margin-bottom:0}
-.ai-msg-bubble ul,.ai-msg-bubble ol{padding-left:20px;margin:6px 0}
-.ai-msg-bubble li{margin:3px 0}
-.ai-msg-bubble strong{font-weight:700}
-.ai-msg-bubble em{font-style:italic}
-.ai-msg-bubble code:not([class]){
-  background:rgba(255,255,255,.08);border-radius:5px;
-  padding:2px 6px;font-size:13px;font-family:'Fira Code','Courier New',monospace;
-  color:#a5f3fc;
-}
-.ai-msg-bubble blockquote{
-  border-left:3px solid var(--border2);padding-left:12px;
-  color:var(--text2);margin:8px 0;font-style:italic;
-}
+.ai-msg-bubble p{margin:5px 0}.ai-msg-bubble p:first-child{margin-top:0}.ai-msg-bubble p:last-child{margin-bottom:0}
+.ai-msg-bubble ul,.ai-msg-bubble ol{padding-left:18px;margin:5px 0}
+.ai-msg-bubble li{margin:2px 0}
+.ai-msg-bubble strong{font-weight:700}.ai-msg-bubble em{font-style:italic}
+.ai-msg-bubble code:not([class]){background:rgba(255,255,255,.08);border-radius:4px;padding:2px 5px;font-size:12.5px;font-family:'Fira Code','Courier New',monospace;color:#a5f3fc}
 .ai-msg-bubble a{color:var(--primary);text-decoration:underline}
-.ai-msg-bubble table{border-collapse:collapse;width:100%;margin:8px 0;font-size:13px}
-.ai-msg-bubble th,.ai-msg-bubble td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+.ai-msg-bubble blockquote{border-left:3px solid var(--border2);padding-left:11px;color:var(--text2);margin:7px 0;font-style:italic}
+.ai-msg-bubble table{border-collapse:collapse;width:100%;margin:7px 0;font-size:13px}
+.ai-msg-bubble th,.ai-msg-bubble td{border:1px solid var(--border2);padding:5px 9px;text-align:left}
 .ai-msg-bubble th{background:var(--bg4);font-weight:600}
-.ai-msg-bubble hr{border:none;border-top:1px solid var(--border);margin:12px 0}
+.ai-msg-bubble hr{border:none;border-top:1px solid var(--border2);margin:10px 0}
 
 @keyframes _blink{0%,100%{opacity:1}50%{opacity:0}}
-.ai-cursor::after{content:'▌';animation:_blink .8s step-end infinite;font-size:12px;color:var(--text3)}
+.ai-cursor::after{content:'▌';animation:_blink .8s step-end infinite;font-size:11px;color:var(--text3)}
 
-@media(max-width:768px){
-  .ai-sb{position:absolute;height:100%;z-index:20;transform:translateX(-100%)}
-  .ai-sb.open{transform:translateX(0)}
+/* ─── Input ─── */
+.ai-input-section{
+  flex-shrink:0;padding:8px 14px;
+  padding-bottom:max(12px,env(safe-area-inset-bottom,12px));
+  border-top:1px solid var(--border2);background:var(--bg);
+}
+.ai-file-prevs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px;max-width:760px;margin-left:auto;margin-right:auto}
+.ai-file-prev-item{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border2);background:var(--bg3)}
+.ai-file-prev-item img{width:58px;height:58px;object-fit:cover;display:block}
+.ai-file-prev-chip{display:flex;align-items:center;gap:5px;padding:6px 10px;font-size:12px;color:var(--text2)}
+.ai-file-prev-rm{position:absolute;top:2px;right:2px;width:16px;height:16px;background:rgba(0,0,0,.7);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;line-height:1}
+.ai-input-bar{
+  display:flex;align-items:flex-end;gap:5px;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:15px;
+  padding:9px 9px 9px 14px;max-width:760px;margin:0 auto;transition:border-color .15s;
+}
+.ai-input-bar:focus-within{border-color:rgba(255,255,255,.14)}
+.ai-ta{flex:1;background:none;border:none;outline:none;resize:none;font-size:14px;line-height:1.6;color:var(--text);max-height:190px;overflow-y:auto;min-height:22px}
+.ai-ta::placeholder{color:var(--text3)}
+.ai-input-btns{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.ai-attach-lbl{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--text3);cursor:pointer;transition:background .12s,color .12s}
+.ai-attach-lbl:hover{background:var(--bg4);color:var(--text2)}
+.ai-think-btn{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:background .12s,color .12s}
+.ai-think-btn.active{color:#a78bfa;background:rgba(167,139,250,.12)}
+.ai-think-btn:hover{background:var(--bg4);color:var(--text2)}
+.ai-think-btn.active:hover{background:rgba(167,139,250,.2);color:#a78bfa}
+@keyframes _spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.ai-think-btn.active svg{animation:_spin 4s linear infinite}
+.ai-send-btn{width:32px;height:32px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;transition:opacity .13s,transform .13s;flex-shrink:0}
+.ai-send-btn:hover{opacity:.85;transform:scale(1.05)}
+.ai-send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.ai-disclaimer{font-size:11px;color:var(--text3);text-align:center;margin-top:7px;max-width:760px;margin-left:auto;margin-right:auto}
+
+/* ─── Mobile ─── */
+@media(max-width:900px){
+  .ai-sb{position:fixed;top:0;left:0;height:100%;transform:translateX(-100%)}
+  .ai-sb.mob-open{transform:translateX(0)}
+  .ai-rnav{position:fixed;top:0;right:0;height:100%;transform:translateX(100%)}
+  .ai-rnav.mob-open{transform:translateX(0)}
+  .ai-root{padding:0}
   .ai-suggestions{grid-template-columns:1fr}
+}
+@media(min-width:901px){
+  .ai-sb{position:relative}
+  .ai-rnav{position:relative}
 }
 </style>
 </head>
 <body>
 
-<nav class="site-nav">
-  <a href="/" class="site-nav-logo">
-    <img src="https://i.imgur.com/xY7M2iE.jpeg" alt="Lonely Hub">
-    <span>Lonely Hub</span>
-  </a>
-  <a href="/" class="site-nav-link nav-hide-xs" title="Home">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <span>Home</span>
-  </a>
-  <a href="/mods" class="site-nav-link" title="Mods">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-    <span>Mods</span>
-  </a>
-  <a href="/clients" class="site-nav-link" title="Clients">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/><line x1="6" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="14" y2="12"/></svg>
-    <span>Clients</span>
-  </a>
-  <a href="/forum" class="site-nav-link nav-hide-xs" title="Forum">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    <span>Forum</span>
-  </a>
-  <a href="/ai-chat" class="site-nav-link active" title="AI Chat">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>
-    <span>AI Chat</span>
-  </a>
-  <div class="site-nav-right">
-    <div class="ai-model-sel" id="ai-model-sel">
-      <button class="ai-model-btn" id="ai-model-btn" onclick="toggleModelDD(event)">
-        <img id="ai-model-img" src="https://i.imgur.com/0DwnmdY.jpeg" alt="">
-        <span id="ai-model-name-lbl">GPT-4o-mini</span>
-        <svg class="ai-model-chevron" id="ai-model-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      <div class="ai-model-dd" id="ai-model-dd"></div>
-    </div>
-    {% if user %}
-    <a href="/users/{{ user.username }}" title="{{ user.display_name }}">
-      <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="" class="site-nav-avatar" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
-    </a>
-    {% else %}
-    <a href="/login" style="font-size:13px;font-weight:600;color:var(--text2);padding:5px 12px;border:1px solid var(--border);border-radius:8px;transition:background .13s,color .13s" onmouseover="this.style.background='#191d24';this.style.color='#e2e5ea'" onmouseout="this.style.background='';this.style.color=''">Sign In</a>
-    {% endif %}
-  </div>
-</nav>
+<!-- Shared overlay for both drawers -->
+<div class="ai-overlay" id="ai-overlay" onclick="closeAllDrawers()"></div>
 
-<div class="ai-overlay" id="ai-overlay" onclick="closeSidebar()"></div>
-
+<!-- Context menu -->
 <div class="ai-ctx" id="ai-ctx">
   <div class="ai-ctx-item" onclick="ctxRename()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
     Rename
   </div>
   <div class="ai-ctx-item" id="ai-ctx-pin" onclick="ctxPin()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
     <span id="ai-ctx-pin-label">Pin</span>
   </div>
   <div class="ai-ctx-item danger" onclick="ctxDelete()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
     Delete
   </div>
 </div>
 
+<!-- Rename modal -->
 <div class="ai-modal-bg" id="ai-rename-bg">
   <div class="ai-modal-box">
     <div class="ai-modal-title">Rename chat</div>
@@ -484,64 +402,148 @@ input{font-family:inherit;color:inherit}
   </div>
 </div>
 
-<div class="ai-layout">
+<div class="ai-root">
+
+  <!-- LEFT sidebar: chat history -->
   <aside class="ai-sb" id="ai-sb">
     <div class="ai-sb-head">
       <button class="ai-sb-new-btn" onclick="startNewChat()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Create a new chat
       </button>
       <div class="ai-sb-search-wrap">
         <div class="ai-sb-search-icon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
         <input class="ai-sb-search" id="ai-sb-search" type="text" placeholder="Search chats...">
       </div>
     </div>
     <div class="ai-sb-list" id="ai-sb-list">
-      <div class="ai-sb-empty" id="ai-sb-empty">No chats yet</div>
+      <div class="ai-sb-empty" id="ai-sb-empty">No chats yet.<br>Start a conversation above.</div>
     </div>
   </aside>
 
+  <!-- MAIN content -->
   <div class="ai-main">
+
+    <!-- Topbar: only toggle buttons + model selector -->
     <div class="ai-topbar">
-      <button class="ai-icon-btn" id="ai-sb-toggle" onclick="toggleSidebar()" title="Chats">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <button class="ai-icon-btn" onclick="toggleSb()" title="Chat history">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       </button>
-      <button class="ai-icon-btn" onclick="startNewChat()" title="New chat">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+      <div class="ai-topbar-center">
+        <div class="ai-model-sel" id="ai-model-sel">
+          <button class="ai-model-btn" id="ai-model-btn" onclick="toggleModelDD(event)">
+            <img id="ai-model-img" src="https://i.imgur.com/0DwnmdY.jpeg" alt="">
+            <span id="ai-model-name-lbl">GPT-4o-mini</span>
+            <svg class="ai-model-chevron" id="ai-model-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="ai-model-dd" id="ai-model-dd"></div>
+        </div>
+      </div>
+      <button class="ai-icon-btn" onclick="toggleRnav()" title="Navigation">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
     </div>
 
+    <!-- Messages -->
     <div class="ai-msgs" id="ai-msgs">
       <div class="ai-msgs-inner" id="ai-msgs-inner"></div>
     </div>
 
+    <!-- Input -->
     <div class="ai-input-section">
       <div class="ai-file-prevs" id="ai-file-prevs"></div>
-      <div class="ai-input-bar" id="ai-input-bar">
+      <div class="ai-input-bar">
         <textarea class="ai-ta" id="ai-ta" rows="1" placeholder="Ask Lonely AI anything..."></textarea>
         <div class="ai-input-btns">
-          <label class="ai-attach-lbl" title="Upload file" for="ai-file-input">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          <label class="ai-attach-lbl" for="ai-file-input" title="Upload file">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           </label>
           <input type="file" id="ai-file-input" multiple accept="image/*,text/*,.pdf,.json,.md,.csv,.txt" style="display:none">
           <button class="ai-think-btn" id="ai-think-btn" onclick="toggleThinking()" title="Reasoning" style="display:none">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="2.2"/>
-              <ellipse cx="12" cy="12" rx="10" ry="4"/>
-              <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/>
-              <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/>
-            </svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>
           </button>
           <button class="ai-send-btn" id="ai-send-btn" onclick="sendMsg()" title="Send">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
         </div>
       </div>
       <p class="ai-disclaimer">AI can make mistakes. Check important info.</p>
     </div>
   </div>
+
+  <!-- RIGHT sidebar: site navigation (matches main site exactly) -->
+  <aside class="ai-rnav" id="ai-rnav">
+    <div class="ai-rnav-logo">
+      <img src="https://i.imgur.com/xY7M2iE.jpeg" alt="Lonely Hub">
+      <span>Lonely Hub</span>
+    </div>
+    <nav class="ai-rnav-nav">
+      <a href="/" class="ai-rnav-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Home</span>
+      </a>
+      <a href="/mods" class="ai-rnav-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span>Mods</span>
+      </a>
+      <a href="/clients" class="ai-rnav-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/><line x1="6" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="14" y2="12"/></svg>
+        <span>Clients</span>
+      </a>
+      <a href="/forum" class="ai-rnav-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>Forum</span>
+      </a>
+      <a href="/ai-chat" class="ai-rnav-link active">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>
+        <span>AI Chat</span>
+      </a>
+      {% if user %}
+      <a href="/upload" class="ai-rnav-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>Upload</span>
+      </a>
+      <a href="/dashboard" class="ai-rnav-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>Dashboard</span>
+      </a>
+      {% if user.tag == 'admin' %}
+      <a href="/admin/dashboard" class="ai-rnav-link admin-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span>Admin</span>
+      </a>
+      {% endif %}
+      {% endif %}
+      <a href="/api/docs" class="ai-rnav-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        <span>API Docs</span>
+      </a>
+      <a href="https://dsc.gg/lonelyhub" target="_blank" class="ai-rnav-link discord-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+        <span>Discord</span>
+      </a>
+    </nav>
+    <div class="ai-rnav-footer">
+      {% if user %}
+      <a href="/users/{{ user.username }}" class="ai-rnav-user">
+        <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="" class="ai-rnav-avatar" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
+        <div class="ai-rnav-user-info">
+          <div class="ai-rnav-user-name">{{ user.display_name }}</div>
+          <div class="ai-rnav-user-sub">@{{ user.username }}</div>
+        </div>
+      </a>
+      <a href="/logout" class="ai-rnav-btn-ghost" style="display:block;margin-top:6px;text-align:center;padding:7px;border-radius:8px;font-size:13px;color:var(--text2);border:1px solid var(--border2);transition:background .15s">Sign Out</a>
+      {% else %}
+      <div class="ai-rnav-auth-btns">
+        <a href="/login" class="ai-rnav-btn-ghost">Sign In</a>
+        <a href="/register" class="ai-rnav-btn-primary">Register</a>
+      </div>
+      {% endif %}
+    </div>
+  </aside>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
@@ -557,56 +559,76 @@ var S = {
   thinking: false,
   sending: false,
   sbOpen: false,
+  rnavOpen: false,
   pendingFiles: [],
   ctxId: null,
   ctxPinned: false,
 };
 
 marked.setOptions({ breaks: true, gfm: true });
-var _markedRenderer = new marked.Renderer();
-_markedRenderer.code = function(code, lang) {
+var _mr = new marked.Renderer();
+_mr.code = function(code, lang) {
   var language = (lang || 'text').toLowerCase();
   var validLang = hljs.getLanguage(language) ? language : 'text';
-  var highlighted;
-  try { highlighted = hljs.highlight(code, { language: validLang }).value; }
-  catch(e) { highlighted = hljs.highlightAuto(code).value; }
-  var displayLang = lang || 'code';
-  return '<div class="ai-code-wrap">' +
-    '<div class="ai-code-hd">' +
-      '<span class="ai-code-lang">' + displayLang + '</span>' +
-      '<button class="ai-code-copy" onclick="copyCodeBlock(this)">' +
-        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
-        'Copy' +
-      '</button>' +
-    '</div>' +
-    '<div class="ai-code-body"><pre><code class="hljs">' + highlighted + '</code></pre></div>' +
-  '</div>';
+  var hl;
+  try { hl = hljs.highlight(code, { language: validLang }).value; }
+  catch(e) { hl = hljs.highlightAuto(code).value; }
+  return '<div class="ai-code-wrap"><div class="ai-code-hd"><span class="ai-code-lang">' + (lang || 'code') + '</span>' +
+    '<button class="ai-code-copy" onclick="copyCodeBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>' +
+    '</div><div class="ai-code-body"><pre><code class="hljs">' + hl + '</code></pre></div></div>';
 };
-marked.use({ renderer: _markedRenderer });
+marked.use({ renderer: _mr });
 
 function copyCodeBlock(btn) {
-  var wrap = btn.closest('.ai-code-wrap');
-  var code = wrap.querySelector('code').innerText;
+  var code = btn.closest('.ai-code-wrap').querySelector('code').innerText;
   navigator.clipboard.writeText(code).then(function() {
-    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Copied';
-    setTimeout(function() {
-      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy';
-    }, 1500);
+    btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Copied';
+    setTimeout(function() { btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy'; }, 1500);
   });
 }
 
+function isMobile() { return window.innerWidth <= 900; }
+
+function toggleSb() {
+  if (isMobile()) {
+    S.sbOpen = !S.sbOpen;
+    document.getElementById('ai-sb').classList.toggle('mob-open', S.sbOpen);
+    document.getElementById('ai-overlay').classList.toggle('on', S.sbOpen || S.rnavOpen);
+    if (S.sbOpen && S.rnavOpen) { S.rnavOpen = false; document.getElementById('ai-rnav').classList.remove('mob-open'); }
+  } else {
+    S.sbOpen = !S.sbOpen;
+    document.getElementById('ai-sb').classList.toggle('closed', !S.sbOpen);
+  }
+}
+
+function toggleRnav() {
+  if (isMobile()) {
+    S.rnavOpen = !S.rnavOpen;
+    document.getElementById('ai-rnav').classList.toggle('mob-open', S.rnavOpen);
+    document.getElementById('ai-overlay').classList.toggle('on', S.sbOpen || S.rnavOpen);
+    if (S.rnavOpen && S.sbOpen) { S.sbOpen = false; document.getElementById('ai-sb').classList.remove('mob-open'); }
+  } else {
+    S.rnavOpen = !S.rnavOpen;
+    document.getElementById('ai-rnav').classList.toggle('closed', !S.rnavOpen);
+  }
+}
+
+function closeAllDrawers() {
+  S.sbOpen = false; S.rnavOpen = false;
+  document.getElementById('ai-sb').classList.remove('mob-open');
+  document.getElementById('ai-rnav').classList.remove('mob-open');
+  document.getElementById('ai-overlay').classList.remove('on');
+}
+
 function renderModel(key) {
-  var cfg = MODELS[key];
-  if (!cfg) return;
+  var cfg = MODELS[key]; if (!cfg) return;
   S.model = key;
   document.getElementById('ai-model-img').src = cfg.image;
   document.getElementById('ai-model-name-lbl').textContent = cfg.name;
   var btn = document.getElementById('ai-think-btn');
   btn.style.display = cfg.thinking ? 'flex' : 'none';
   if (!cfg.thinking) { S.thinking = false; btn.classList.remove('active'); }
-  document.querySelectorAll('.ai-model-item').forEach(function(el) {
-    el.classList.toggle('active', el.dataset.key === key);
-  });
+  document.querySelectorAll('.ai-model-item').forEach(function(el) { el.classList.toggle('active', el.dataset.key === key); });
   closeModelDD();
 }
 
@@ -614,8 +636,8 @@ function toggleModelDD(e) {
   e.stopPropagation();
   var dd = document.getElementById('ai-model-dd');
   var chev = document.getElementById('ai-model-chev');
-  var open = dd.classList.toggle('open');
-  chev.classList.toggle('open', open);
+  dd.classList.toggle('open');
+  chev.classList.toggle('open', dd.classList.contains('open'));
 }
 function closeModelDD() {
   document.getElementById('ai-model-dd').classList.remove('open');
@@ -631,13 +653,11 @@ function buildModelDD() {
     item.className = 'ai-model-item' + (key === S.model ? ' active' : '');
     item.dataset.key = key;
     item.onclick = function() { renderModel(key); };
-    var tagHtml = cfg.thinking
-      ? '<span class="ai-model-item-tag think"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>Reasoning</span>'
+    var tag = cfg.thinking
+      ? '<span class="ai-model-item-tag think"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>Reasoning</span>'
       : '<span class="ai-model-item-tag">Standard</span>';
-    item.innerHTML =
-      '<img src="' + cfg.image + '" alt="">' +
-      '<div class="ai-model-item-info"><div class="ai-model-item-name">' + cfg.name + '</div>' + tagHtml + '</div>' +
-      '<svg class="ai-model-item-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    item.innerHTML = '<img src="' + cfg.image + '" alt=""><div class="ai-model-item-info"><div class="ai-model-item-name">' + cfg.name + '</div>' + tag + '</div>' +
+      '<svg class="ai-model-item-check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
     dd.appendChild(item);
   });
 }
@@ -648,55 +668,29 @@ function toggleThinking() {
   document.getElementById('ai-think-btn').classList.toggle('active', S.thinking);
 }
 
-function toggleSidebar() {
-  S.sbOpen = !S.sbOpen;
-  var sb = document.getElementById('ai-sb');
-  var ov = document.getElementById('ai-overlay');
-  if (window.innerWidth <= 768) {
-    sb.classList.toggle('open', S.sbOpen);
-    ov.classList.toggle('on', S.sbOpen);
-  } else {
-    sb.classList.toggle('closed', !S.sbOpen);
-  }
-}
-function closeSidebar() {
-  S.sbOpen = false;
-  document.getElementById('ai-sb').classList.remove('open');
-  document.getElementById('ai-overlay').classList.remove('on');
-}
-
 function showWelcome() {
-  var inner = document.getElementById('ai-msgs-inner');
-  inner.innerHTML =
+  document.getElementById('ai-msgs-inner').innerHTML =
     '<div class="ai-welcome">' +
-      '<div class="ai-welcome-icon">' +
-        '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e05252" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>' +
-      '</div>' +
+      '<div class="ai-welcome-icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="rgb(250,80,80)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg></div>' +
       '<div class="ai-welcome-title">Lonely AI</div>' +
       '<div class="ai-welcome-sub">Smart assistant — ask anything about Minecraft or coding</div>' +
       '<div class="ai-suggestions">' +
-        _sugCard('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>', 'Create a Minecraft mod in Java', 'Create a Minecraft mod in Java') +
-        _sugCard('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>', 'How to set up a Minecraft server', 'How to set up a Minecraft server') +
-        _sugCard('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', 'Best Minecraft seeds in 2025', 'Best Minecraft seeds in 2025') +
-        _sugCard('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', 'Fix common Minecraft Forge errors', 'Fix common Minecraft Forge errors') +
+        _sugCard('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>', 'Create a Minecraft mod in Java', 'Create a Minecraft mod in Java') +
+        _sugCard('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>', 'How to set up a Minecraft server', 'How to set up a Minecraft server') +
+        _sugCard('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', 'Best Minecraft seeds in 2025', 'Best Minecraft seeds in 2025') +
+        _sugCard('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', 'Fix Minecraft Forge errors', 'Fix common Minecraft Forge errors') +
       '</div>' +
     '</div>';
 }
 function _sugCard(icon, label, prompt) {
-  return '<button class="ai-sug-card" onclick="useSuggestion(\'' + prompt.replace(/'/g, "\\'") + '\')">' +
-    icon + '<div class="ai-sug-card-text">' + label + '</div></button>';
+  return '<button class="ai-sug-card" onclick="useSuggestion(\'' + prompt.replace(/'/g,"\\'") + '\')">' + icon + '<div class="ai-sug-card-text">' + label + '</div></button>';
 }
-function useSuggestion(text) {
-  document.getElementById('ai-ta').value = text;
-  autoGrowTA();
-  sendMsg();
-}
+function useSuggestion(text) { document.getElementById('ai-ta').value = text; autoGrowTA(); sendMsg(); }
 
 function loadChats() {
   if (!USER) return;
   fetch('/api/ai/chats').then(function(r) { return r.json(); }).then(function(d) {
-    if (!d.success) return;
-    renderChatList(d.chats);
+    if (d.success) renderChatList(d.chats);
   });
 }
 
@@ -704,19 +698,14 @@ function renderChatList(chats) {
   var list = document.getElementById('ai-sb-list');
   var empty = document.getElementById('ai-sb-empty');
   if (!chats || !chats.length) {
-    list.innerHTML = '';
-    list.appendChild(empty);
-    empty.style.display = 'block';
-    return;
+    list.innerHTML = ''; list.appendChild(empty); empty.style.display = 'block'; return;
   }
-  empty.style.display = 'none';
-  list.innerHTML = '';
+  empty.style.display = 'none'; list.innerHTML = '';
   var pinned = chats.filter(function(c) { return c.pinned; });
   var unpinned = chats.filter(function(c) { return !c.pinned; });
   if (pinned.length) {
     var ph = document.createElement('div'); ph.className = 'ai-sb-section'; ph.textContent = 'Pinned';
-    list.appendChild(ph);
-    pinned.forEach(function(c) { list.appendChild(_makeChatItem(c)); });
+    list.appendChild(ph); pinned.forEach(function(c) { list.appendChild(_makeChatItem(c)); });
   }
   if (unpinned.length) {
     if (pinned.length) {
@@ -725,33 +714,24 @@ function renderChatList(chats) {
     }
     unpinned.forEach(function(c) { list.appendChild(_makeChatItem(c)); });
   }
-  var searchEl = document.getElementById('ai-sb-search');
-  if (searchEl && searchEl.value.trim()) {
-    filterChats(searchEl.value.trim());
-  }
+  var q = document.getElementById('ai-sb-search').value.trim();
+  if (q) filterChats(q);
 }
 
 function _makeChatItem(c) {
   var el = document.createElement('div');
   el.className = 'ai-chat-item' + (c.id === S.chatId ? ' active' : '');
   el.id = 'ci-' + c.id;
-  el.onclick = function(e) {
-    if (e.target.closest('.ai-chat-del')) return;
-    openChat(c.id);
-  };
+  el.onclick = function(e) { if (e.target.closest('.ai-chat-del')) return; openChat(c.id); };
   el.addEventListener('contextmenu', function(e) { e.preventDefault(); showCtxMenu(e.clientX, e.clientY, c.id, c.pinned); });
   var _lp = null;
-  el.addEventListener('touchstart', function(e) {
-    _lp = setTimeout(function() { showCtxMenu(e.touches[0].clientX, e.touches[0].clientY, c.id, c.pinned); }, 600);
-  }, { passive: true });
+  el.addEventListener('touchstart', function(e) { _lp = setTimeout(function() { showCtxMenu(e.touches[0].clientX, e.touches[0].clientY, c.id, c.pinned); }, 600); }, { passive: true });
   el.addEventListener('touchend', function() { clearTimeout(_lp); });
   el.addEventListener('touchmove', function() { clearTimeout(_lp); });
-  var pin = c.pinned ? '<div class="ai-chat-pin"></div>' : '';
-  el.innerHTML = pin +
+  el.innerHTML = (c.pinned ? '<div class="ai-chat-pin"></div>' : '') +
     '<div class="ai-chat-title">' + _esc(c.title || 'New Chat') + '</div>' +
     '<button class="ai-chat-del" onclick="quickDelete(event,\'' + c.id + '\')" title="Delete">' +
-      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>' +
-    '</button>';
+    '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>';
   return el;
 }
 
@@ -760,19 +740,13 @@ function quickDelete(e, id) {
   var el = document.getElementById('ci-' + id);
   if (el) el.remove();
   fetch('/api/ai/chats/' + id, { method: 'DELETE' }).then(function() {
-    if (id === S.chatId) {
-      S.chatId = null;
-      showWelcome();
-      history.replaceState(null, '', '/ai-chat');
-    }
-    var list = document.getElementById('ai-sb-list');
-    var items = list.querySelectorAll('.ai-chat-item');
-    if (!items.length) {
+    if (id === S.chatId) { S.chatId = null; showWelcome(); history.replaceState(null, '', '/ai-chat'); }
+    var remaining = document.getElementById('ai-sb-list').querySelectorAll('.ai-chat-item');
+    if (!remaining.length) {
+      var list = document.getElementById('ai-sb-list');
       list.innerHTML = '';
-      var empty = document.getElementById('ai-sb-empty');
-      if (!empty) { empty = document.createElement('div'); empty.id = 'ai-sb-empty'; empty.className = 'ai-sb-empty'; empty.textContent = 'No chats yet'; }
-      list.appendChild(empty);
-      empty.style.display = 'block';
+      var emp = document.getElementById('ai-sb-empty') || (function() { var d = document.createElement('div'); d.id='ai-sb-empty';d.className='ai-sb-empty';d.innerHTML='No chats yet.<br>Start a conversation above.';return d; })();
+      list.appendChild(emp); emp.style.display = 'block';
     }
   });
 }
@@ -780,27 +754,21 @@ function quickDelete(e, id) {
 function filterChats(q) {
   q = (q || '').toLowerCase().trim();
   document.querySelectorAll('.ai-chat-item').forEach(function(el) {
-    var title = el.querySelector('.ai-chat-title');
-    if (!title) return;
-    el.style.display = (!q || title.textContent.toLowerCase().includes(q)) ? '' : 'none';
+    var t = el.querySelector('.ai-chat-title');
+    if (!t) return;
+    el.style.display = (!q || t.textContent.toLowerCase().includes(q)) ? '' : 'none';
   });
   document.querySelectorAll('.ai-sb-section').forEach(function(sec) {
-    var next = sec.nextElementSibling;
-    var anyVisible = false;
-    while (next && !next.classList.contains('ai-sb-section')) {
-      if (next.style.display !== 'none') anyVisible = true;
-      next = next.nextElementSibling;
-    }
-    sec.style.display = anyVisible ? '' : 'none';
+    var next = sec.nextElementSibling; var any = false;
+    while (next && !next.classList.contains('ai-sb-section')) { if (next.style.display !== 'none') any = true; next = next.nextElementSibling; }
+    sec.style.display = any ? '' : 'none';
   });
 }
 
 function openChat(id) {
   S.chatId = id;
-  document.querySelectorAll('.ai-chat-item').forEach(function(el) {
-    el.classList.toggle('active', el.id === 'ci-' + id);
-  });
-  if (window.innerWidth <= 768) closeSidebar();
+  document.querySelectorAll('.ai-chat-item').forEach(function(el) { el.classList.toggle('active', el.id === 'ci-' + id); });
+  if (isMobile()) closeAllDrawers();
   fetch('/api/ai/chats/' + id).then(function(r) { return r.json(); }).then(function(d) {
     if (!d.success) return;
     var chat = d.chat;
@@ -819,261 +787,159 @@ function startNewChat() {
   S.chatId = null;
   document.querySelectorAll('.ai-chat-item').forEach(function(el) { el.classList.remove('active'); });
   showWelcome();
-  if (window.innerWidth <= 768) closeSidebar();
+  if (isMobile()) closeAllDrawers();
   document.getElementById('ai-ta').focus();
 }
 
-function appendUserMsg(text, filesList) {
+function appendUserMsg(text, files) {
   var inner = document.getElementById('ai-msgs-inner');
   var el = document.createElement('div');
   el.className = 'ai-msg user';
-  var filesHtml = '';
-  if (filesList && filesList.length) {
-    filesHtml = '<div class="ai-msg-file-list">';
-    filesList.forEach(function(f) {
-      if (f.type.startsWith('image/')) {
-        filesHtml += '<div class="ai-msg-file-thumb"><img src="data:' + f.type + ';base64,' + f.data + '" alt=""></div>';
-      } else {
-        filesHtml += '<div class="ai-msg-file-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + _esc(f.name) + '</div>';
-      }
+  var fHtml = '';
+  if (files && files.length) {
+    fHtml = '<div class="ai-msg-file-list">';
+    files.forEach(function(f) {
+      if (f.type.startsWith('image/')) fHtml += '<div class="ai-msg-file-thumb"><img src="data:' + f.type + ';base64,' + f.data + '" alt=""></div>';
+      else fHtml += '<div class="ai-msg-file-chip"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + _esc(f.name) + '</div>';
     });
-    filesHtml += '</div>';
+    fHtml += '</div>';
   }
-  var avatar = USER && USER.avatar ? '<img class="ai-msg-avatar" src="' + USER.avatar + '" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' : '';
-  el.innerHTML = avatar +
-    '<div class="ai-msg-body"><div class="ai-msg-bubble">' + _esc(text) + '</div>' + filesHtml + '</div>';
-  inner.appendChild(el);
-  scrollBottom();
-  return el;
+  var av = USER && USER.avatar ? '<img class="ai-msg-avatar" src="' + USER.avatar + '" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' : '';
+  el.innerHTML = av + '<div class="ai-msg-body"><div class="ai-msg-bubble">' + _esc(text) + '</div>' + fHtml + '</div>';
+  inner.appendChild(el); scrollBottom(); return el;
 }
 
 function addLoadingMsg() {
   var inner = document.getElementById('ai-msgs-inner');
-  var el = document.createElement('div');
-  el.className = 'ai-msg assistant';
+  var el = document.createElement('div'); el.className = 'ai-msg assistant';
   var cfg = MODELS[S.model] || {};
-  el.innerHTML =
-    '<img class="ai-msg-avatar" src="' + (cfg.image || '') + '" alt="">' +
+  el.innerHTML = '<img class="ai-msg-avatar" src="' + (cfg.image || '') + '" alt="">' +
     '<div class="ai-msg-body"><div class="ai-msg-meta"><img src="' + (cfg.image || '') + '"><span>' + (cfg.name || 'AI') + '</span></div>' +
     '<div class="ai-dots"><span></span><span></span><span></span></div></div>';
-  inner.appendChild(el);
-  scrollBottom();
-  return el;
+  inner.appendChild(el); scrollBottom(); return el;
 }
 
 function appendAIMsg(output, thinking, thinkingTime, cfg, animate) {
   var inner = document.getElementById('ai-msgs-inner');
-  var el = document.createElement('div');
-  el.className = 'ai-msg assistant';
-  var modelImg = cfg && cfg.image ? cfg.image : '';
-  var modelName = cfg && cfg.name ? cfg.name : 'Lonely AI';
+  var el = document.createElement('div'); el.className = 'ai-msg assistant';
+  var img = cfg && cfg.image ? cfg.image : '';
+  var name = cfg && cfg.name ? cfg.name : 'Lonely AI';
   var thinkHtml = '';
   if (thinking) {
-    var label = thinkingTime > 0 ? 'Reasoned for ' + thinkingTime + 's' : 'Reasoning...';
-    thinkHtml =
-      '<div class="ai-thinking">' +
-        '<div class="ai-thinking-hd" onclick="toggleThinkBlock(this)">' +
-          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>' +
-          label +
-          '<svg class="ai-think-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>' +
-        '</div>' +
-        '<div class="ai-thinking-bd">' + _esc(thinking) + '</div>' +
-      '</div>';
+    var lbl = thinkingTime > 0 ? 'Reasoned for ' + thinkingTime + 's' : 'Reasoning...';
+    thinkHtml = '<div class="ai-thinking"><div class="ai-thinking-hd" onclick="toggleThinkBlock(this)">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>' +
+      lbl + '<svg class="ai-think-chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>' +
+      '</div><div class="ai-thinking-bd">' + _esc(thinking) + '</div></div>';
   }
-  var bubbleId = 'bubble-' + Date.now();
-  var actionsHtml =
-    '<div class="ai-msg-actions">' +
-      '<button class="ai-msg-action-btn" title="Copy" onclick="copyAIMsg(this)">' +
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
-      '</button>' +
-      '<button class="ai-msg-action-btn" title="Retry" onclick="retryMsg(this)">' +
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>' +
-      '</button>' +
+  var bid = 'bbl-' + Date.now();
+  var acts = '<div class="ai-msg-actions">' +
+    '<button class="ai-msg-action-btn" title="Copy" onclick="copyAIMsg(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' +
+    '<button class="ai-msg-action-btn" title="Retry" onclick="retryMsg(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg></button>' +
     '</div>';
-  el.innerHTML =
-    '<img class="ai-msg-avatar" src="' + modelImg + '" alt="">' +
-    '<div class="ai-msg-body">' +
-      '<div class="ai-msg-meta"><img src="' + modelImg + '" onerror="this.onerror=null;this.src=\'https://i.imgur.com/xY7M2iE.jpeg\'"><span>' + modelName + '</span></div>' +
-      thinkHtml +
-      '<div class="ai-msg-bubble ai-cursor" id="' + bubbleId + '"></div>' +
-      actionsHtml +
-    '</div>';
-  inner.appendChild(el);
-  scrollBottom();
-  var bubbleEl = document.getElementById(bubbleId);
-  if (animate) {
-    typeAndRender(bubbleEl, output, function() {
-      bubbleEl.classList.remove('ai-cursor');
-      scrollBottom();
-    });
-  } else {
-    bubbleEl.innerHTML = marked.parse(output || '');
-    bubbleEl.classList.remove('ai-cursor');
-  }
+  el.innerHTML = '<img class="ai-msg-avatar" src="' + img + '" alt="">' +
+    '<div class="ai-msg-body"><div class="ai-msg-meta"><img src="' + img + '" onerror="this.onerror=null;this.src=\'https://i.imgur.com/xY7M2iE.jpeg\'"><span>' + name + '</span></div>' +
+    thinkHtml + '<div class="ai-msg-bubble ai-cursor" id="' + bid + '"></div>' + acts + '</div>';
+  inner.appendChild(el); scrollBottom();
+  var bel = document.getElementById(bid);
+  if (animate) { typeAndRender(bel, output, function() { bel.classList.remove('ai-cursor'); scrollBottom(); }); }
+  else { bel.innerHTML = marked.parse(output || ''); bel.classList.remove('ai-cursor'); }
   return el;
 }
 
-function toggleThinkBlock(hd) {
-  hd.classList.toggle('open');
-  hd.nextElementSibling.classList.toggle('open');
-}
+function toggleThinkBlock(hd) { hd.classList.toggle('open'); hd.nextElementSibling.classList.toggle('open'); }
 
-function typeAndRender(el, text, onDone) {
-  if (!text) { el.innerHTML = marked.parse(''); if (onDone) onDone(); return; }
-  var len = text.length;
-  var chunkSize = Math.max(1, Math.floor(len / 200));
-  var delay = 10;
-  var i = 0;
-  function step() {
-    i = Math.min(i + chunkSize, len);
-    el.textContent = text.slice(0, i);
-    if (i < len) { setTimeout(step, delay); }
-    else {
-      el.innerHTML = marked.parse(text);
-      if (onDone) onDone();
-    }
-  }
-  step();
+function typeAndRender(el, text, cb) {
+  if (!text) { el.innerHTML = marked.parse(''); if (cb) cb(); return; }
+  var len = text.length; var chunk = Math.max(1, Math.floor(len / 200)); var i = 0;
+  (function step() {
+    i = Math.min(i + chunk, len); el.textContent = text.slice(0, i);
+    if (i < len) setTimeout(step, 10);
+    else { el.innerHTML = marked.parse(text); if (cb) cb(); }
+  })();
 }
 
 function copyAIMsg(btn) {
-  var bubble = btn.closest('.ai-msg-body').querySelector('.ai-msg-bubble');
-  var text = bubble.innerText || bubble.textContent;
-  navigator.clipboard.writeText(text);
+  var b = btn.closest('.ai-msg-body').querySelector('.ai-msg-bubble');
+  navigator.clipboard.writeText(b.innerText || b.textContent);
 }
 
 function retryMsg(btn) {
   if (S.sending || !S.chatId) return;
-  var msgEl = btn.closest('.ai-msg');
-  msgEl.remove();
-  S.sending = true;
-  document.getElementById('ai-send-btn').disabled = true;
-  var loadEl = addLoadingMsg();
-  fetch('/api/ai/send/' + S.chatId + '/retry', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ thinking: S.thinking })
-  }).then(function(r) { return r.json(); }).then(function(d) {
-    S.sending = false;
-    document.getElementById('ai-send-btn').disabled = false;
-    loadEl.remove();
-    if (!d.success) { addErrMsg(d.error || 'Error'); return; }
-    appendAIMsg(d.output, d.thinking, d.thinking_time, { name: d.model_name, image: d.model_image }, true);
-    scrollBottom();
-  }).catch(function() {
-    S.sending = false;
-    document.getElementById('ai-send-btn').disabled = false;
-    loadEl.remove();
-    addErrMsg('Network error');
-  });
+  btn.closest('.ai-msg').remove();
+  S.sending = true; document.getElementById('ai-send-btn').disabled = true;
+  var le = addLoadingMsg();
+  fetch('/api/ai/send/' + S.chatId + '/retry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ thinking: S.thinking }) })
+    .then(function(r) { return r.json(); }).then(function(d) {
+      S.sending = false; document.getElementById('ai-send-btn').disabled = false; le.remove();
+      if (!d.success) { addErrMsg(d.error || 'Error'); return; }
+      appendAIMsg(d.output, d.thinking, d.thinking_time, { name: d.model_name, image: d.model_image }, true);
+    }).catch(function() { S.sending = false; document.getElementById('ai-send-btn').disabled = false; le.remove(); addErrMsg('Network error'); });
 }
 
 function addErrMsg(txt) {
-  var inner = document.getElementById('ai-msgs-inner');
   var el = document.createElement('div');
   el.style.cssText = 'text-align:center;color:#f87171;font-size:13px;padding:10px';
   el.textContent = txt;
-  inner.appendChild(el);
-  scrollBottom();
+  document.getElementById('ai-msgs-inner').appendChild(el); scrollBottom();
 }
 
 function sendMsg() {
-  var ta = document.getElementById('ai-ta');
-  var text = ta.value.trim();
+  var ta = document.getElementById('ai-ta'); var text = ta.value.trim();
   if ((!text && S.pendingFiles.length === 0) || S.sending) return;
   if (!USER) { window.location.href = '/login'; return; }
-  S.sending = true;
-  document.getElementById('ai-send-btn').disabled = true;
-  var files = S.pendingFiles.slice();
-  S.pendingFiles = [];
+  S.sending = true; document.getElementById('ai-send-btn').disabled = true;
+  var files = S.pendingFiles.slice(); S.pendingFiles = [];
   document.getElementById('ai-file-prevs').innerHTML = '';
-  ta.value = '';
-  autoGrowTA();
-  appendUserMsg(text, files);
-  var loadEl = addLoadingMsg();
-  fetch('/api/ai/send', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: S.chatId, model: S.model, message: text, thinking: S.thinking, files: files })
-  }).then(function(r) { return r.json(); }).then(function(d) {
-    S.sending = false;
-    document.getElementById('ai-send-btn').disabled = false;
-    loadEl.remove();
-    if (!d.success) { addErrMsg(d.error || 'Error'); return; }
-    if (!S.chatId && d.chat_id) {
-      S.chatId = d.chat_id;
-      history.replaceState(null, '', '/ai-chat/' + d.chat_id);
-    }
-    appendAIMsg(d.output, d.thinking, d.thinking_time, { name: d.model_name, image: d.model_image }, true);
-    loadChats();
-    scrollBottom();
-  }).catch(function() {
-    S.sending = false;
-    document.getElementById('ai-send-btn').disabled = false;
-    loadEl.remove();
-    addErrMsg('Network error');
-  });
+  ta.value = ''; autoGrowTA();
+  appendUserMsg(text, files); var le = addLoadingMsg();
+  fetch('/api/ai/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: S.chatId, model: S.model, message: text, thinking: S.thinking, files: files }) })
+    .then(function(r) { return r.json(); }).then(function(d) {
+      S.sending = false; document.getElementById('ai-send-btn').disabled = false; le.remove();
+      if (!d.success) { addErrMsg(d.error || 'Error'); return; }
+      if (!S.chatId && d.chat_id) { S.chatId = d.chat_id; history.replaceState(null, '', '/ai-chat/' + d.chat_id); }
+      appendAIMsg(d.output, d.thinking, d.thinking_time, { name: d.model_name, image: d.model_image }, true);
+      loadChats(); scrollBottom();
+    }).catch(function() { S.sending = false; document.getElementById('ai-send-btn').disabled = false; le.remove(); addErrMsg('Network error'); });
 }
 
-function autoGrowTA() {
-  var ta = document.getElementById('ai-ta');
-  ta.style.height = 'auto';
-  ta.style.height = Math.min(ta.scrollHeight, 180) + 'px';
-}
-
-function scrollBottom() {
-  var msgs = document.getElementById('ai-msgs');
-  msgs.scrollTop = msgs.scrollHeight;
-}
-
-function _esc(t) {
-  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+function autoGrowTA() { var ta = document.getElementById('ai-ta'); ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 180) + 'px'; }
+function scrollBottom() { var m = document.getElementById('ai-msgs'); m.scrollTop = m.scrollHeight; }
+function _esc(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function showCtxMenu(x, y, id, pinned) {
-  S.ctxId = id;
-  S.ctxPinned = pinned;
+  S.ctxId = id; S.ctxPinned = pinned;
   document.getElementById('ai-ctx-pin-label').textContent = pinned ? 'Unpin' : 'Pin';
   var ctx = document.getElementById('ai-ctx');
-  ctx.style.left = Math.min(x, window.innerWidth - 180) + 'px';
-  ctx.style.top = Math.min(y, window.innerHeight - 130) + 'px';
+  ctx.style.left = Math.min(x, window.innerWidth - 170) + 'px';
+  ctx.style.top = Math.min(y, window.innerHeight - 120) + 'px';
   ctx.classList.add('on');
 }
 function closeCtxMenu() { document.getElementById('ai-ctx').classList.remove('on'); }
 
 function ctxRename() {
   closeCtxMenu();
-  var inp = document.getElementById('ai-rename-input');
   var el = document.getElementById('ci-' + S.ctxId);
-  inp.value = el ? (el.querySelector('.ai-chat-title').textContent) : '';
+  document.getElementById('ai-rename-input').value = el ? el.querySelector('.ai-chat-title').textContent : '';
   document.getElementById('ai-rename-bg').classList.add('on');
-  inp.focus();
-  inp.select();
+  document.getElementById('ai-rename-input').focus();
 }
 function closeRenameModal() { document.getElementById('ai-rename-bg').classList.remove('on'); }
 function saveRename() {
   var title = document.getElementById('ai-rename-input').value.trim();
   if (!title || !S.ctxId) { closeRenameModal(); return; }
-  fetch('/api/ai/chats/' + S.ctxId, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title: title })
-  }).then(function() { loadChats(); closeRenameModal(); });
+  fetch('/api/ai/chats/' + S.ctxId, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: title }) })
+    .then(function() { loadChats(); closeRenameModal(); });
 }
 
 function ctxPin() {
-  closeCtxMenu();
-  if (!S.ctxId) return;
-  fetch('/api/ai/chats/' + S.ctxId, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ pinned: !S.ctxPinned })
-  }).then(function() { loadChats(); });
+  closeCtxMenu(); if (!S.ctxId) return;
+  fetch('/api/ai/chats/' + S.ctxId, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pinned: !S.ctxPinned }) })
+    .then(function() { loadChats(); });
 }
 
 function ctxDelete() {
-  closeCtxMenu();
-  if (!S.ctxId) return;
+  closeCtxMenu(); if (!S.ctxId) return;
   var el = document.getElementById('ci-' + S.ctxId);
   if (el) el.remove();
   fetch('/api/ai/chats/' + S.ctxId, { method: 'DELETE' }).then(function() {
@@ -1083,9 +949,8 @@ function ctxDelete() {
 }
 
 function setupFileInput() {
-  var inp = document.getElementById('ai-file-input');
-  inp.addEventListener('change', function() {
-    Array.from(inp.files).forEach(function(file) {
+  document.getElementById('ai-file-input').addEventListener('change', function() {
+    Array.from(this.files).forEach(function(file) {
       var reader = new FileReader();
       if (file.type.startsWith('image/')) {
         reader.onload = function(e) {
@@ -1096,71 +961,63 @@ function setupFileInput() {
         reader.readAsDataURL(file);
       } else {
         reader.onload = function(e) {
-          var content = e.target.result;
-          S.pendingFiles.push({ name: file.name, type: file.type || 'text/plain', data: '', text_content: typeof content === 'string' ? content.slice(0, 8000) : '' });
+          S.pendingFiles.push({ name: file.name, type: file.type || 'text/plain', data: '', text_content: (typeof e.target.result === 'string' ? e.target.result.slice(0, 8000) : '') });
           addFilePrev({ name: file.name, type: file.type, idx: S.pendingFiles.length - 1 });
         };
         reader.readAsText(file);
       }
     });
-    inp.value = '';
+    this.value = '';
   });
 }
 
 function addFilePrev(f) {
   var prevs = document.getElementById('ai-file-prevs');
-  var item = document.createElement('div');
-  item.className = 'ai-file-prev-item';
-  item.dataset.idx = f.idx;
+  var item = document.createElement('div'); item.className = 'ai-file-prev-item'; item.dataset.idx = f.idx;
   if (f.type && f.type.startsWith('image/')) {
     item.innerHTML = '<img src="' + f.src + '" alt=""><button class="ai-file-prev-rm" onclick="removeFilePrev(this)">×</button>';
   } else {
-    item.innerHTML = '<div class="ai-file-prev-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + _esc(f.name) + '</div><button class="ai-file-prev-rm" style="position:relative;top:0;right:0;background:none;color:var(--text3);font-size:15px" onclick="removeFilePrev(this)">×</button>';
+    item.innerHTML = '<div class="ai-file-prev-chip"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + _esc(f.name) + '<button onclick="removeFilePrev(this)" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:0 0 0 6px;font-size:14px">×</button></div>';
   }
   prevs.appendChild(item);
 }
 
 function removeFilePrev(btn) {
   var item = btn.closest('.ai-file-prev-item');
-  var idx = parseInt(item.dataset.idx);
-  S.pendingFiles[idx] = null;
+  S.pendingFiles[parseInt(item.dataset.idx)] = null;
   item.remove();
-  S.pendingFiles = S.pendingFiles.filter(function(x) { return x !== null; });
+  S.pendingFiles = S.pendingFiles.filter(Boolean);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
   buildModelDD();
   renderModel('gpt-4o-mini');
   setupFileInput();
-  if (window.innerWidth >= 900) { S.sbOpen = true; }
-  else { document.getElementById('ai-sb').classList.add('closed'); }
+
+  if (!isMobile()) { S.sbOpen = true; S.rnavOpen = true; }
+  else {
+    document.getElementById('ai-sb').classList.remove('mob-open');
+    document.getElementById('ai-rnav').classList.remove('mob-open');
+  }
+
   var ta = document.getElementById('ai-ta');
   ta.addEventListener('input', autoGrowTA);
-  ta.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
-  });
+  ta.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } });
+
   document.addEventListener('click', function(e) {
     if (!document.getElementById('ai-model-sel').contains(e.target)) closeModelDD();
     if (!document.getElementById('ai-ctx').contains(e.target)) closeCtxMenu();
   });
-  document.getElementById('ai-rename-bg').addEventListener('click', function(e) {
-    if (e.target === this) closeRenameModal();
-  });
-  document.getElementById('ai-rename-input').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') saveRename();
-    if (e.key === 'Escape') closeRenameModal();
-  });
-  document.getElementById('ai-sb-search').addEventListener('input', function() {
-    filterChats(this.value);
-  });
+
+  document.getElementById('ai-rename-bg').addEventListener('click', function(e) { if (e.target === this) closeRenameModal(); });
+  document.getElementById('ai-rename-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') closeRenameModal(); });
+  document.getElementById('ai-sb-search').addEventListener('input', function() { filterChats(this.value); });
+
   if (USER) {
     loadChats();
-    if (OPEN_CHAT_ID) {
-      setTimeout(function() { openChat(OPEN_CHAT_ID); }, 300);
-    } else { showWelcome(); }
-  } else {
-    showWelcome();
-  }
+    if (OPEN_CHAT_ID) { setTimeout(function() { openChat(OPEN_CHAT_ID); }, 350); }
+    else { showWelcome(); }
+  } else { showWelcome(); }
 });
 </script>
 </body>
