@@ -877,18 +877,25 @@ function retryMsg(btn) {
           var _dEv = ev;
           if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
           ref = startStreamMsg(startCfg || {});
+          var _finishOutput = function() {
+            _twAdd(ref.bubble, contentBuf);
+            _twWhenDone(function() {
+              ref.bubble.innerHTML = marked.parse(contentBuf || '');
+              ref.bubble.classList.remove('ai-cursor');
+              scrollBottom();
+              S.sending = false; S.abortCtrl = null; setSendingUI(false);
+            });
+          };
           if (thinkBuf) {
             ref.thinkWrap.style.display = '';
-            ref.thinkBd.textContent = thinkBuf;
-            if (_dEv.thinking_time > 0) ref.thinkLbl.textContent = 'Thought for ' + _dEv.thinking_time + 's';
+            _twAdd(ref.thinkBd, thinkBuf);
+            _twWhenDone(function() {
+              ref.thinkLbl.textContent = _dEv.thinking_time > 0 ? 'Thought for ' + _dEv.thinking_time + 's' : 'Thought';
+              _finishOutput();
+            });
+          } else {
+            _finishOutput();
           }
-          _twAdd(ref.bubble, contentBuf);
-          _twWhenDone(function() {
-            ref.bubble.innerHTML = marked.parse(contentBuf || '');
-            ref.bubble.classList.remove('ai-cursor');
-            scrollBottom();
-            S.sending = false; S.abortCtrl = null; setSendingUI(false);
-          });
         } else if (ev.type === 'error') {
           _twFlush();
           if (ref) { ref.el.remove(); ref = null; }
@@ -1036,19 +1043,26 @@ function sendMsg() {
           var _dEv2 = ev;
           if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
           ref = startStreamMsg(startCfg || {});
+          var _finishOutput2 = function() {
+            _twAdd(ref.bubble, contentBuf);
+            _twWhenDone(function() {
+              ref.bubble.innerHTML = marked.parse(contentBuf || '');
+              ref.bubble.classList.remove('ai-cursor');
+              scrollBottom();
+              S.sending = false; S.abortCtrl = null; setSendingUI(false);
+              if (_dEv2.title) loadChats();
+            });
+          };
           if (thinkBuf) {
             ref.thinkWrap.style.display = '';
-            ref.thinkBd.textContent = thinkBuf;
-            if (_dEv2.thinking_time > 0) ref.thinkLbl.textContent = 'Thought for ' + _dEv2.thinking_time + 's';
+            _twAdd(ref.thinkBd, thinkBuf);
+            _twWhenDone(function() {
+              ref.thinkLbl.textContent = _dEv2.thinking_time > 0 ? 'Thought for ' + _dEv2.thinking_time + 's' : 'Thought';
+              _finishOutput2();
+            });
+          } else {
+            _finishOutput2();
           }
-          _twAdd(ref.bubble, contentBuf);
-          _twWhenDone(function() {
-            ref.bubble.innerHTML = marked.parse(contentBuf || '');
-            ref.bubble.classList.remove('ai-cursor');
-            scrollBottom();
-            S.sending = false; S.abortCtrl = null; setSendingUI(false);
-            if (_dEv2.title) loadChats();
-          });
         } else if (ev.type === 'error') {
           _twFlush();
           if (ref) { ref.el.remove(); ref = null; }
