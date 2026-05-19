@@ -782,6 +782,8 @@ function startNewChat() {
 
 function appendUserMsg(text, files) {
   var inner = document.getElementById('ai-msgs-inner');
+  var welcome = inner.querySelector('.ai-welcome');
+  if (welcome) welcome.remove();
   var el = document.createElement('div');
   el.className = 'ai-msg user';
   var fHtml = '';
