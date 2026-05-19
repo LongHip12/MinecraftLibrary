@@ -32,14 +32,11 @@ textarea,input{font-family:inherit;color:inherit}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:4px}
 
-/* ─── Overlay ─── */
 .ai-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40}
 .ai-overlay.on{display:block}
 
-/* ─── Root layout ─── */
 .ai-root{display:flex;height:100vh;height:100dvh;overflow:hidden}
 
-/* ─── LEFT sidebar — chat history ─── */
 .ai-sb{
   width:var(--sb-w);flex-shrink:0;
   background:var(--bg2);border-right:1px solid var(--border2);
@@ -85,7 +82,6 @@ textarea,input{font-family:inherit;color:inherit}
 .ai-chat-del:hover{background:rgba(248,113,113,.15);color:#f87171}
 .ai-sb-empty{padding:28px 12px;text-align:center;color:var(--text3);font-size:13px;line-height:1.6}
 
-/* ─── RIGHT sidebar — site navigation ─── */
 .ai-rnav{
   width:var(--rnav-w);flex-shrink:0;
   background:var(--bg2);border-left:1px solid var(--border2);
@@ -140,10 +136,8 @@ textarea,input{font-family:inherit;color:inherit}
 }
 .ai-rnav-btn-primary:hover{opacity:.85}
 
-/* ─── Main content ─── */
 .ai-main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
 
-/* ─── Topbar — only model selector + toggles ─── */
 .ai-topbar{
   height:var(--topbar-h);display:flex;align-items:center;padding:0 10px;gap:6px;
   border-bottom:1px solid var(--border2);flex-shrink:0;
@@ -157,7 +151,6 @@ textarea,input{font-family:inherit;color:inherit}
 .ai-icon-btn:hover{background:rgba(255,255,255,.06);color:var(--text)}
 .ai-topbar-center{flex:1;display:flex;justify-content:center}
 
-/* ─── Model selector ─── */
 .ai-model-sel{position:relative}
 .ai-model-btn{
   display:flex;align-items:center;gap:7px;padding:6px 10px 6px 8px;
@@ -190,7 +183,6 @@ textarea,input{font-family:inherit;color:inherit}
 .ai-model-item-check{color:var(--primary);opacity:0}
 .ai-model-item.active .ai-model-item-check{opacity:1}
 
-/* ─── Context menu ─── */
 .ai-ctx{
   position:fixed;background:var(--bg3);border:1px solid rgba(255,255,255,.1);
   border-radius:12px;padding:5px;min-width:155px;z-index:1000;
@@ -205,7 +197,6 @@ textarea,input{font-family:inherit;color:inherit}
 .ai-ctx-item.danger{color:#f87171}
 .ai-ctx-item svg{opacity:.7;flex-shrink:0}
 
-/* ─── Rename modal ─── */
 .ai-modal-bg{
   display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
   z-index:2000;align-items:center;justify-content:center;
@@ -233,7 +224,6 @@ textarea,input{font-family:inherit;color:inherit}
 }
 .ai-modal-ok:hover{opacity:.85}
 
-/* ─── Messages ─── */
 .ai-msgs{flex:1;overflow-y:auto;padding:20px 16px 12px;display:flex;flex-direction:column}
 .ai-msgs-inner{display:flex;flex-direction:column;gap:18px;max-width:760px;width:100%;margin:0 auto}
 
@@ -322,7 +312,6 @@ textarea,input{font-family:inherit;color:inherit}
 @keyframes _blink{0%,100%{opacity:1}50%{opacity:0}}
 .ai-cursor::after{content:'▌';animation:_blink .8s step-end infinite;font-size:11px;color:var(--text3)}
 
-/* ─── Input ─── */
 .ai-input-section{
   flex-shrink:0;padding:8px 14px;
   padding-bottom:max(12px,env(safe-area-inset-bottom,12px));
@@ -355,7 +344,6 @@ textarea,input{font-family:inherit;color:inherit}
 .ai-send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
 .ai-disclaimer{font-size:11px;color:var(--text3);text-align:center;margin-top:7px;max-width:760px;margin-left:auto;margin-right:auto}
 
-/* ─── Mobile ─── */
 @media(max-width:900px){
   .ai-sb{position:fixed;top:0;left:0;height:100%;transform:translateX(-100%);z-index:60}
   .ai-sb.mob-open{transform:translateX(0)}
@@ -372,10 +360,8 @@ textarea,input{font-family:inherit;color:inherit}
 </head>
 <body>
 
-<!-- Shared overlay for both drawers -->
 <div class="ai-overlay" id="ai-overlay" onclick="closeAllDrawers()"></div>
 
-<!-- Context menu -->
 <div class="ai-ctx" id="ai-ctx">
   <div class="ai-ctx-item" onclick="ctxRename()">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -391,7 +377,6 @@ textarea,input{font-family:inherit;color:inherit}
   </div>
 </div>
 
-<!-- Rename modal -->
 <div class="ai-modal-bg" id="ai-rename-bg">
   <div class="ai-modal-box">
     <div class="ai-modal-title">Rename chat</div>
@@ -405,7 +390,6 @@ textarea,input{font-family:inherit;color:inherit}
 
 <div class="ai-root">
 
-  <!-- LEFT sidebar: chat history -->
   <aside class="ai-sb" id="ai-sb">
     <div class="ai-sb-head">
       <button class="ai-sb-new-btn" onclick="startNewChat()">
@@ -424,10 +408,8 @@ textarea,input{font-family:inherit;color:inherit}
     </div>
   </aside>
 
-  <!-- MAIN content -->
   <div class="ai-main">
 
-    <!-- Topbar: only toggle buttons + model selector -->
     <div class="ai-topbar">
       <button class="ai-icon-btn" onclick="toggleSb()" title="Chat history">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -447,12 +429,10 @@ textarea,input{font-family:inherit;color:inherit}
       </button>
     </div>
 
-    <!-- Messages -->
     <div class="ai-msgs" id="ai-msgs">
       <div class="ai-msgs-inner" id="ai-msgs-inner"></div>
     </div>
 
-    <!-- Input -->
     <div class="ai-input-section">
       <div class="ai-file-prevs" id="ai-file-prevs"></div>
       <div class="ai-input-bar">
@@ -474,7 +454,6 @@ textarea,input{font-family:inherit;color:inherit}
     </div>
   </div>
 
-  <!-- RIGHT sidebar: site navigation (matches main site exactly) -->
   <aside class="ai-rnav" id="ai-rnav">
     <div class="ai-rnav-logo">
       <img src="https://i.imgur.com/xY7M2iE.jpeg" alt="Lonely Hub">
@@ -824,23 +803,23 @@ function addLoadingMsg() {
   var el = document.createElement('div'); el.className = 'ai-msg assistant';
   var cfg = MODELS[S.model] || {};
   el.innerHTML = '<img class="ai-msg-avatar" src="' + (cfg.image || '') + '" alt="">' +
-    '<div class="ai-msg-body"><div class="ai-msg-meta"><img src="' + (cfg.image || '') + '"><span>' + (cfg.name || 'AI') + '</span></div>' +
+    '<div class="ai-msg-body"><div class="ai-msg-meta"><span>' + (cfg.name || 'AI') + '</span></div>' +
     '<div class="ai-dots"><span></span><span></span><span></span></div></div>';
   inner.appendChild(el); scrollBottom(); return el;
 }
 
-function appendAIMsg(output, thinking, thinkingTime, cfg, animate) {
+function appendAIMsg(output, thinking, thinkingTime, cfg) {
   var inner = document.getElementById('ai-msgs-inner');
   var el = document.createElement('div'); el.className = 'ai-msg assistant';
   var img = cfg && cfg.image ? cfg.image : '';
   var name = cfg && cfg.name ? cfg.name : 'Lonely AI';
   var thinkHtml = '';
   if (thinking) {
-    var lbl = thinkingTime > 0 ? 'Reasoned for ' + thinkingTime + 's' : 'Reasoning...';
-    thinkHtml = '<div class="ai-thinking"><div class="ai-thinking-hd" onclick="toggleThinkBlock(this)">' +
+    var lbl = thinkingTime > 0 ? 'Thought for ' + thinkingTime + 's' : 'Thinking...';
+    thinkHtml = '<div class="ai-thinking"><div class="ai-thinking-hd open" onclick="toggleThinkBlock(this)">' +
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>' +
       lbl + '<svg class="ai-think-chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>' +
-      '</div><div class="ai-thinking-bd">' + _esc(thinking) + '</div></div>';
+      '</div><div class="ai-thinking-bd open">' + _esc(thinking) + '</div></div>';
   }
   var bid = 'bbl-' + Date.now();
   var acts = '<div class="ai-msg-actions">' +
@@ -848,26 +827,15 @@ function appendAIMsg(output, thinking, thinkingTime, cfg, animate) {
     '<button class="ai-msg-action-btn" title="Retry" onclick="retryMsg(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg></button>' +
     '</div>';
   el.innerHTML = '<img class="ai-msg-avatar" src="' + img + '" alt="">' +
-    '<div class="ai-msg-body"><div class="ai-msg-meta"><img src="' + img + '" onerror="this.onerror=null;this.src=\'https://i.imgur.com/xY7M2iE.jpeg\'"><span>' + name + '</span></div>' +
-    thinkHtml + '<div class="ai-msg-bubble ai-cursor" id="' + bid + '"></div>' + acts + '</div>';
+    '<div class="ai-msg-body"><div class="ai-msg-meta"><span>' + name + '</span></div>' +
+    thinkHtml + '<div class="ai-msg-bubble" id="' + bid + '"></div>' + acts + '</div>';
   inner.appendChild(el); scrollBottom();
   var bel = document.getElementById(bid);
-  if (animate) { typeAndRender(bel, output, function() { bel.classList.remove('ai-cursor'); scrollBottom(); }); }
-  else { bel.innerHTML = marked.parse(output || ''); bel.classList.remove('ai-cursor'); }
+  bel.innerHTML = marked.parse(output || '');
   return el;
 }
 
 function toggleThinkBlock(hd) { hd.classList.toggle('open'); hd.nextElementSibling.classList.toggle('open'); }
-
-function typeAndRender(el, text, cb) {
-  if (!text) { el.innerHTML = marked.parse(''); if (cb) cb(); return; }
-  var len = text.length; var chunk = Math.max(1, Math.floor(len / 200)); var i = 0;
-  (function step() {
-    i = Math.min(i + chunk, len); el.textContent = text.slice(0, i);
-    if (i < len) setTimeout(step, 10);
-    else { el.innerHTML = marked.parse(text); if (cb) cb(); }
-  })();
-}
 
 function copyAIMsg(btn) {
   var b = btn.closest('.ai-msg-body').querySelector('.ai-msg-bubble');
@@ -1039,7 +1007,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var ta = document.getElementById('ai-ta');
   ta.addEventListener('input', autoGrowTA);
-  ta.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } });
+  var isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  ta.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey && !isMobile) { e.preventDefault(); sendMsg(); } });
 
   document.addEventListener('click', function(e) {
     if (!document.getElementById('ai-model-sel').contains(e.target)) closeModelDD();
