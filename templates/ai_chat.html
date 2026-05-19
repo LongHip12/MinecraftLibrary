@@ -262,6 +262,17 @@ textarea,input{font-family:inherit;color:inherit}
   background:var(--bg3);border:1px solid var(--border2);
   border-radius:4px 17px 17px 17px;color:var(--text);
 }
+.user-md p{margin:0 0 4px}
+.user-md p:last-child{margin:0}
+.user-md code{background:rgba(0,0,0,.25);border-radius:4px;padding:1px 5px;font-family:monospace;font-size:13px}
+.user-md pre{background:rgba(0,0,0,.35);border-radius:8px;padding:10px 13px;overflow-x:auto;margin:6px 0}
+.user-md pre code{background:none;padding:0}
+.user-md h1,.user-md h2,.user-md h3{margin:6px 0 2px;line-height:1.3}
+.user-md ul,.user-md ol{margin:4px 0;padding-left:20px}
+.user-md li{margin:2px 0}
+.user-md strong{font-weight:600}
+.user-md em{font-style:italic}
+.user-md blockquote{border-left:3px solid rgba(250,80,80,.5);margin:4px 0;padding:2px 0 2px 10px;color:var(--text2)}
 .ai-msg-file-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
 .ai-msg-file-thumb{border-radius:8px;overflow:hidden;max-width:180px;max-height:130px;border:1px solid var(--border2)}
 .ai-msg-file-thumb img{width:100%;height:100%;object-fit:cover;display:block}
@@ -608,6 +619,7 @@ function closeAllDrawers() {
 function renderModel(key) {
   var cfg = MODELS[key]; if (!cfg) return;
   S.model = key;
+  try { localStorage.setItem('lh_model', key); } catch(e) {}
   document.getElementById('ai-model-img').src = cfg.image;
   document.getElementById('ai-model-name-lbl').textContent = cfg.name;
   var btn = document.getElementById('ai-think-btn');
@@ -796,7 +808,8 @@ function appendUserMsg(text, files) {
     fHtml += '</div>';
   }
   var av = USER && USER.avatar ? '<img class="ai-msg-avatar" src="' + USER.avatar + '" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' : '';
-  el.innerHTML = av + '<div class="ai-msg-body"><div class="ai-msg-bubble">' + _esc(text) + '</div>' + fHtml + '</div>';
+  var mdText = marked.parse(text || '');
+  el.innerHTML = av + '<div class="ai-msg-body"><div class="ai-msg-bubble user-md">' + mdText + '</div>' + fHtml + '</div>';
   inner.appendChild(el); scrollBottom(); return el;
 }
 
@@ -869,9 +882,11 @@ function retryMsg(btn) {
           contentBuf += ev.chunk;
           _twAdd(ref.bubble, ev.chunk);
         } else if (ev.type === 'done') {
-          _finishStream(ref, contentBuf);
-          if (ref && ev.thinking_time > 0) ref.thinkLbl.textContent = 'Thought for ' + ev.thinking_time + 's';
-          S.sending = false; S.abortCtrl = null; setSendingUI(false);
+          var _dEv = ev;
+          _finishStream(ref, contentBuf, function() {
+            if (ref && _dEv.thinking_time > 0) ref.thinkLbl.textContent = 'Thought for ' + _dEv.thinking_time + 's';
+            S.sending = false; S.abortCtrl = null; setSendingUI(false);
+          });
         } else if (ev.type === 'error') {
           _twFlush();
           if (ref) { ref.el.remove(); ref = null; }
@@ -880,7 +895,7 @@ function retryMsg(btn) {
         }
       });
     }).catch(function(err) {
-      if (err.name === 'AbortError') { _finishStream(ref, contentBuf); return; }
+      if (err.name === 'AbortError') { if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; } return; }
       if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
       S.sending = false; S.abortCtrl = null; setSendingUI(false); addErrMsg('Network error');
     });
@@ -900,7 +915,7 @@ function setSendingUI(active) {
 }
 
 function handleSendBtn() {
-  if (S.sending) stopMsg(); else sendMsg();
+  if (S.sending || _tw.tmr) stopMsg(); else sendMsg();
 }
 
 function readSSEStream(resp, onEvent) {
@@ -968,24 +983,27 @@ function _twTick() {
   }
   _tw.typed += _tw.q[0]; _tw.q = _tw.q.slice(1);
   _tw.el.textContent = _tw.typed; scrollBottom();
-  _tw.tmr = setTimeout(_twTick, 20);
+  _tw.tmr = setTimeout(_twTick, 10);
 }
-function _twAdd(el, s) { if (_tw.el && _tw.el !== el) { _tw.typed = ''; } _tw.el = el; _tw.q += s; if (!_tw.tmr) _tw.tmr = setTimeout(_twTick, 20); }
+function _twAdd(el, s) { if (_tw.el && _tw.el !== el) { _tw.typed = ''; } _tw.el = el; _tw.q += s; if (!_tw.tmr) _tw.tmr = setTimeout(_twTick, 10); }
 function _twFlush() { if (_tw.tmr) { clearTimeout(_tw.tmr); _tw.tmr = null; } _tw.q = ''; _tw.el = null; _tw.typed = ''; _tw.cb = null; }
 function _twWhenDone(cb) { if (!_tw.tmr && !_tw.q) cb(); else _tw.cb = cb; }
 
-function _finishStream(ref, contentBuf) {
-  if (!ref) return;
+function _finishStream(ref, contentBuf, onDone) {
+  if (!ref) { if (onDone) onDone(); return; }
   _twWhenDone(function() {
     ref.bubble.innerHTML = marked.parse(contentBuf || '');
     ref.bubble.classList.remove('ai-cursor');
     scrollBottom();
+    if (onDone) onDone();
   });
 }
 
 function stopMsg() {
+  var el = _tw.el; var typed = _tw.typed;
   if (S.abortCtrl) { S.abortCtrl.abort(); S.abortCtrl = null; }
   _twFlush();
+  if (el) { el.innerHTML = marked.parse(typed || el.textContent || ''); el.classList.remove('ai-cursor'); }
   S.sending = false; setSendingUI(false);
   if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
 }
@@ -1020,10 +1038,12 @@ function sendMsg() {
           contentBuf += ev.chunk;
           _twAdd(ref.bubble, ev.chunk);
         } else if (ev.type === 'done') {
-          _finishStream(ref, contentBuf);
-          if (ref && ev.thinking_time > 0) ref.thinkLbl.textContent = 'Thought for ' + ev.thinking_time + 's';
-          S.sending = false; S.abortCtrl = null; setSendingUI(false);
-          if (ev.title) loadChats();
+          var _dEv2 = ev;
+          _finishStream(ref, contentBuf, function() {
+            if (ref && _dEv2.thinking_time > 0) ref.thinkLbl.textContent = 'Thought for ' + _dEv2.thinking_time + 's';
+            S.sending = false; S.abortCtrl = null; setSendingUI(false);
+            if (_dEv2.title) loadChats();
+          });
         } else if (ev.type === 'error') {
           _twFlush();
           if (ref) { ref.el.remove(); ref = null; }
@@ -1032,7 +1052,7 @@ function sendMsg() {
         }
       });
     }).catch(function(err) {
-      if (err.name === 'AbortError') { _finishStream(ref, contentBuf); return; }
+      if (err.name === 'AbortError') { if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; } return; }
       if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
       S.sending = false; S.abortCtrl = null; setSendingUI(false); addErrMsg('Network error');
     });
@@ -1126,7 +1146,8 @@ function removeFilePrev(btn) {
 
 document.addEventListener('DOMContentLoaded', function() {
   buildModelDD();
-  renderModel('gpt-4o-mini');
+  var savedModel = (function() { try { return localStorage.getItem('lh_model'); } catch(e) { return null; } })();
+  renderModel((savedModel && MODELS[savedModel]) ? savedModel : 'gpt-4o-mini');
   setupFileInput();
 
   if (!isMobile()) { S.sbOpen = true; S.rnavOpen = true; }
