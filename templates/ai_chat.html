@@ -957,17 +957,28 @@ function startStreamMsg(cfg) {
   };
 }
 
-var _tw = { q: '', el: null, tmr: null, typed: '' };
+var _tw = { q: '', el: null, tmr: null, typed: '', cb: null };
 function _twAdd(el, s) { _tw.el = el; _tw.q += s; if (!_tw.tmr) _tw.tmr = setTimeout(_twTick, 20); }
-function _twTick() { if (!_tw.q || !_tw.el) { _tw.tmr = null; return; } _tw.typed += _tw.q[0]; _tw.q = _tw.q.slice(1); _tw.el.textContent = _tw.typed; scrollBottom(); _tw.tmr = setTimeout(_twTick, 20); }
-function _twFlush() { if (_tw.tmr) { clearTimeout(_tw.tmr); _tw.tmr = null; } _tw.q = ''; _tw.el = null; _tw.typed = ''; }
+function _twTick() {
+  if (!_tw.q || !_tw.el) {
+    _tw.tmr = null;
+    if (_tw.cb) { var f = _tw.cb; _tw.cb = null; f(); }
+    return;
+  }
+  _tw.typed += _tw.q[0]; _tw.q = _tw.q.slice(1);
+  _tw.el.textContent = _tw.typed; scrollBottom();
+  _tw.tmr = setTimeout(_twTick, 20);
+}
+function _twFlush() { if (_tw.tmr) { clearTimeout(_tw.tmr); _tw.tmr = null; } _tw.q = ''; _tw.el = null; _tw.typed = ''; _tw.cb = null; }
+function _twWhenDone(cb) { if (!_tw.tmr && !_tw.q) cb(); else _tw.cb = cb; }
 
 function _finishStream(ref, contentBuf) {
-  _twFlush();
   if (!ref) return;
-  ref.bubble.innerHTML = marked.parse(contentBuf || '');
-  ref.bubble.classList.remove('ai-cursor');
-  scrollBottom();
+  _twWhenDone(function() {
+    ref.bubble.innerHTML = marked.parse(contentBuf || '');
+    ref.bubble.classList.remove('ai-cursor');
+    scrollBottom();
+  });
 }
 
 function stopMsg() {
@@ -1124,8 +1135,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var ta = document.getElementById('ai-ta');
   ta.addEventListener('input', autoGrowTA);
-  var isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-  ta.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey && !isMobile) { e.preventDefault(); sendMsg(); } });
+  var isTouchDev = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  ta.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey && !isTouchDev) { e.preventDefault(); sendMsg(); } });
 
   document.addEventListener('click', function(e) {
     if (!document.getElementById('ai-model-sel').contains(e.target)) closeModelDD();
