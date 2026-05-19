@@ -4259,10 +4259,6 @@ def api_v2_chat_ai():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-  @app.route("/api/docs")
-  def api_docs_page():
-      return render_template("api_docs.html")
-  
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 3000))
     app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
