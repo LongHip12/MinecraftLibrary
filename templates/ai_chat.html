@@ -869,15 +869,14 @@ function retryMsg(btn) {
       return readSSEStream(resp, function(ev) {
         if (ev.type === 'start') {
           startCfg = { name: ev.model_name, image: ev.model_image };
-        } else if ((ev.type === 'thinking' || ev.type === 'content') && !ref) {
+        } else if ((ev.type === 'content' || (ev.type === 'thinking' && S.thinking)) && !ref) {
           if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
           ref = startStreamMsg(startCfg || {});
-          if (ev.type === 'thinking') { ref.thinkWrap.style.display = ''; ref.thinkBd.textContent += ev.chunk; scrollBottom(); }
+          if (ev.type === 'thinking') { ref.thinkWrap.style.display = ''; ref.thinkBd.textContent += ev.chunk; }
           else { contentBuf += ev.chunk; _twAdd(ref.bubble, ev.chunk); }
-        } else if (ev.type === 'thinking' && ref) {
+        } else if (ev.type === 'thinking' && S.thinking && ref) {
           ref.thinkWrap.style.display = '';
           ref.thinkBd.textContent += ev.chunk;
-          scrollBottom();
         } else if (ev.type === 'content' && ref) {
           contentBuf += ev.chunk;
           _twAdd(ref.bubble, ev.chunk);
@@ -1025,15 +1024,14 @@ function sendMsg() {
         if (ev.type === 'start') {
           startCfg = { name: ev.model_name, image: ev.model_image };
           if (!S.chatId && ev.chat_id) { S.chatId = ev.chat_id; history.replaceState(null, '', '/ai-chat/' + ev.chat_id); }
-        } else if ((ev.type === 'thinking' || ev.type === 'content') && !ref) {
+        } else if ((ev.type === 'content' || (ev.type === 'thinking' && S.thinking)) && !ref) {
           if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
           ref = startStreamMsg(startCfg || {});
-          if (ev.type === 'thinking') { ref.thinkWrap.style.display = ''; ref.thinkBd.textContent += ev.chunk; scrollBottom(); }
+          if (ev.type === 'thinking') { ref.thinkWrap.style.display = ''; ref.thinkBd.textContent += ev.chunk; }
           else { contentBuf += ev.chunk; _twAdd(ref.bubble, ev.chunk); }
-        } else if (ev.type === 'thinking' && ref) {
+        } else if (ev.type === 'thinking' && S.thinking && ref) {
           ref.thinkWrap.style.display = '';
           ref.thinkBd.textContent += ev.chunk;
-          scrollBottom();
         } else if (ev.type === 'content' && ref) {
           contentBuf += ev.chunk;
           _twAdd(ref.bubble, ev.chunk);
@@ -1059,7 +1057,7 @@ function sendMsg() {
 }
 
 function autoGrowTA() { var ta = document.getElementById('ai-ta'); ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 180) + 'px'; }
-function scrollBottom() { var m = document.getElementById('ai-msgs'); m.scrollTop = m.scrollHeight; }
+function scrollBottom() {}
 function _esc(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function showCtxMenu(x, y, id, pinned) {
