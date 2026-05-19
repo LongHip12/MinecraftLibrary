@@ -89,6 +89,7 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_prefix=1)
 app.secret_key = os.environ.get("SESSION_SECRET") or secrets.token_hex(32)
 APP_START_TIME = datetime.now()
+STATUS_HISTORY = []
 LOG_BUFFER.append({'t': APP_START_TIME.isoformat(timespec='milliseconds'), 'level': 'startup', 'msg': f'[STARTUP] App started — Python {sys.version.split()[0]}'})
 CORS(app)
 
@@ -3770,6 +3771,58 @@ def admin_health():
             "total_downloads": sum(m.get("downloads", 0) for m in mods_data.get("mods", [])),
         }
     })
+
+
+@app.route("/status")
+def status_page():
+    import sys, platform
+    uptime = datetime.now() - APP_START_TIME
+    hours, remainder = divmod(int(uptime.total_seconds()), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    uptime_str = f"{hours}h {minutes}m {seconds}s"
+    env_checks = {
+        "Email (Brevo)": bool(os.environ.get("BREVO_API_KEY")),
+        "Email (SMTP)": bool(os.environ.get("APP_PASSWORD")),
+        "Google OAuth": bool(os.environ.get("GOOGLE_CLIENT_ID") and os.environ.get("GOOGLE_CLIENT_SECRET")),
+        "Discord OAuth": bool(os.environ.get("DISCORD_CLIENT_ID") and os.environ.get("DISCORD_CLIENT_SECRET")),
+        "Discord Bot": bool(os.environ.get("DISCORD_BOT_TOKEN") and os.environ.get("DISCORD_GUILD_ID")),
+        "Supabase Backup": bool(os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SERVICE_KEY")),
+    }
+    accounts = load_json("accounts-data.json")
+    mods_data = load_json("mods-data.json")
+    sessions = load_json("sessions-data.json")
+    active_sessions = sum(
+        1 for s in sessions.get("sessions", {}).values()
+        if datetime.fromisoformat(s.get("expires", "1970-01-01")) > datetime.now()
+    )
+    stats = {
+        "users": len(accounts.get("users", [])),
+        "mods": len(mods_data.get("mods", [])),
+        "active_sessions": active_sessions,
+        "total_downloads": sum(m.get("downloads", 0) for m in mods_data.get("mods", [])),
+    }
+    now = datetime.now()
+    STATUS_HISTORY.append({
+        "t": now.isoformat(timespec='seconds'),
+        "ts": int(now.timestamp()),
+        "all_ok": all(env_checks.values()),
+        "services": env_checks,
+    })
+    if len(STATUS_HISTORY) > 288:
+        del STATUS_HISTORY[:-288]
+    all_ok = all(env_checks.values())
+    started_at = APP_START_TIME.strftime("%Y-%m-%d %H:%M UTC")
+    return render_template(
+        "status.html",
+        all_ok=all_ok,
+        services=env_checks,
+        uptime_str=uptime_str,
+        started_at=started_at,
+        stats=stats,
+        history=STATUS_HISTORY,
+        python_version=sys.version.split()[0],
+        platform=platform.system(),
+    )
 
 
 @app.route("/api/docs")
