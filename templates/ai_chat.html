@@ -862,33 +862,37 @@ function retryMsg(btn) {
   btn.closest('.ai-msg').remove();
   S.sending = true; S.abortCtrl = new AbortController(); setSendingUI(true);
   S.loadingEl = addLoadingMsg();
-  var ref = null; var contentBuf = ''; var startCfg = null;
+  var ref = null; var contentBuf = ''; var thinkBuf = ''; var startCfg = null;
   fetch('/api/ai/send/' + S.chatId + '/retry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ thinking: S.thinking }), signal: S.abortCtrl.signal })
     .then(function(resp) {
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       return readSSEStream(resp, function(ev) {
         if (ev.type === 'start') {
           startCfg = { name: ev.model_name, image: ev.model_image };
-        } else if ((ev.type === 'content' || (ev.type === 'thinking' && S.thinking)) && !ref) {
-          if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
-          ref = startStreamMsg(startCfg || {});
-          if (ev.type === 'thinking') { ref.thinkWrap.style.display = ''; ref.thinkBd.textContent += ev.chunk; }
-          else { contentBuf += ev.chunk; _twAdd(ref.bubble, ev.chunk); }
-        } else if (ev.type === 'thinking' && S.thinking && ref) {
-          ref.thinkWrap.style.display = '';
-          ref.thinkBd.textContent += ev.chunk;
-        } else if (ev.type === 'content' && ref) {
+        } else if (ev.type === 'thinking' && S.thinking) {
+          thinkBuf += ev.chunk;
+        } else if (ev.type === 'content') {
           contentBuf += ev.chunk;
-          _twAdd(ref.bubble, ev.chunk);
         } else if (ev.type === 'done') {
           var _dEv = ev;
-          _finishStream(ref, contentBuf, function() {
-            if (ref && _dEv.thinking_time > 0) ref.thinkLbl.textContent = 'Thought for ' + _dEv.thinking_time + 's';
+          if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
+          ref = startStreamMsg(startCfg || {});
+          if (thinkBuf) {
+            ref.thinkWrap.style.display = '';
+            ref.thinkBd.textContent = thinkBuf;
+            if (_dEv.thinking_time > 0) ref.thinkLbl.textContent = 'Thought for ' + _dEv.thinking_time + 's';
+          }
+          _twAdd(ref.bubble, contentBuf);
+          _twWhenDone(function() {
+            ref.bubble.innerHTML = marked.parse(contentBuf || '');
+            ref.bubble.classList.remove('ai-cursor');
+            scrollBottom();
             S.sending = false; S.abortCtrl = null; setSendingUI(false);
           });
         } else if (ev.type === 'error') {
           _twFlush();
           if (ref) { ref.el.remove(); ref = null; }
+          if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
           addErrMsg(ev.error || 'Error');
           S.sending = false; S.abortCtrl = null; setSendingUI(false);
         }
@@ -1016,7 +1020,7 @@ function sendMsg() {
   document.getElementById('ai-file-prevs').innerHTML = '';
   ta.value = ''; autoGrowTA();
   appendUserMsg(text, files); S.loadingEl = addLoadingMsg();
-  var ref = null; var contentBuf = ''; var startCfg = null;
+  var ref = null; var contentBuf = ''; var thinkBuf = ''; var startCfg = null;
   fetch('/api/ai/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: S.chatId, model: S.model, message: text, thinking: S.thinking, files: files }), signal: S.abortCtrl.signal })
     .then(function(resp) {
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -1024,27 +1028,31 @@ function sendMsg() {
         if (ev.type === 'start') {
           startCfg = { name: ev.model_name, image: ev.model_image };
           if (!S.chatId && ev.chat_id) { S.chatId = ev.chat_id; history.replaceState(null, '', '/ai-chat/' + ev.chat_id); }
-        } else if ((ev.type === 'content' || (ev.type === 'thinking' && S.thinking)) && !ref) {
-          if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
-          ref = startStreamMsg(startCfg || {});
-          if (ev.type === 'thinking') { ref.thinkWrap.style.display = ''; ref.thinkBd.textContent += ev.chunk; }
-          else { contentBuf += ev.chunk; _twAdd(ref.bubble, ev.chunk); }
-        } else if (ev.type === 'thinking' && S.thinking && ref) {
-          ref.thinkWrap.style.display = '';
-          ref.thinkBd.textContent += ev.chunk;
-        } else if (ev.type === 'content' && ref) {
+        } else if (ev.type === 'thinking' && S.thinking) {
+          thinkBuf += ev.chunk;
+        } else if (ev.type === 'content') {
           contentBuf += ev.chunk;
-          _twAdd(ref.bubble, ev.chunk);
         } else if (ev.type === 'done') {
           var _dEv2 = ev;
-          _finishStream(ref, contentBuf, function() {
-            if (ref && _dEv2.thinking_time > 0) ref.thinkLbl.textContent = 'Thought for ' + _dEv2.thinking_time + 's';
+          if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
+          ref = startStreamMsg(startCfg || {});
+          if (thinkBuf) {
+            ref.thinkWrap.style.display = '';
+            ref.thinkBd.textContent = thinkBuf;
+            if (_dEv2.thinking_time > 0) ref.thinkLbl.textContent = 'Thought for ' + _dEv2.thinking_time + 's';
+          }
+          _twAdd(ref.bubble, contentBuf);
+          _twWhenDone(function() {
+            ref.bubble.innerHTML = marked.parse(contentBuf || '');
+            ref.bubble.classList.remove('ai-cursor');
+            scrollBottom();
             S.sending = false; S.abortCtrl = null; setSendingUI(false);
             if (_dEv2.title) loadChats();
           });
         } else if (ev.type === 'error') {
           _twFlush();
           if (ref) { ref.el.remove(); ref = null; }
+          if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
           addErrMsg(ev.error || 'Error');
           S.sending = false; S.abortCtrl = null; setSendingUI(false);
         }
