@@ -465,7 +465,7 @@ textarea,input{font-family:inherit;color:inherit}
           <button class="ai-think-btn" id="ai-think-btn" onclick="toggleThinking()" title="Reasoning" style="display:none">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>
           </button>
-          <button class="ai-send-btn" id="ai-send-btn" onclick="sendMsg()" title="Send">
+          <button class="ai-send-btn" id="ai-send-btn" onclick="handleSendBtn()" title="Send">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
         </div>
@@ -554,11 +554,16 @@ var MODELS = {{ models | tojson | safe }};
 var USER = {{ (user | tojson) if user else 'null' }};
 var OPEN_CHAT_ID = '{{ open_chat_id | default('') }}';
 
+var SEND_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+var STOP_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>';
+
 var S = {
   model: 'gpt-4o-mini',
   chatId: null,
   thinking: false,
   sending: false,
+  abortCtrl: null,
+  loadingEl: null,
   sbOpen: false,
   rnavOpen: false,
   pendingFiles: [],
@@ -872,14 +877,19 @@ function copyAIMsg(btn) {
 function retryMsg(btn) {
   if (S.sending || !S.chatId) return;
   btn.closest('.ai-msg').remove();
-  S.sending = true; document.getElementById('ai-send-btn').disabled = true;
-  var le = addLoadingMsg();
-  fetch('/api/ai/send/' + S.chatId + '/retry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ thinking: S.thinking }) })
+  S.sending = true; S.abortCtrl = new AbortController(); setSendingUI(true);
+  S.loadingEl = addLoadingMsg();
+  fetch('/api/ai/send/' + S.chatId + '/retry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ thinking: S.thinking }), signal: S.abortCtrl.signal })
     .then(function(r) { return r.json(); }).then(function(d) {
-      S.sending = false; document.getElementById('ai-send-btn').disabled = false; le.remove();
+      if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
+      S.sending = false; S.abortCtrl = null; setSendingUI(false);
       if (!d.success) { addErrMsg(d.error || 'Error'); return; }
       appendAIMsg(d.output, d.thinking, d.thinking_time, { name: d.model_name, image: d.model_image }, true);
-    }).catch(function() { S.sending = false; document.getElementById('ai-send-btn').disabled = false; le.remove(); addErrMsg('Network error'); });
+    }).catch(function(err) {
+      if (err.name === 'AbortError') return;
+      if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
+      S.sending = false; S.abortCtrl = null; setSendingUI(false); addErrMsg('Network error');
+    });
 }
 
 function addErrMsg(txt) {
@@ -889,23 +899,45 @@ function addErrMsg(txt) {
   document.getElementById('ai-msgs-inner').appendChild(el); scrollBottom();
 }
 
+function setSendingUI(active) {
+  var btn = document.getElementById('ai-send-btn');
+  btn.innerHTML = active ? STOP_ICON : SEND_ICON;
+  btn.title = active ? 'Stop' : 'Send';
+}
+
+function handleSendBtn() {
+  if (S.sending) stopMsg(); else sendMsg();
+}
+
+function stopMsg() {
+  if (S.abortCtrl) { S.abortCtrl.abort(); S.abortCtrl = null; }
+  S.sending = false;
+  setSendingUI(false);
+  if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
+}
+
 function sendMsg() {
   var ta = document.getElementById('ai-ta'); var text = ta.value.trim();
   if ((!text && S.pendingFiles.length === 0) || S.sending) return;
   if (!USER) { window.location.href = '/login'; return; }
-  S.sending = true; document.getElementById('ai-send-btn').disabled = true;
+  S.sending = true; S.abortCtrl = new AbortController(); setSendingUI(true);
   var files = S.pendingFiles.slice(); S.pendingFiles = [];
   document.getElementById('ai-file-prevs').innerHTML = '';
   ta.value = ''; autoGrowTA();
-  appendUserMsg(text, files); var le = addLoadingMsg();
-  fetch('/api/ai/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: S.chatId, model: S.model, message: text, thinking: S.thinking, files: files }) })
+  appendUserMsg(text, files); S.loadingEl = addLoadingMsg();
+  fetch('/api/ai/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: S.chatId, model: S.model, message: text, thinking: S.thinking, files: files }), signal: S.abortCtrl.signal })
     .then(function(r) { return r.json(); }).then(function(d) {
-      S.sending = false; document.getElementById('ai-send-btn').disabled = false; le.remove();
+      if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
+      S.sending = false; S.abortCtrl = null; setSendingUI(false);
       if (!d.success) { addErrMsg(d.error || 'Error'); return; }
       if (!S.chatId && d.chat_id) { S.chatId = d.chat_id; history.replaceState(null, '', '/ai-chat/' + d.chat_id); }
       appendAIMsg(d.output, d.thinking, d.thinking_time, { name: d.model_name, image: d.model_image }, true);
       loadChats(); scrollBottom();
-    }).catch(function() { S.sending = false; document.getElementById('ai-send-btn').disabled = false; le.remove(); addErrMsg('Network error'); });
+    }).catch(function(err) {
+      if (err.name === 'AbortError') return;
+      if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
+      S.sending = false; S.abortCtrl = null; setSendingUI(false); addErrMsg('Network error');
+    });
 }
 
 function autoGrowTA() { var ta = document.getElementById('ai-ta'); ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 180) + 'px'; }
