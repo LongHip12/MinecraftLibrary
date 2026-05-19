@@ -148,6 +148,7 @@ textarea,input{font-family:inherit;color:inherit}
   height:var(--topbar-h);display:flex;align-items:center;padding:0 10px;gap:6px;
   border-bottom:1px solid var(--border2);flex-shrink:0;
   background:rgba(10,10,15,.85);backdrop-filter:blur(20px) saturate(160%);
+  position:relative;z-index:50;
 }
 .ai-icon-btn{
   width:34px;height:34px;border-radius:var(--radius-sm);display:flex;align-items:center;
@@ -643,6 +644,10 @@ function closeModelDD() {
   document.getElementById('ai-model-dd').classList.remove('open');
   document.getElementById('ai-model-chev').classList.remove('open');
 }
+document.addEventListener('click', function(e) {
+  var sel = document.getElementById('ai-model-sel');
+  if (sel && !sel.contains(e.target)) closeModelDD();
+});
 
 function buildModelDD() {
   var dd = document.getElementById('ai-model-dd');
