@@ -4080,7 +4080,7 @@ def api_ai_update_chat(chat_id):
         chat["title"] = data["title"]
     if "pinned" in data:
         chat["pinned"] = bool(data["pinned"])
-    chat["updated_at"] = datetime.utcnow().isoformat()
+    chat["updated_at"] = datetime.now().isoformat()
     _save_user_chats(user["id"], chats)
     return jsonify({"success": True, "chat": chat})
 
@@ -4115,8 +4115,8 @@ def api_ai_send():
             "title": "New Chat",
             "pinned": False,
             "model": model_key,
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat(),
             "messages": [],
         }
         chats.insert(0, chat)
@@ -4145,7 +4145,7 @@ def api_ai_send():
         msg_content = user_text
     chat["messages"].append({"role": "user", "content": msg_content})
     chat["model"] = model_key
-    chat["updated_at"] = datetime.utcnow().isoformat()
+    chat["updated_at"] = datetime.now().isoformat()
     _save_user_chats(user["id"], chats)
     api_messages = [{"role": m["role"], "content": m["content"]} for m in chat["messages"]]
     t0 = time.time()
@@ -4161,7 +4161,7 @@ def api_ai_send():
         "thinking_time": thinking_time,
         "model": model_key,
     })
-    chat["updated_at"] = datetime.utcnow().isoformat()
+    chat["updated_at"] = datetime.now().isoformat()
     if len(chat["messages"]) == 2:
         try:
             _, title_text = _do_ai_call("gpt-4o-mini", [
@@ -4214,7 +4214,7 @@ def api_ai_retry(chat_id):
         "thinking_time": thinking_time,
         "model": model_key,
     })
-    chat["updated_at"] = datetime.utcnow().isoformat()
+    chat["updated_at"] = datetime.now().isoformat()
     _save_user_chats(user["id"], chats)
     cfg = AI_MODELS_CONFIG.get(model_key, {})
     return jsonify({
