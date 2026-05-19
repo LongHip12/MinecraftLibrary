@@ -3894,7 +3894,7 @@ def _ai_parse_sse(resp):
             pass
     return "".join(thinking_parts).strip(), "".join(output_parts).strip()
 
-def _ai_call_openrouter(model_id, messages):
+def _ai_call_openrouter(model_id, messages, api_key=None):
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
     resp = requests.post(
         "https://openrouter.ai/api/v1/chat/completions",
@@ -3927,8 +3927,8 @@ def _ai_call_nvidia(model_id, api_key, messages, extra=None):
     resp.raise_for_status()
     return _ai_parse_sse(resp)
 
-def _ai_call_poolside(messages, enable_thinking):
-    api_key = os.environ.get("POOLSIDE_API_KEY", "")
+def _ai_call_poolside(messages, enable_thinking, api_key=None):
+    api_key = api_key or os.environ.get("POOLSIDE_API_KEY", "")
     resp = requests.post(
         "https://inference.poolside.ai/v1/chat/completions",
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -3944,8 +3944,8 @@ def _ai_call_poolside(messages, enable_thinking):
     resp.raise_for_status()
     return _ai_parse_sse(resp)
 
-def _ai_call_gemini(messages):
-    api_key = os.environ.get("GOOGLE_GEMINI_KEY", "")
+def _ai_call_gemini(messages, api_key=None):
+    api_key = api_key or os.environ.get("GOOGLE_GEMINI_KEY", "")
     contents = []
     sys_text = ""
     for m in messages:
@@ -3987,11 +3987,12 @@ def _do_ai_call(model_key, messages, enable_thinking):
     cfg = AI_MODELS_CONFIG.get(model_key)
     if not cfg:
         raise ValueError(f"Unknown model: {model_key}")
+    model_api_key = os.environ.get(cfg.get("api_key_env", ""), "")
     sys_msg = {"role": "system", "content": AI_SYSTEM_PROMPT}
     full_messages = [sys_msg] + messages
     provider = cfg["provider"]
     if provider == "openrouter":
-        return _ai_call_openrouter(cfg["model_id"], full_messages)
+        return _ai_call_openrouter(cfg["model_id"], full_messages, model_api_key)
     elif provider == "nvidia":
         api_key = os.environ.get(cfg.get("api_key_env", ""), "")
         extra = {}
@@ -4006,9 +4007,9 @@ def _do_ai_call(model_key, messages, enable_thinking):
             extra["reasoning_budget"] = 16384
         return _ai_call_nvidia(cfg["model_id"], api_key, full_messages, extra)
     elif provider == "poolside":
-        return _ai_call_poolside(full_messages, enable_thinking and cfg.get("thinking", False))
+        return _ai_call_poolside(full_messages, enable_thinking and cfg.get("thinking", False), model_api_key)
     elif provider == "google":
-        return _ai_call_gemini(full_messages)
+        return _ai_call_gemini(full_messages, model_api_key)
     else:
         raise ValueError(f"Unknown provider: {provider}")
 
@@ -4257,6 +4258,11 @@ def api_v2_chat_ai():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+  @app.route("/api/docs")
+  def api_docs_page():
+      return render_template("api_docs.html")
+  
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 3000))
     app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
