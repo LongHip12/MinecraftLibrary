@@ -9,6 +9,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*:focus{outline:none}
+button,a,input,textarea,select{-webkit-tap-highlight-color:transparent;outline:none}
 :root{
   --bg:#0c0e11;--bg2:#111418;--bg3:#191d24;--bg4:#20242d;--bg5:#272c36;
   --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
@@ -26,8 +28,31 @@ input{font-family:inherit;color:inherit}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:6px}
 
+
+  /* ── Site nav ─── */
+  .site-nav{position:fixed;top:0;left:0;right:0;z-index:300;height:52px;background:rgba(12,14,17,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;padding:0 16px;gap:2px}
+  .site-nav-logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;color:#e2e5ea;text-decoration:none;margin-right:8px;flex-shrink:0}
+  .site-nav-logo img{width:28px;height:28px;border-radius:7px;object-fit:cover}
+  .site-nav-link{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:9px;font-size:13px;font-weight:500;color:#8b929e;text-decoration:none;transition:background .13s,color .13s;flex-shrink:0}
+  .site-nav-link:hover{background:#191d24;color:#e2e5ea}
+  .site-nav-link.active{color:#e05252}
+  .site-nav-link svg{flex-shrink:0;opacity:.75}
+  @media(max-width:600px){.site-nav-link span{display:none}.site-nav-link{padding:6px 9px}}
+  /* ── Sidebar new chat + search ─── */
+  .ai-sb-new-btn{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;background:rgba(224,82,82,.12);border:1px solid rgba(224,82,82,.25);border-radius:10px;color:#e05252;font-size:13px;font-weight:600;cursor:pointer;transition:background .13s,border-color .13s}
+  .ai-sb-new-btn:hover{background:rgba(224,82,82,.2);border-color:#e05252}
+  .ai-sb-search-wrap{position:relative;margin-top:6px}
+  .ai-sb-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#555d6b;pointer-events:none}
+  .ai-sb-search{width:100%;background:#191d24;border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:7px 10px 7px 32px;font-size:13px;color:#e2e5ea;font-family:inherit;transition:border-color .15s}
+  .ai-sb-search::placeholder{color:#555d6b}
+  .ai-sb-search:focus{border-color:rgba(255,255,255,.15)}
+  /* ── Sidebar delete btn ─── */
+  .ai-chat-del{opacity:0;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#555d6b;transition:background .12s,color .12s,opacity .12s;flex-shrink:0;margin-left:auto}
+  .ai-chat-item:hover .ai-chat-del{opacity:1}
+  .ai-chat-del:hover{background:rgba(248,113,113,.12);color:#f87171}
+  
 /* ── Layout ────────────────── */
-.ai-layout{display:flex;height:100vh;overflow:hidden;position:relative}
+.ai-layout{display:flex;height:100vh;overflow:hidden;position:relative;padding-top:52px}
 
 /* ── Sidebar ────────────────── */
 .ai-sb{
@@ -38,7 +63,7 @@ input{font-family:inherit;color:inherit}
   z-index:20;
 }
 .ai-sb.closed{width:0;transform:translateX(-100%)}
-.ai-sb-head{
+.ai-sb-head{flex-direction:column;gap:0;padding:12px 10px 10px;
   padding:14px 12px 10px;display:flex;align-items:center;justify-content:space-between;
   flex-shrink:0;border-bottom:1px solid var(--border);
 }
@@ -292,7 +317,7 @@ input{font-family:inherit;color:inherit}
 .ai-code-body code.hljs{background:transparent;padding:14px 16px;font-size:13px;line-height:1.6}
 
 /* ── Input section ────────────────── */
-.ai-input-section{
+.ai-input-section{flex-shrink:0!important;
   flex-shrink:0;padding:8px 16px 14px;
   border-top:1px solid var(--border);background:var(--bg);
 }
@@ -426,19 +451,19 @@ input{font-family:inherit;color:inherit}
 <div class="ai-layout">
   <aside class="ai-sb" id="ai-sb">
     <div class="ai-sb-head">
-      <span class="ai-sb-title">Đoạn chat</span>
+      <span class="ai-sb-title">Chats</span>
     </div>
     <div class="ai-sb-list" id="ai-sb-list">
-      <div class="ai-sb-empty" id="ai-sb-empty">Chưa có đoạn chat nào</div>
+      <div class="ai-sb-empty" id="ai-sb-empty">No chats yet</div>
     </div>
   </aside>
 
   <div class="ai-main">
     <div class="ai-topbar">
-      <button class="ai-icon-btn" id="ai-sb-toggle" onclick="toggleSidebar()" title="Đoạn chat">
+      <button class="ai-icon-btn" id="ai-sb-toggle" onclick="toggleSidebar()" title="Chats">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <button class="ai-icon-btn" onclick="startNewChat()" title="Đoạn chat mới">
+      <button class="ai-icon-btn" onclick="startNewChat()" title="Chats mới">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
       </button>
       <div class="ai-topbar-right">
@@ -460,13 +485,13 @@ input{font-family:inherit;color:inherit}
     <div class="ai-input-section">
       <div class="ai-file-prevs" id="ai-file-prevs"></div>
       <div class="ai-input-bar" id="ai-input-bar">
-        <textarea class="ai-ta" id="ai-ta" rows="1" placeholder="Hỏi Lonely AI bất cứ điều gì..."></textarea>
+        <textarea class="ai-ta" id="ai-ta" rows="1" placeholder="Ask Lonely AI anything..."></textarea>
         <div class="ai-input-btns">
           <label class="ai-attach-lbl" title="Upload file" for="ai-file-input">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           </label>
           <input type="file" id="ai-file-input" multiple accept="image/*,text/*,.pdf,.json,.md,.csv,.txt" style="display:none">
-          <button class="ai-think-btn" id="ai-think-btn" onclick="toggleThinking()" title="Suy nghĩ" style="display:none">
+          <button class="ai-think-btn" id="ai-think-btn" onclick="toggleThinking()" title="Reasoning" style="display:none">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="2.2"/>
               <ellipse cx="12" cy="12" rx="10" ry="4"/>
@@ -479,7 +504,7 @@ input{font-family:inherit;color:inherit}
           </button>
         </div>
       </div>
-      <p class="ai-disclaimer">AI có thể mắc lỗi, hãy kiểm tra lại thông tin quan trọng.</p>
+      <p class="ai-disclaimer">AI can make mistakes. Check important info.</p>
     </div>
   </div>
 </div>
@@ -528,7 +553,7 @@ function copyCodeBlock(btn) {
   var wrap = btn.closest('.ai-code-wrap');
   var code = wrap.querySelector('code').innerText;
   navigator.clipboard.writeText(code).then(function() {
-    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Đã copy';
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Copied';
     setTimeout(function() {
       btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy';
     }, 1500);
@@ -572,8 +597,8 @@ function buildModelDD() {
     item.dataset.key = key;
     item.onclick = function() { renderModel(key); };
     var tagHtml = cfg.thinking
-      ? '<span class="ai-model-item-tag think"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>Hỗ trợ suy nghĩ</span>'
-      : '<span class="ai-model-item-tag">Tiêu chuẩn</span>';
+      ? '<span class="ai-model-item-tag think"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>Reasoning</span>'
+      : '<span class="ai-model-item-tag">Standard</span>';
     item.innerHTML =
       '<img src="' + cfg.image + '" alt="">' +
       '<div class="ai-model-item-info"><div class="ai-model-item-name">' + cfg.name + '</div>' + tagHtml + '</div>' +
@@ -613,12 +638,12 @@ function showWelcome() {
         '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e05252" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>' +
       '</div>' +
       '<div class="ai-welcome-title">Lonely AI</div>' +
-      '<div class="ai-welcome-sub">Trợ lý thông minh của Lonely Hub — hỏi bất cứ điều gì</div>' +
+      '<div class="ai-welcome-sub">Smart assistant — ask anything about Minecraft or coding</div>' +
       '<div class="ai-suggestions">' +
-        _sugCard('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>', 'Tạo một Minecraft mod bằng Java', 'Tạo một Minecraft mod bằng Java') +
-        _sugCard('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>', 'Hướng dẫn tạo server Minecraft', 'Hướng dẫn tạo server Minecraft') +
-        _sugCard('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', 'Các Minecraft seed đẹp nhất 2025', 'Các Minecraft seed đẹp nhất 2025') +
-        _sugCard('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', 'Cách fix lỗi phổ biến trong Minecraft Forge', 'Cách fix lỗi phổ biến trong Minecraft Forge') +
+        _sugCard('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>', 'Create a Minecraft mod in Java', 'Create a Minecraft mod in Java') +
+        _sugCard('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>', 'How to set up a Minecraft server', 'How to set up a Minecraft server') +
+        _sugCard('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', 'Best Minecraft seeds in 2025', 'Best Minecraft seeds in 2025') +
+        _sugCard('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', 'Fix common Minecraft Forge errors', 'Fix common Minecraft Forge errors') +
       '</div>' +
     '</div>';
 }
@@ -654,13 +679,13 @@ function renderChatList(chats) {
   var pinned = chats.filter(function(c) { return c.pinned; });
   var unpinned = chats.filter(function(c) { return !c.pinned; });
   if (pinned.length) {
-    var ph = document.createElement('div'); ph.className = 'ai-sb-section'; ph.textContent = 'Đã ghim';
+    var ph = document.createElement('div'); ph.className = 'ai-sb-section'; ph.textContent = 'Pinned';
     list.appendChild(ph);
     pinned.forEach(function(c) { list.appendChild(_makeChatItem(c)); });
   }
   if (unpinned.length) {
     if (pinned.length) {
-      var rh = document.createElement('div'); rh.className = 'ai-sb-section'; rh.textContent = 'Gần đây';
+      var rh = document.createElement('div'); rh.className = 'ai-sb-section'; rh.textContent = 'Recent';
       list.appendChild(rh);
     }
     unpinned.forEach(function(c) { list.appendChild(_makeChatItem(c)); });
@@ -757,7 +782,7 @@ function appendAIMsg(output, thinking, thinkingTime, cfg, animate) {
   var modelName = cfg && cfg.name ? cfg.name : 'Lonely AI';
   var thinkHtml = '';
   if (thinking) {
-    var label = thinkingTime > 0 ? 'Đã suy nghĩ trong ' + thinkingTime + 's' : 'Đã suy nghĩ';
+    var label = thinkingTime > 0 ? 'Reasoned for ' + thinkingTime + 's' : 'Reasoning';
     thinkHtml =
       '<div class="ai-thinking">' +
         '<div class="ai-thinking-hd" onclick="toggleThinkBlock(this)">' +
