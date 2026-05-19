@@ -4010,9 +4010,57 @@ def _stream_provider(model_key, messages, enable_thinking):
                 pass
 
     elif provider == "google":
-        _, output = _ai_call_gemini(full_messages, os.environ.get(cfg.get("api_key_env", ""), ""))
-        if output:
-            yield ("content", output)
+        api_key = os.environ.get(cfg.get("api_key_env", ""), "")
+        contents = []
+        sys_text = ""
+        for m in full_messages:
+            role = m.get("role", "")
+            content = m.get("content", "")
+            if role == "system":
+                sys_text = content if isinstance(content, str) else ""
+            elif role == "user":
+                if isinstance(content, str):
+                    contents.append({"role": "user", "parts": [{"text": content}]})
+                else:
+                    gparts = []
+                    for part in content:
+                        if part.get("type") == "text":
+                            gparts.append({"text": part["text"]})
+                        elif part.get("type") == "image_url":
+                            url = part["image_url"]["url"]
+                            if url.startswith("data:"):
+                                mt, b64 = url.split(",", 1)
+                                mime = mt.split(":")[1].split(";")[0]
+                                gparts.append({"inlineData": {"mimeType": mime, "data": b64}})
+                    contents.append({"role": "user", "parts": gparts})
+            elif role == "assistant":
+                ct = content if isinstance(content, str) else ""
+                contents.append({"role": "model", "parts": [{"text": ct}]})
+        g_payload = {"contents": contents}
+        if sys_text:
+            g_payload["systemInstruction"] = {"parts": [{"text": sys_text}]}
+        g_resp = requests.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{cfg['model_id']}:streamGenerateContent?key={api_key}&alt=sse",
+            json=g_payload, stream=True, timeout=120
+        )
+        g_resp.raise_for_status()
+        for line in g_resp.iter_lines():
+            if not line:
+                continue
+            line = line.decode("utf-8") if isinstance(line, bytes) else line
+            if line == "data: [DONE]":
+                break
+            if not line.startswith("data: "):
+                continue
+            try:
+                gchunk = json.loads(line[6:])
+                for cand in gchunk.get("candidates", []):
+                    for gpart in cand.get("content", {}).get("parts", []):
+                        gt = gpart.get("text", "")
+                        if gt:
+                            yield ("content", gt)
+            except Exception:
+                pass
 
 def _ai_call_openrouter(model_id, messages, api_key=None):
     api_key = api_key or os.environ.get("OPENROUTER_API_KEY", "")
@@ -4247,9 +4295,7 @@ def api_ai_send():
             if f.get("type", "").startswith("image/"):
                 parts.append({"type": "image_url", "image_url": {"url": f"data:{f['type']};base64,{f['data']}"}})
             else:
-                parts.append({"type": "text", "text": f"
-[File: {f['name']}]
-{f.get('text_content','(binary)')}"})
+                parts.append({"type": "text", "text": f"\n[File: {f['name']}]\n{f.get('text_content','(binary)')}"})
         msg_content = parts
     elif files_data:
         extras = []
@@ -4258,13 +4304,8 @@ def api_ai_send():
                 extras.append(f"[Image: {f['name']}]")
             else:
                 tc = f.get("text_content", "")
-                extras.append(f"
-[File: {f['name']}]
-{tc}" if tc else f"[File: {f['name']}]")
-        msg_content = (user_text + "
-" + "
-".join(extras)).strip() if user_text else "
-".join(extras)
+                extras.append(f"\n[File: {f['name']}]\n{tc}" if tc else f"[File: {f['name']}]")
+        msg_content = (user_text + "\n" + "\n".join(extras)).strip() if user_text else "\n".join(extras)
     else:
         msg_content = user_text
     chat["messages"].append({"role": "user", "content": msg_content})
