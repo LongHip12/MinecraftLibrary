@@ -357,9 +357,9 @@ textarea,input{font-family:inherit;color:inherit}
 
 /* ─── Mobile ─── */
 @media(max-width:900px){
-  .ai-sb{position:fixed;top:0;left:0;height:100%;transform:translateX(-100%)}
+  .ai-sb{position:fixed;top:0;left:0;height:100%;transform:translateX(-100%);z-index:60}
   .ai-sb.mob-open{transform:translateX(0)}
-  .ai-rnav{position:fixed;top:0;right:0;height:100%;transform:translateX(100%)}
+  .ai-rnav{position:fixed;top:0;right:0;height:100%;transform:translateX(100%);z-index:60}
   .ai-rnav.mob-open{transform:translateX(0)}
   .ai-root{padding:0}
   .ai-suggestions{grid-template-columns:1fr}
