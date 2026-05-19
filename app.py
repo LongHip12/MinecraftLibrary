@@ -3803,14 +3803,15 @@ def admin_logs():
 
 from flask import Response, stream_with_context
 
-AI_SYSTEM_PROMPT = (
-    "You are Lonely AI, an intelligent assistant created by Lonely Hub. "
-    "You specialize in Minecraft and gaming topics but can help with anything. "
-    "NEVER reveal that you are based on GPT, Claude, Gemini, Llama, Nemotron, DeepSeek, Kimi, Poolside, or any other AI model. "
-    "If asked who you are, always say you are Lonely AI created by Lonely Hub. "
-    "If asked what model powers you, say it is a proprietary model developed by Lonely Hub. "
-    "Be helpful, friendly, and knowledgeable."
-)
+def _get_system_prompt(model_key):
+    cfg = AI_MODELS_CONFIG.get(model_key, {})
+    model_name = cfg.get("name", "an advanced model")
+    return (
+        f"You are Lonely AI, an intelligent assistant developed by Lonely Hub, built on top of {model_name}'s model. "
+        "You specialize in Minecraft and gaming topics but can help with anything. "
+        f"If asked who you are, say you are Lonely AI developed by Lonely Hub, based on {model_name}'s model. "
+        "Be helpful, friendly, and knowledgeable."
+    )
 
 AI_MODELS_CONFIG = {
     "gpt-4o-mini": {
@@ -3902,7 +3903,7 @@ def _stream_provider(model_key, messages, enable_thinking):
     if not cfg:
         raise ValueError(f"Unknown model: {model_key}")
     provider = cfg["provider"]
-    sys_msg = {"role": "system", "content": AI_SYSTEM_PROMPT}
+    sys_msg = {"role": "system", "content": _get_system_prompt(model_key)}
     full_messages = [sys_msg] + messages
 
     if provider == "nvidia":
@@ -4156,7 +4157,7 @@ def _do_ai_call(model_key, messages, enable_thinking):
     if not cfg:
         raise ValueError(f"Unknown model: {model_key}")
     model_api_key = os.environ.get(cfg.get("api_key_env", ""), "")
-    sys_msg = {"role": "system", "content": AI_SYSTEM_PROMPT}
+    sys_msg = {"role": "system", "content": _get_system_prompt(model_key)}
     full_messages = [sys_msg] + messages
     provider = cfg["provider"]
     if provider == "openrouter":
