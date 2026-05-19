@@ -3819,6 +3819,7 @@ AI_MODELS_CONFIG = {
         "image": "https://i.imgur.com/0DwnmdY.jpeg",
         "provider": "openrouter",
         "model_id": "openai/gpt-4o-mini",
+        "api_key_env": "OPENROUTER_GPT4O_MINI_KEY",
     },
     "nvidia-nemotron": {
         "name": "Nvidia Nemotron",
@@ -3842,6 +3843,7 @@ AI_MODELS_CONFIG = {
         "image": "https://i.imgur.com/xY7M2iE.jpeg",
         "provider": "poolside",
         "model_id": "poolside/laguna-m.1",
+        "api_key_env": "POOLSIDE_API_KEY",
     },
     "llama-3.3-70b": {
         "name": "Meta Llama-3.3-70b",
@@ -3857,6 +3859,7 @@ AI_MODELS_CONFIG = {
         "image": "https://i.imgur.com/GdLBseU.jpeg",
         "provider": "google",
         "model_id": "gemini-3-flash-preview",
+        "api_key_env": "GOOGLE_GEMINI_KEY",
     },
     "kimi-k2.6": {
         "name": "Kimi K2.6",
@@ -3895,7 +3898,7 @@ def _ai_parse_sse(resp):
     return "".join(thinking_parts).strip(), "".join(output_parts).strip()
 
 def _ai_call_openrouter(model_id, messages, api_key=None):
-    api_key = os.environ.get("OPENROUTER_API_KEY", "")
+    api_key = api_key or os.environ.get("OPENROUTER_API_KEY", "")
     resp = requests.post(
         "https://openrouter.ai/api/v1/chat/completions",
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},

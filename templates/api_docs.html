@@ -181,6 +181,168 @@
   print(resp.json())  # {"success": true}</pre></div>
     </div>
 
+    <h2 id="v2">/api/v2/chat/ai</h2>
+    <div class="endpoint"><span class="method">POST</span>/api/v2/chat/ai</div>
+    <p>Stateless public API. Authenticate with your personal API token — find it in your profile settings under <strong>API Token</strong>. No session cookie required. Messages do not persist to any chat history.</p>
+
+    <h3>Request headers</h3>
+    <table class="tbl">
+      <thead><tr><th>Header</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>X-Token</code></td><td><span class="req">Required</span></td><td>Your personal API token (from profile settings)</td></tr>
+        <tr><td><code>Content-Type</code></td><td><span class="req">Required</span></td><td><code>application/json</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Request body</h3>
+    <table class="tbl">
+      <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>model</code></td><td>string</td><td><span class="opt">Optional</span></td><td>Model ID (see list below). Defaults to <code>gpt-4o-mini</code>.</td></tr>
+        <tr><td><code>messages</code></td><td>array</td><td><span class="req">Required</span></td><td>OpenAI-style message array: <code>[{"role":"user","content":"..."}]</code>. Supports <code>user</code>, <code>assistant</code>, and <code>system</code> roles.</td></tr>
+        <tr><td><code>thinking</code></td><td>boolean</td><td><span class="opt">Optional</span></td><td>Enable reasoning mode for models that support it.</td></tr>
+        <tr><td><code>stream</code></td><td>boolean</td><td><span class="opt">Optional</span></td><td>Stream response as Server-Sent Events.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Response (non-streaming)</h3>
+    <table class="tbl">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>success</code></td><td>boolean</td><td>Whether the request succeeded.</td></tr>
+        <tr><td><code>output</code></td><td>string</td><td>The AI's response text (Markdown).</td></tr>
+        <tr><td><code>thinking</code></td><td>string|null</td><td>Reasoning block (if reasoning was enabled and the model supports it).</td></tr>
+        <tr><td><code>model</code></td><td>string</td><td>Model key used for this request.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>SSE event types (stream mode)</h3>
+    <table class="tbl">
+      <thead><tr><th>type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>thinking</code></td><td>Reasoning block chunk (reasoning-capable models only)</td></tr>
+        <tr><td><code>content</code></td><td>Response text chunk</td></tr>
+        <tr><td><code>error</code></td><td>Error message</td></tr>
+        <tr><td><code>[DONE]</code></td><td>Stream finished</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Available models for /api/v2/chat/ai</h3>
+    <div class="model-grid">
+      <div class="model-card"><img src="https://i.imgur.com/0DwnmdY.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">GPT-4o-mini</div><code class="model-card-id">gpt-4o-mini</code><div class="model-card-tag">Standard</div></div></div>
+      <div class="model-card"><img src="https://i.imgur.com/xY7M2iE.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Lonely AI</div><code class="model-card-id">lonely-ai</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
+      <div class="model-card"><img src="https://i.imgur.com/DJgiwrh.png" alt=""><div class="model-card-info"><div class="model-card-name">Nvidia Nemotron</div><code class="model-card-id">nvidia-nemotron</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
+      <div class="model-card"><img src="https://i.imgur.com/0BQqhba.png" alt=""><div class="model-card-info"><div class="model-card-name">DeepSeek V4 Flash</div><code class="model-card-id">deepseek-v4-flash</code><div class="model-card-tag">Standard</div></div></div>
+      <div class="model-card"><img src="https://i.imgur.com/pESTVyY.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Meta Llama-3.3-70b</div><code class="model-card-id">llama-3.3-70b</code><div class="model-card-tag">Standard</div></div></div>
+      <div class="model-card"><img src="https://i.imgur.com/GdLBseU.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Gemini Flash</div><code class="model-card-id">gemini</code><div class="model-card-tag">Standard</div></div></div>
+      <div class="model-card"><img src="https://i.imgur.com/COgMkUi.jpeg" alt=""><div class="model-card-info"><div class="model-card-name">Kimi K2.6</div><code class="model-card-id">kimi-k2.6</code><div class="model-card-tag">&#x2728; Reasoning</div></div></div>
+    </div>
+
+    <h3>Python examples — /api/v2/chat/ai</h3>
+
+    <h3 style="margin-top:14px">Basic request</h3>
+    <div class="code-wrap">
+      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+      <div class="code-body"><pre>import requests
+
+resp = requests.post(
+    "https://lonelyhub.net/api/v2/chat/ai",
+    headers={
+        "X-Token": "YOUR_API_TOKEN",
+        "Content-Type": "application/json",
+    },
+    json={
+        "model": "gpt-4o-mini",
+        "messages": [
+            {"role": "user", "content": "How do I create a Minecraft mod in Java?"}
+        ],
+    },
+)
+data = resp.json()
+print(data["output"])</pre></div>
+    </div>
+
+    <h3>Multi-turn conversation</h3>
+    <div class="code-wrap">
+      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+      <div class="code-body"><pre>import requests
+
+API_URL = "https://lonelyhub.net/api/v2/chat/ai"
+HEADERS = {"X-Token": "YOUR_API_TOKEN", "Content-Type": "application/json"}
+
+history = []
+
+def chat(user_message, model="gpt-4o-mini"):
+    history.append({"role": "user", "content": user_message})
+    resp = requests.post(API_URL, headers=HEADERS, json={
+        "model": model,
+        "messages": history,
+    })
+    data = resp.json()
+    reply = data["output"]
+    history.append({"role": "assistant", "content": reply})
+    return reply
+
+print(chat("What is the best way to start modding Minecraft?"))
+print(chat("Can you show me a simple example?"))</pre></div>
+    </div>
+
+    <h3>Reasoning model with thinking enabled</h3>
+    <div class="code-wrap">
+      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+      <div class="code-body"><pre>import requests
+
+resp = requests.post(
+    "https://lonelyhub.net/api/v2/chat/ai",
+    headers={"X-Token": "YOUR_API_TOKEN", "Content-Type": "application/json"},
+    json={
+        "model": "nvidia-nemotron",
+        "messages": [
+            {"role": "user", "content": "Explain how Minecraft chunk loading works"}
+        ],
+        "thinking": True,
+    },
+)
+data = resp.json()
+if data.get("thinking"):
+    print("[Reasoning]")
+    print(data["thinking"])
+    print("---")
+print(data["output"])</pre></div>
+    </div>
+
+    <h3>Streaming response</h3>
+    <div class="code-wrap">
+      <div class="code-hd"><span class="code-lang">python</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+      <div class="code-body"><pre>import requests, json
+
+resp = requests.post(
+    "https://lonelyhub.net/api/v2/chat/ai",
+    headers={"X-Token": "YOUR_API_TOKEN", "Content-Type": "application/json"},
+    json={
+        "model": "gpt-4o-mini",
+        "messages": [{"role": "user", "content": "Tell me about Minecraft redstone"}],
+        "stream": True,
+    },
+    stream=True,
+)
+for line in resp.iter_lines():
+    if not line:
+        continue
+    text = line.decode() if isinstance(line, bytes) else line
+    if text == "data: [DONE]":
+        break
+    if text.startswith("data: "):
+        event = json.loads(text[6:])
+        if event["type"] == "thinking":
+            print(f"[Reasoning] {event['content']}")
+        elif event["type"] == "content":
+            print(event["content"], end="", flush=True)
+        elif event["type"] == "error":
+            print(f"Error: {event['error']}")
+print()</pre></div>
+    </div>
+
     <h2>Environment Variables</h2>
     <p>Set these in your server's <code>.env</code> file. Each model uses its own dedicated API key.</p>
     <table class="tbl">

@@ -9,8 +9,10 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-*:focus{outline:none}
-button,a,input,textarea,select{-webkit-tap-highlight-color:transparent;outline:none}
+*{-webkit-tap-highlight-color:transparent!important;-webkit-focus-ring-color:transparent!important}
+*:focus{outline:none!important;box-shadow:none!important}
+button,a,input,textarea,select{-webkit-tap-highlight-color:transparent!important;outline:none!important;-webkit-appearance:none}
+input[type="text"]:focus,textarea:focus{outline:none!important;box-shadow:none!important}
 :root{
   --bg:#0c0e11;--bg2:#111418;--bg3:#191d24;--bg4:#20242d;--bg5:#272c36;
   --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
@@ -20,41 +22,47 @@ button,a,input,textarea,select{-webkit-tap-highlight-color:transparent;outline:n
   --radius:14px;--sb:260px;--topbar:52px;
 }
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px}
-button{cursor:pointer;background:none;border:none;color:inherit;font-family:inherit;font-size:inherit}
-a{color:inherit;text-decoration:none}
+button{cursor:pointer;background:none;border:none;color:inherit;font-family:inherit;font-size:inherit;-webkit-tap-highlight-color:transparent}
+a{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
 textarea{font-family:inherit;font-size:inherit;color:inherit}
 input{font-family:inherit;color:inherit}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:6px}
 
+.site-nav{position:fixed;top:0;left:0;right:0;z-index:300;height:52px;background:rgba(12,14,17,.95);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;padding:0 16px;gap:2px}
+.site-nav-logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;color:#e2e5ea;text-decoration:none;margin-right:8px;flex-shrink:0}
+.site-nav-logo img{width:28px;height:28px;border-radius:7px;object-fit:cover}
+.site-nav-link{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:9px;font-size:13px;font-weight:500;color:#8b929e;text-decoration:none;transition:background .13s,color .13s;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.site-nav-link:hover{background:#191d24;color:#e2e5ea}
+.site-nav-link:focus{outline:none}
+.site-nav-link.active{color:#e05252}
+.site-nav-link svg{flex-shrink:0;opacity:.75}
+.site-nav-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.site-nav-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.1);flex-shrink:0}
+@media(max-width:640px){
+  .site-nav-link span{display:none}
+  .site-nav-link{padding:6px 8px}
+  .site-nav-link svg{opacity:.85}
+}
+@media(max-width:400px){
+  .site-nav-link.nav-hide-xs{display:none}
+}
 
-  /* ── Site nav ─── */
-  .site-nav{position:fixed;top:0;left:0;right:0;z-index:300;height:52px;background:rgba(12,14,17,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;padding:0 16px;gap:2px}
-  .site-nav-logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;color:#e2e5ea;text-decoration:none;margin-right:8px;flex-shrink:0}
-  .site-nav-logo img{width:28px;height:28px;border-radius:7px;object-fit:cover}
-  .site-nav-link{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:9px;font-size:13px;font-weight:500;color:#8b929e;text-decoration:none;transition:background .13s,color .13s;flex-shrink:0}
-  .site-nav-link:hover{background:#191d24;color:#e2e5ea}
-  .site-nav-link.active{color:#e05252}
-  .site-nav-link svg{flex-shrink:0;opacity:.75}
-  @media(max-width:600px){.site-nav-link span{display:none}.site-nav-link{padding:6px 9px}}
-  /* ── Sidebar new chat + search ─── */
-  .ai-sb-new-btn{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;background:rgba(224,82,82,.12);border:1px solid rgba(224,82,82,.25);border-radius:10px;color:#e05252;font-size:13px;font-weight:600;cursor:pointer;transition:background .13s,border-color .13s}
-  .ai-sb-new-btn:hover{background:rgba(224,82,82,.2);border-color:#e05252}
-  .ai-sb-search-wrap{position:relative;margin-top:6px}
-  .ai-sb-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#555d6b;pointer-events:none}
-  .ai-sb-search{width:100%;background:#191d24;border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:7px 10px 7px 32px;font-size:13px;color:#e2e5ea;font-family:inherit;transition:border-color .15s}
-  .ai-sb-search::placeholder{color:#555d6b}
-  .ai-sb-search:focus{border-color:rgba(255,255,255,.15)}
-  /* ── Sidebar delete btn ─── */
-  .ai-chat-del{opacity:0;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#555d6b;transition:background .12s,color .12s,opacity .12s;flex-shrink:0;margin-left:auto}
-  .ai-chat-item:hover .ai-chat-del{opacity:1}
-  .ai-chat-del:hover{background:rgba(248,113,113,.12);color:#f87171}
-  
-/* ── Layout ────────────────── */
-.ai-layout{display:flex;height:100vh;overflow:hidden;position:relative;padding-top:52px}
+.ai-sb-new-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;background:rgba(224,82,82,.12);border:1px solid rgba(224,82,82,.25);border-radius:10px;color:#e05252;font-size:13px;font-weight:600;cursor:pointer;transition:background .13s,border-color .13s;-webkit-tap-highlight-color:transparent}
+.ai-sb-new-btn:hover{background:rgba(224,82,82,.2);border-color:#e05252}
+.ai-sb-search-wrap{position:relative;margin-top:8px}
+.ai-sb-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#555d6b;pointer-events:none}
+.ai-sb-search{width:100%;background:#191d24;border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:7px 10px 7px 32px;font-size:13px;color:#e2e5ea;font-family:inherit;transition:border-color .15s;-webkit-appearance:none}
+.ai-sb-search::placeholder{color:#555d6b}
+.ai-sb-search:focus{border-color:rgba(255,255,255,.15);outline:none}
+.ai-chat-del{opacity:0;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#555d6b;transition:background .12s,color .12s,opacity .12s;flex-shrink:0;margin-left:auto;-webkit-tap-highlight-color:transparent}
+@media(hover:hover){.ai-chat-item:hover .ai-chat-del{opacity:1}}
+@media(hover:none){.ai-chat-del{opacity:.45}}
+.ai-chat-del:hover{background:rgba(248,113,113,.12);color:#f87171}
 
-/* ── Sidebar ────────────────── */
+.ai-layout{display:flex;height:100vh;height:100dvh;overflow:hidden;position:relative;padding-top:52px}
+
 .ai-sb{
   width:var(--sb);flex-shrink:0;background:var(--bg2);
   border-right:1px solid var(--border);
@@ -63,11 +71,10 @@ input{font-family:inherit;color:inherit}
   z-index:20;
 }
 .ai-sb.closed{width:0;transform:translateX(-100%)}
-.ai-sb-head{flex-direction:column;gap:0;padding:12px 10px 10px;
-  padding:14px 12px 10px;display:flex;align-items:center;justify-content:space-between;
+.ai-sb-head{
+  padding:12px 10px 10px;display:flex;flex-direction:column;gap:0;
   flex-shrink:0;border-bottom:1px solid var(--border);
 }
-.ai-sb-title{font-size:13px;font-weight:600;color:var(--text2);letter-spacing:.4px;text-transform:uppercase}
 .ai-sb-list{flex:1;overflow-y:auto;padding:8px 6px}
 .ai-sb-section{font-size:10.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;padding:6px 8px 4px}
 .ai-chat-item{
@@ -81,14 +88,11 @@ input{font-family:inherit;color:inherit}
 .ai-chat-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
 .ai-sb-empty{padding:24px 12px;text-align:center;color:var(--text3);font-size:13px}
 
-/* ── Overlay (mobile) ────────── */
 .ai-overlay{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:19;
-  backdrop-filter:blur(2px);
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:19;
 }
 .ai-overlay.on{display:block}
 
-/* ── Context menu ────────────── */
 .ai-ctx{
   position:fixed;background:var(--bg3);border:1px solid var(--border2);
   border-radius:12px;padding:6px;min-width:160px;z-index:1000;
@@ -98,13 +102,12 @@ input{font-family:inherit;color:inherit}
 .ai-ctx-item{
   display:flex;align-items:center;gap:9px;padding:9px 12px;
   border-radius:8px;font-size:13px;color:var(--text);cursor:pointer;
-  transition:background .12s;
+  transition:background .12s;-webkit-tap-highlight-color:transparent;
 }
 .ai-ctx-item:hover{background:var(--bg4)}
 .ai-ctx-item.danger{color:#f87171}
 .ai-ctx-item svg{flex-shrink:0;opacity:.75}
 
-/* ── Rename modal ────────────── */
 .ai-modal-bg{
   display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);
   z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(4px);
@@ -119,17 +122,15 @@ input{font-family:inherit;color:inherit}
   width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:10px;
   padding:10px 14px;font-size:14px;outline:none;color:var(--text);
 }
-.ai-modal-input:focus{border-color:var(--primary)}
+.ai-modal-input:focus{border-color:var(--primary);outline:none}
 .ai-modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
-.ai-modal-cancel{padding:8px 18px;border-radius:8px;font-size:13px;color:var(--text2);border:1px solid var(--border2)}
+.ai-modal-cancel{padding:8px 18px;border-radius:8px;font-size:13px;color:var(--text2);border:1px solid var(--border2);-webkit-tap-highlight-color:transparent}
 .ai-modal-cancel:hover{background:var(--bg4)}
-.ai-modal-ok{padding:8px 18px;border-radius:8px;font-size:13px;background:var(--primary);color:#fff;font-weight:600}
+.ai-modal-ok{padding:8px 18px;border-radius:8px;font-size:13px;background:var(--primary);color:#fff;font-weight:600;-webkit-tap-highlight-color:transparent}
 .ai-modal-ok:hover{opacity:.88}
 
-/* ── Main ────────────────────── */
 .ai-main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
 
-/* ── Topbar ────────────────────── */
 .ai-topbar{
   height:var(--topbar);display:flex;align-items:center;padding:0 10px;gap:6px;
   border-bottom:1px solid var(--border);flex-shrink:0;
@@ -137,17 +138,17 @@ input{font-family:inherit;color:inherit}
 .ai-icon-btn{
   width:34px;height:34px;border-radius:8px;display:flex;align-items:center;
   justify-content:center;color:var(--text2);transition:background .13s,color .13s;flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
 }
 .ai-icon-btn:hover{background:var(--bg3);color:var(--text)}
 .ai-topbar-right{margin-left:auto}
 
-/* ── Model selector ────────────── */
 .ai-model-sel{position:relative}
 .ai-model-btn{
   display:flex;align-items:center;gap:7px;padding:6px 10px 6px 8px;
   background:var(--bg3);border:1px solid var(--border);border-radius:20px;
   cursor:pointer;color:var(--text);font-size:13px;font-weight:500;
-  transition:background .13s,border-color .13s;
+  transition:background .13s,border-color .13s;-webkit-tap-highlight-color:transparent;
 }
 .ai-model-btn:hover{background:var(--bg4);border-color:var(--border2)}
 .ai-model-btn img{width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0}
@@ -163,7 +164,7 @@ input{font-family:inherit;color:inherit}
 .ai-model-dd.open{display:block}
 .ai-model-item{
   display:flex;align-items:center;gap:10px;padding:9px 10px;
-  border-radius:9px;cursor:pointer;transition:background .12s;
+  border-radius:9px;cursor:pointer;transition:background .12s;-webkit-tap-highlight-color:transparent;
 }
 .ai-model-item:hover{background:var(--bg4)}
 .ai-model-item.active{background:var(--primary-dim)}
@@ -178,14 +179,12 @@ input{font-family:inherit;color:inherit}
 .ai-model-item-check{color:var(--primary);opacity:0}
 .ai-model-item.active .ai-model-item-check{opacity:1}
 
-/* ── Messages area ────────────── */
 .ai-msgs{
   flex:1;overflow-y:auto;padding:20px 16px 12px;
   display:flex;flex-direction:column;gap:18px;
 }
 .ai-msgs-inner{display:flex;flex-direction:column;gap:18px;max-width:760px;width:100%;margin:0 auto}
 
-/* ── Welcome screen ────────────── */
 .ai-welcome{
   flex:1;display:flex;flex-direction:column;align-items:center;
   justify-content:center;padding:40px 20px 20px;
@@ -204,13 +203,12 @@ input{font-family:inherit;color:inherit}
 .ai-sug-card{
   background:var(--bg3);border:1px solid var(--border);border-radius:14px;
   padding:16px 16px 14px;cursor:pointer;text-align:left;
-  transition:background .15s,border-color .15s,transform .12s;
+  transition:background .15s,border-color .15s,transform .12s;-webkit-tap-highlight-color:transparent;
 }
 .ai-sug-card:hover{background:var(--bg4);border-color:var(--border2);transform:translateY(-1px)}
 .ai-sug-card svg{display:block;margin-bottom:10px;opacity:.8}
 .ai-sug-card-text{font-size:13px;color:var(--text);line-height:1.5}
 
-/* ── Message bubbles ────────────── */
 .ai-msg{display:flex;gap:10px;max-width:760px;width:100%;margin:0 auto;position:relative}
 .ai-msg.user{flex-direction:row-reverse;align-self:flex-end}
 .ai-msg.assistant{align-self:flex-start}
@@ -250,14 +248,13 @@ input{font-family:inherit;color:inherit}
   font-size:12px;color:var(--text2);
 }
 
-/* ── Thinking ────────────────────── */
 .ai-thinking{
   background:var(--think-dim);border:1px solid rgba(167,139,250,.2);
   border-radius:12px;margin-bottom:6px;overflow:hidden;
 }
 .ai-thinking-hd{
   display:flex;align-items:center;gap:7px;padding:9px 13px;
-  cursor:pointer;font-size:13px;color:var(--think);user-select:none;
+  cursor:pointer;font-size:13px;color:var(--think);user-select:none;-webkit-tap-highlight-color:transparent;
 }
 .ai-thinking-hd svg{flex-shrink:0}
 .ai-thinking-hd .ai-think-chev{transition:transform .2s;margin-left:auto;opacity:.6}
@@ -270,7 +267,6 @@ input{font-family:inherit;color:inherit}
 }
 .ai-thinking-bd.open{display:block}
 
-/* ── Loading dots ────────────────── */
 @keyframes _aidot{0%,60%,100%{transform:translateY(0);opacity:.3}30%{transform:translateY(-5px);opacity:1}}
 .ai-dots{display:flex;align-items:center;gap:4px;padding:14px 16px}
 .ai-dots span{
@@ -280,7 +276,6 @@ input{font-family:inherit;color:inherit}
 .ai-dots span:nth-child(2){animation-delay:.15s}
 .ai-dots span:nth-child(3){animation-delay:.3s}
 
-/* ── Message action buttons ────────── */
 .ai-msg-actions{
   display:flex;align-items:center;gap:2px;margin-top:4px;padding:0 2px;
   opacity:0;transition:opacity .15s;
@@ -288,11 +283,10 @@ input{font-family:inherit;color:inherit}
 .ai-msg:hover .ai-msg-actions{opacity:1}
 .ai-msg-action-btn{
   width:28px;height:28px;border-radius:7px;display:flex;align-items:center;
-  justify-content:center;color:var(--text3);transition:background .12s,color .12s;
+  justify-content:center;color:var(--text3);transition:background .12s,color .12s;-webkit-tap-highlight-color:transparent;
 }
 .ai-msg-action-btn:hover{background:var(--bg4);color:var(--text2)}
 
-/* ── Code blocks ────────────────── */
 .ai-code-wrap{
   background:#13151a;border:1px solid rgba(255,255,255,.09);
   border-radius:12px;margin:10px 0;overflow:hidden;
@@ -309,16 +303,16 @@ input{font-family:inherit;color:inherit}
 .ai-code-copy{
   display:flex;align-items:center;gap:5px;font-size:11px;
   color:#8b929e;padding:3px 8px;border-radius:6px;
-  transition:background .12s,color .12s;
+  transition:background .12s,color .12s;-webkit-tap-highlight-color:transparent;
 }
 .ai-code-copy:hover{background:rgba(255,255,255,.07);color:#c9d1d9}
 .ai-code-body{overflow-x:auto}
 .ai-code-body pre{margin:0}
 .ai-code-body code.hljs{background:transparent;padding:14px 16px;font-size:13px;line-height:1.6}
 
-/* ── Input section ────────────────── */
-.ai-input-section{flex-shrink:0!important;
-  flex-shrink:0;padding:8px 16px 14px;
+.ai-input-section{
+  flex-shrink:0;padding:8px 16px;
+  padding-bottom:max(14px, env(safe-area-inset-bottom, 14px));
   border-top:1px solid var(--border);background:var(--bg);
 }
 .ai-file-prevs{
@@ -337,7 +331,7 @@ input{font-family:inherit;color:inherit}
 .ai-file-prev-rm{
   position:absolute;top:3px;right:3px;width:18px;height:18px;
   background:rgba(0,0,0,.7);border-radius:50%;display:flex;
-  align-items:center;justify-content:center;color:#fff;font-size:11px;
+  align-items:center;justify-content:center;color:#fff;font-size:11px;-webkit-tap-highlight-color:transparent;
 }
 .ai-input-bar{
   display:flex;align-items:flex-end;gap:6px;
@@ -349,19 +343,19 @@ input{font-family:inherit;color:inherit}
 .ai-ta{
   flex:1;background:none;border:none;outline:none;resize:none;
   font-size:14px;line-height:1.6;color:var(--text);
-  max-height:200px;overflow-y:auto;
+  max-height:200px;overflow-y:auto;min-height:24px;
 }
 .ai-ta::placeholder{color:var(--text3)}
 .ai-input-btns{display:flex;align-items:center;gap:3px;flex-shrink:0}
 .ai-attach-lbl{
   width:34px;height:34px;border-radius:8px;display:flex;align-items:center;
   justify-content:center;color:var(--text3);cursor:pointer;
-  transition:background .12s,color .12s;
+  transition:background .12s,color .12s;-webkit-tap-highlight-color:transparent;
 }
 .ai-attach-lbl:hover{background:var(--bg4);color:var(--text2)}
 .ai-think-btn{
   width:34px;height:34px;border-radius:8px;display:flex;align-items:center;
-  justify-content:center;color:var(--text3);transition:background .12s,color .12s;
+  justify-content:center;color:var(--text3);transition:background .12s,color .12s;-webkit-tap-highlight-color:transparent;
 }
 .ai-think-btn.active{
   color:var(--think);background:var(--think-dim);
@@ -373,7 +367,7 @@ input{font-family:inherit;color:inherit}
 .ai-send-btn{
   width:34px;height:34px;border-radius:9px;background:var(--primary);
   display:flex;align-items:center;justify-content:center;color:#fff;
-  transition:opacity .13s,transform .13s;flex-shrink:0;
+  transition:opacity .13s,transform .13s;flex-shrink:0;-webkit-tap-highlight-color:transparent;
 }
 .ai-send-btn:hover{opacity:.85;transform:scale(1.04)}
 .ai-send-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
@@ -382,7 +376,6 @@ input{font-family:inherit;color:inherit}
   margin-top:8px;max-width:760px;margin-left:auto;margin-right:auto;
 }
 
-/* ── Markdown styles ─────────────── */
 .ai-msg-bubble h1,.ai-msg-bubble h2,.ai-msg-bubble h3{font-weight:700;margin:14px 0 6px;line-height:1.3}
 .ai-msg-bubble h1{font-size:18px}.ai-msg-bubble h2{font-size:16px}.ai-msg-bubble h3{font-size:14px}
 .ai-msg-bubble p{margin:6px 0}
@@ -407,11 +400,9 @@ input{font-family:inherit;color:inherit}
 .ai-msg-bubble th{background:var(--bg4);font-weight:600}
 .ai-msg-bubble hr{border:none;border-top:1px solid var(--border);margin:12px 0}
 
-/* ── Typewriter cursor ─────────────── */
 @keyframes _blink{0%,100%{opacity:1}50%{opacity:0}}
 .ai-cursor::after{content:'▌';animation:_blink .8s step-end infinite;font-size:12px;color:var(--text3)}
 
-/* ── Responsive ─────────────────── */
 @media(max-width:768px){
   .ai-sb{position:absolute;height:100%;z-index:20;transform:translateX(-100%)}
   .ai-sb.open{transform:translateX(0)}
@@ -420,30 +411,75 @@ input{font-family:inherit;color:inherit}
 </style>
 </head>
 <body>
+
+<nav class="site-nav">
+  <a href="/" class="site-nav-logo">
+    <img src="https://i.imgur.com/xY7M2iE.jpeg" alt="Lonely Hub">
+    <span>Lonely Hub</span>
+  </a>
+  <a href="/" class="site-nav-link nav-hide-xs" title="Home">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Home</span>
+  </a>
+  <a href="/mods" class="site-nav-link" title="Mods">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    <span>Mods</span>
+  </a>
+  <a href="/clients" class="site-nav-link" title="Clients">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/><line x1="6" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="14" y2="12"/></svg>
+    <span>Clients</span>
+  </a>
+  <a href="/forum" class="site-nav-link nav-hide-xs" title="Forum">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span>Forum</span>
+  </a>
+  <a href="/ai-chat" class="site-nav-link active" title="AI Chat">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>
+    <span>AI Chat</span>
+  </a>
+  <div class="site-nav-right">
+    <div class="ai-model-sel" id="ai-model-sel">
+      <button class="ai-model-btn" id="ai-model-btn" onclick="toggleModelDD(event)">
+        <img id="ai-model-img" src="https://i.imgur.com/0DwnmdY.jpeg" alt="">
+        <span id="ai-model-name-lbl">GPT-4o-mini</span>
+        <svg class="ai-model-chevron" id="ai-model-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="ai-model-dd" id="ai-model-dd"></div>
+    </div>
+    {% if user %}
+    <a href="/users/{{ user.username }}" title="{{ user.display_name }}">
+      <img src="{{ user.avatar if user.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="" class="site-nav-avatar" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
+    </a>
+    {% else %}
+    <a href="/login" style="font-size:13px;font-weight:600;color:var(--text2);padding:5px 12px;border:1px solid var(--border);border-radius:8px;transition:background .13s,color .13s" onmouseover="this.style.background='#191d24';this.style.color='#e2e5ea'" onmouseout="this.style.background='';this.style.color=''">Sign In</a>
+    {% endif %}
+  </div>
+</nav>
+
 <div class="ai-overlay" id="ai-overlay" onclick="closeSidebar()"></div>
 
 <div class="ai-ctx" id="ai-ctx">
   <div class="ai-ctx-item" onclick="ctxRename()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-    Đổi tên
+    Rename
   </div>
   <div class="ai-ctx-item" id="ai-ctx-pin" onclick="ctxPin()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-    <span id="ai-ctx-pin-label">Ghim</span>
+    <span id="ai-ctx-pin-label">Pin</span>
   </div>
   <div class="ai-ctx-item danger" onclick="ctxDelete()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-    Xóa
+    Delete
   </div>
 </div>
 
 <div class="ai-modal-bg" id="ai-rename-bg">
   <div class="ai-modal-box">
-    <div class="ai-modal-title">Đổi tên đoạn chat</div>
-    <input class="ai-modal-input" id="ai-rename-input" type="text" placeholder="Tên mới...">
+    <div class="ai-modal-title">Rename chat</div>
+    <input class="ai-modal-input" id="ai-rename-input" type="text" placeholder="New name...">
     <div class="ai-modal-btns">
-      <button class="ai-modal-cancel" onclick="closeRenameModal()">Hủy</button>
-      <button class="ai-modal-ok" onclick="saveRename()">Lưu</button>
+      <button class="ai-modal-cancel" onclick="closeRenameModal()">Cancel</button>
+      <button class="ai-modal-ok" onclick="saveRename()">Save</button>
     </div>
   </div>
 </div>
@@ -451,7 +487,16 @@ input{font-family:inherit;color:inherit}
 <div class="ai-layout">
   <aside class="ai-sb" id="ai-sb">
     <div class="ai-sb-head">
-      <span class="ai-sb-title">Chats</span>
+      <button class="ai-sb-new-btn" onclick="startNewChat()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Create a new chat
+      </button>
+      <div class="ai-sb-search-wrap">
+        <div class="ai-sb-search-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <input class="ai-sb-search" id="ai-sb-search" type="text" placeholder="Search chats...">
+      </div>
     </div>
     <div class="ai-sb-list" id="ai-sb-list">
       <div class="ai-sb-empty" id="ai-sb-empty">No chats yet</div>
@@ -463,19 +508,9 @@ input{font-family:inherit;color:inherit}
       <button class="ai-icon-btn" id="ai-sb-toggle" onclick="toggleSidebar()" title="Chats">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <button class="ai-icon-btn" onclick="startNewChat()" title="Chats mới">
+      <button class="ai-icon-btn" onclick="startNewChat()" title="New chat">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
       </button>
-      <div class="ai-topbar-right">
-        <div class="ai-model-sel" id="ai-model-sel">
-          <button class="ai-model-btn" id="ai-model-btn" onclick="toggleModelDD(event)">
-            <img id="ai-model-img" src="https://i.imgur.com/0DwnmdY.jpeg" alt="">
-            <span id="ai-model-name-lbl">GPT-4o-mini</span>
-            <svg class="ai-model-chevron" id="ai-model-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="ai-model-dd" id="ai-model-dd"></div>
-        </div>
-      </div>
     </div>
 
     <div class="ai-msgs" id="ai-msgs">
@@ -499,7 +534,7 @@ input{font-family:inherit;color:inherit}
               <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/>
             </svg>
           </button>
-          <button class="ai-send-btn" id="ai-send-btn" onclick="sendMsg()" title="Gửi">
+          <button class="ai-send-btn" id="ai-send-btn" onclick="sendMsg()" title="Send">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
         </div>
@@ -690,13 +725,20 @@ function renderChatList(chats) {
     }
     unpinned.forEach(function(c) { list.appendChild(_makeChatItem(c)); });
   }
+  var searchEl = document.getElementById('ai-sb-search');
+  if (searchEl && searchEl.value.trim()) {
+    filterChats(searchEl.value.trim());
+  }
 }
 
 function _makeChatItem(c) {
   var el = document.createElement('div');
   el.className = 'ai-chat-item' + (c.id === S.chatId ? ' active' : '');
   el.id = 'ci-' + c.id;
-  el.onclick = function() { openChat(c.id); };
+  el.onclick = function(e) {
+    if (e.target.closest('.ai-chat-del')) return;
+    openChat(c.id);
+  };
   el.addEventListener('contextmenu', function(e) { e.preventDefault(); showCtxMenu(e.clientX, e.clientY, c.id, c.pinned); });
   var _lp = null;
   el.addEventListener('touchstart', function(e) {
@@ -705,8 +747,52 @@ function _makeChatItem(c) {
   el.addEventListener('touchend', function() { clearTimeout(_lp); });
   el.addEventListener('touchmove', function() { clearTimeout(_lp); });
   var pin = c.pinned ? '<div class="ai-chat-pin"></div>' : '';
-  el.innerHTML = pin + '<div class="ai-chat-title">' + _esc(c.title || 'New Chat') + '</div>';
+  el.innerHTML = pin +
+    '<div class="ai-chat-title">' + _esc(c.title || 'New Chat') + '</div>' +
+    '<button class="ai-chat-del" onclick="quickDelete(event,\'' + c.id + '\')" title="Delete">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>' +
+    '</button>';
   return el;
+}
+
+function quickDelete(e, id) {
+  e.stopPropagation();
+  var el = document.getElementById('ci-' + id);
+  if (el) el.remove();
+  fetch('/api/ai/chats/' + id, { method: 'DELETE' }).then(function() {
+    if (id === S.chatId) {
+      S.chatId = null;
+      showWelcome();
+      history.replaceState(null, '', '/ai-chat');
+    }
+    var list = document.getElementById('ai-sb-list');
+    var items = list.querySelectorAll('.ai-chat-item');
+    if (!items.length) {
+      list.innerHTML = '';
+      var empty = document.getElementById('ai-sb-empty');
+      if (!empty) { empty = document.createElement('div'); empty.id = 'ai-sb-empty'; empty.className = 'ai-sb-empty'; empty.textContent = 'No chats yet'; }
+      list.appendChild(empty);
+      empty.style.display = 'block';
+    }
+  });
+}
+
+function filterChats(q) {
+  q = (q || '').toLowerCase().trim();
+  document.querySelectorAll('.ai-chat-item').forEach(function(el) {
+    var title = el.querySelector('.ai-chat-title');
+    if (!title) return;
+    el.style.display = (!q || title.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+  document.querySelectorAll('.ai-sb-section').forEach(function(sec) {
+    var next = sec.nextElementSibling;
+    var anyVisible = false;
+    while (next && !next.classList.contains('ai-sb-section')) {
+      if (next.style.display !== 'none') anyVisible = true;
+      next = next.nextElementSibling;
+    }
+    sec.style.display = anyVisible ? '' : 'none';
+  });
 }
 
 function openChat(id) {
@@ -733,6 +819,7 @@ function startNewChat() {
   S.chatId = null;
   document.querySelectorAll('.ai-chat-item').forEach(function(el) { el.classList.remove('active'); });
   showWelcome();
+  if (window.innerWidth <= 768) closeSidebar();
   document.getElementById('ai-ta').focus();
 }
 
@@ -782,7 +869,7 @@ function appendAIMsg(output, thinking, thinkingTime, cfg, animate) {
   var modelName = cfg && cfg.name ? cfg.name : 'Lonely AI';
   var thinkHtml = '';
   if (thinking) {
-    var label = thinkingTime > 0 ? 'Reasoned for ' + thinkingTime + 's' : 'Reasoning';
+    var label = thinkingTime > 0 ? 'Reasoned for ' + thinkingTime + 's' : 'Reasoning...';
     thinkHtml =
       '<div class="ai-thinking">' +
         '<div class="ai-thinking-hd" onclick="toggleThinkBlock(this)">' +
@@ -796,10 +883,10 @@ function appendAIMsg(output, thinking, thinkingTime, cfg, animate) {
   var bubbleId = 'bubble-' + Date.now();
   var actionsHtml =
     '<div class="ai-msg-actions">' +
-      '<button class="ai-msg-action-btn" title="" onclick="copyAIMsg(this)">' +
+      '<button class="ai-msg-action-btn" title="Copy" onclick="copyAIMsg(this)">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
       '</button>' +
-      '<button class="ai-msg-action-btn" title="" onclick="retryMsg(this)">' +
+      '<button class="ai-msg-action-btn" title="Retry" onclick="retryMsg(this)">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>' +
       '</button>' +
     '</div>';
@@ -885,7 +972,7 @@ function addErrMsg(txt) {
   var inner = document.getElementById('ai-msgs-inner');
   var el = document.createElement('div');
   el.style.cssText = 'text-align:center;color:#f87171;font-size:13px;padding:10px';
-  el.textContent = '⚠ ' + txt;
+  el.textContent = txt;
   inner.appendChild(el);
   scrollBottom();
 }
@@ -946,7 +1033,7 @@ function _esc(t) {
 function showCtxMenu(x, y, id, pinned) {
   S.ctxId = id;
   S.ctxPinned = pinned;
-  document.getElementById('ai-ctx-pin-label').textContent = pinned ? 'Bỏ ghim' : 'Ghim';
+  document.getElementById('ai-ctx-pin-label').textContent = pinned ? 'Unpin' : 'Pin';
   var ctx = document.getElementById('ai-ctx');
   ctx.style.left = Math.min(x, window.innerWidth - 180) + 'px';
   ctx.style.top = Math.min(y, window.innerHeight - 130) + 'px';
@@ -987,6 +1074,8 @@ function ctxPin() {
 function ctxDelete() {
   closeCtxMenu();
   if (!S.ctxId) return;
+  var el = document.getElementById('ci-' + S.ctxId);
+  if (el) el.remove();
   fetch('/api/ai/chats/' + S.ctxId, { method: 'DELETE' }).then(function() {
     if (S.ctxId === S.chatId) { S.chatId = null; showWelcome(); history.replaceState(null, '', '/ai-chat'); }
     loadChats();
@@ -1061,10 +1150,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (e.key === 'Enter') saveRename();
     if (e.key === 'Escape') closeRenameModal();
   });
+  document.getElementById('ai-sb-search').addEventListener('input', function() {
+    filterChats(this.value);
+  });
   if (USER) {
     loadChats();
-    if (OPEN_CHAT_ID) { openChat(OPEN_CHAT_ID); }
-    else { showWelcome(); }
+    if (OPEN_CHAT_ID) {
+      setTimeout(function() { openChat(OPEN_CHAT_ID); }, 300);
+    } else { showWelcome(); }
   } else {
     showWelcome();
   }
