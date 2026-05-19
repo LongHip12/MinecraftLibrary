@@ -514,6 +514,65 @@
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
             </button>
             {% endif %}
+            {% if user and not post.locked %}
+            <button class="reply-btn" style="font-size:11px;margin-top:4px;" title="Reply to this reply"
+              data-msg="{{ msg.id }}" data-rep="{{ rep.id }}"
+              data-author="{{ rep.author.display_name if rep.author and rep.author.id else 'Anonymous' }}"
+              data-preview="{{ (rep.content or '')[:60] }}"
+              onclick="triggerSubReply(this)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+              <span>Reply</span>
+            </button>
+            {% endif %}
+            {% if rep.replies %}
+            <button title="Show/hide nested replies" class="toggle-replies-btn" data-target="subreplies-{{ rep.id }}" style="margin-top:4px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              <span>{{ rep.replies|length }} {{ 'reply' if rep.replies|length == 1 else 'replies' }}</span>
+            </button>
+            <div class="subreplies-list" id="subreplies-{{ rep.id }}" style="display:none;flex-direction:column;gap:6px;margin-top:8px;padding-left:10px;border-left:2px solid rgba(255,255,255,0.07);">
+              {% for srep in rep.replies %}
+              <div class="subreply-card" id="srep-{{ srep.id }}" style="display:flex;gap:8px;align-items:flex-start;">
+                <img class="reply-avatar" style="width:22px;height:22px;min-width:22px;" src="{{ srep.author.avatar if srep.author and srep.author.avatar else 'https://i.imgur.com/BCzwCla.png' }}" alt="" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
+                <div style="flex:1;min-width:0;">
+                  <div class="reply-author-row">
+                    <span class="reply-author-name">{{ srep.author.display_name if srep.author and srep.author.id else 'Anonymous' }}</span>
+                    <span class="reply-date">{{ srep.created_at[:16].replace('T',' ') }} UTC</span>
+                  </div>
+                  {% if srep.reply_to_content %}
+                  <div class="msg-quote-block">
+                    <div class="msg-quote-author">↩ {{ srep.reply_to_author or 'User' }}</div>
+                    <div class="msg-quote-text">{{ srep.reply_to_content }}</div>
+                  </div>
+                  {% endif %}
+                  {% if srep.content %}<div class="reply-body">{{ srep.content }}</div>{% endif %}
+                  <div class="msg-reactions" id="srep-reactions-{{ srep.id }}" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;align-items:center;">
+                    {% set sreacts = srep.reactions | default({}) %}
+                    {% for emoji, urlist in sreacts.items() %}{% if urlist|length > 0 %}
+                    <button class="react-chip {% if user and user.id in urlist %}active{% endif %}"
+                      style="font-size:12px;padding:2px 8px;"
+                      data-emoji="{{ emoji }}" data-srep="{{ srep.id }}"
+                      onclick="toggleSubReplyReact('{{ post.id }}','{{ msg.id }}','{{ rep.id }}','{{ srep.id }}',this.dataset.emoji)">
+                      {{ emoji }}<span>{{ urlist|length }}</span>
+                    </button>
+                    {% endif %}{% endfor %}
+                    {% if user %}
+                    <button title="Add emoji reaction" class="react-add-btn" style="font-size:11px;padding:2px 6px;" type="button"
+                      onclick="toggleForumReactPicker(event,'srep','{{ post.id }}','{{ msg.id }}','{{ rep.id }}','{{ srep.id }}')">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                    {% endif %}
+                  </div>
+                  {% if user and (user.tag == 'admin' or user.id == srep.author_id or (post.author and user.id == post.author.id)) %}
+                  <button class="delete-msg-btn" onclick="deleteSubReply('{{ post.id }}','{{ msg.id }}','{{ rep.id }}','{{ srep.id }}')" title="Delete" style="margin-top:4px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
+                  </button>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
           </div>
         </div>
         {% endfor %}
@@ -663,6 +722,7 @@ function cancelReply() {
   document.getElementById('chat-form').action = '/forum/post/{{ post.id }}/message';
 }
 
+var _FORUM_EMOJI_NAMES = {'😀':'grinning smile happy','😁':'beam grin happy','😂':'laugh cry tears joy','🤣':'rolling laugh floor','😃':'smile open mouth','😄':'grin happy','😅':'sweat smile awkward','😆':'laughing satisfied','😊':'blush smile happy','😍':'heart eyes love','🥰':'hearts love','😎':'cool sunglasses','😏':'smirk','😢':'cry sad tear','😭':'sob loud cry','😡':'angry rage mad','😤':'steam huff angry','😱':'scream scared shock','🤔':'thinking hmm pondering','😴':'sleep zzz tired','💀':'skull death dead','😈':'devil evil','👻':'ghost halloween','🔥':'fire hot flame','💯':'hundred percent ok cool','✅':'check ok yes done','❌':'cross no wrong','👍':'thumbs up like approve','👎':'thumbs down dislike','👋':'wave hello hi','🙌':'raise hands celebrate','🤝':'handshake deal','💪':'muscle strong flex','❤️':'heart love red','💔':'broken heart sad','💕':'two hearts love','⭐':'star gold','🌟':'glowing star','🎉':'party celebrate','🎮':'game controller video','⚔️':'sword fight battle','🏆':'trophy win champion','🎯':'target bullseye','💎':'diamond gem','🚀':'rocket space launch','🌈':'rainbow color','⚡':'lightning bolt zap','🧠':'brain think smart','😮':'surprised wow open mouth','😵':'dizzy knocked out','🥴':'woozy drunk dizzy','🤯':'exploding head mind blown','👀':'eyes look watching','🫶':'heart hands love','👌':'ok hand perfect','✌️':'victory peace','🥺':'pleading puppy eyes','🙄':'eye roll bored','🥳':'partying celebration','🤩':'star struck amazed','😬':'grimace awkward','🤐':'zipper mouth silent','🥵':'hot sweating','🥶':'cold freezing','🤢':'nauseated sick','🤮':'vomit sick','😷':'mask sick medical','😨':'fear scared','😰':'anxious cold sweat','⚽':'soccer football','🏀':'basketball','🏈':'football','🎾':'tennis','🍕':'pizza food','🍔':'burger food','🍟':'fries food','🍺':'beer drink','☕':'coffee hot drink','🧋':'bubble tea boba','🍰':'cake birthday sweet','🎂':'birthday cake','🍪':'cookie sweet','🍫':'chocolate','🐶':'dog puppy','🐱':'cat kitten','🦊':'fox','🐻':'bear','🐼':'panda','🦁':'lion','🐸':'frog','🦋':'butterfly','🌸':'cherry blossom flower','🌻':'sunflower','🍀':'clover luck','🎵':'music note','🎶':'music notes','🎸':'guitar','🥁':'drums','🎤':'microphone singing','🔑':'key','🏠':'house home','🌙':'moon night','☀️':'sun day','🌍':'earth world','🌋':'volcano','💡':'idea light bulb','🔒':'lock secure','🔓':'unlock','🛡️':'shield defend','🏹':'bow arrow','✍️':'writing pen','💅':'nails beauty','✊':'fist','👊':'punch fist','👏':'clap applause','🙏':'pray thanks please','💸':'money cash fly',};
 var _EMOJI_CATS = {
   'Smileys': ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🥸','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🫣','🤗','🫡','🤔','🫠','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥹','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖'],
   'People': ['👋','🤚','🖐️','✋','🖖','🫱','🫲','🫳','🫴','👌','🤌','🤏','✌️','🤞','🫰','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','🫵','👍','👎','✊','👊','🤛','🤜','👏','🙌','🫶','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🫀','🫁','🧠','🦷','🦴','👁️','👀','👅','👄','🫦','💋'],
@@ -734,7 +794,11 @@ function _buildForumEmojiPicker() {
     if (!q) { showCat(_curCat); return; }
     var results = [], seen = new Set();
     Object.values(_EMOJI_CATS).forEach(function(emojis) {
-      emojis.forEach(function(em) { if (!seen.has(em)) { seen.add(em); if (em.includes(q)) results.push(em); } });
+      emojis.forEach(function(em) {
+        if (!seen.has(em)) { seen.add(em);
+          if (em.includes(q) || (_FORUM_EMOJI_NAMES[em] || '').toLowerCase().includes(q)) results.push(em);
+        }
+      });
     });
     renderGrid(results);
   });
@@ -781,9 +845,10 @@ document.addEventListener('click', function(e) {
   }
 });
 
-function _appendReplyToMsg(msgId, content, authorName, authorAvatar, quotedText, quotedAuthor) {
+function _injectReplyCard(msgId, rep) {
   var msgCard = document.getElementById('msg-' + msgId);
   if (!msgCard) return;
+  if (document.getElementById('rep-' + rep.id)) return;
 
   var repList = document.getElementById('replies-' + msgId);
   if (!repList) {
@@ -828,30 +893,42 @@ function _appendReplyToMsg(msgId, content, authorName, authorAvatar, quotedText,
     toggleBtn.style.display = '';
   }
 
-  var now = new Date();
-  var ts = now.toISOString().replace('T',' ').slice(0,16) + ' UTC';
+  var ts = rep.created_at ? rep.created_at.replace('T',' ').slice(0,16) + ' UTC' : new Date().toISOString().replace('T',' ').slice(0,16) + ' UTC';
   var card = document.createElement('div');
   card.className = 'reply-card';
+  card.id = 'rep-' + rep.id;
   card.style.animation = '_fadeInMsg 0.3s ease';
-  var quoteHtml = quotedText
-    ? '<div class="msg-quote-block"><div class="msg-quote-author">↩ ' + _escHtml(quotedAuthor || 'User') + '</div><div class="msg-quote-text">' + _escHtml(quotedText) + '</div></div>'
+  var quoteHtml = rep.reply_to_content
+    ? '<div class="msg-quote-block"><div class="msg-quote-author">↩ ' + _escHtml(rep.reply_to_author || 'User') + '</div><div class="msg-quote-text">' + _escHtml(rep.reply_to_content) + '</div></div>'
+    : '';
+  var reactBtnHtml = _IS_LOGGED_IN
+    ? '<button title="Add emoji reaction" class="react-add-btn" style="font-size:11px;padding:2px 6px;" type="button" onclick="toggleForumReactPicker(event,\'rep\',\'' + _escHtml(_POST_ID) + '\',\'' + _escHtml(msgId) + '\',\'' + _escHtml(rep.id) + '\')">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>' +
+      '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>'
+    : '';
+  var replyBtnHtml = (_IS_LOGGED_IN && !_IS_LOCKED)
+    ? '<button class="reply-btn" style="font-size:11px;margin-top:4px;" title="Reply to this reply" data-msg="' + _escHtml(msgId) + '" data-rep="' + _escHtml(rep.id) + '" data-author="' + _escHtml(rep.author_name || '') + '" data-preview="' + _escHtml((rep.content || '').slice(0,60)) + '" onclick="triggerSubReply(this)">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg><span>Reply</span></button>'
     : '';
   card.innerHTML =
-    '<img class="reply-avatar" src="' + (authorAvatar || 'https://i.imgur.com/BCzwCla.png') + '" alt="" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' +
+    '<img class="reply-avatar" src="' + _escHtml(rep.author_avatar || 'https://i.imgur.com/BCzwCla.png') + '" alt="" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' +
     '<div class="reply-content-wrap">' +
       '<div class="reply-author-row">' +
-        '<span class="reply-author-name">' + _escHtml(authorName) + '</span>' +
+        '<span class="reply-author-name">' + _escHtml(rep.author_name || 'Anonymous') + '</span>' +
         '<span class="reply-date">' + ts + '</span>' +
       '</div>' +
       quoteHtml +
-      '<div class="reply-body">' + _escHtml(content) + '</div>' +
+      (rep.content ? '<div class="reply-body">' + _escHtml(rep.content) + '</div>' : '') +
+      '<div class="msg-reactions" id="rep-reactions-' + _escHtml(rep.id) + '" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;align-items:center;">' + reactBtnHtml + '</div>' +
+      replyBtnHtml +
     '</div>';
   repList.appendChild(card);
 }
 
-function _appendSubReplyToRep(msgId, repId, content, authorName, authorAvatar, quotedText, quotedAuthor) {
+function _injectSubReplyCard(msgId, repId, srep) {
   var repCard = document.getElementById('rep-' + repId);
   if (!repCard) return;
+  if (document.getElementById('srep-' + srep.id)) return;
 
   var subList = document.getElementById('subreplies-' + repId);
   if (!subList) {
@@ -859,13 +936,13 @@ function _appendSubReplyToRep(msgId, repId, content, authorName, authorAvatar, q
     subList.className = 'subreplies-list';
     subList.id = 'subreplies-' + repId;
     subList.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin-top:8px;padding-left:10px;border-left:2px solid rgba(255,255,255,0.07);';
-    repCard.querySelector('.reply-content-wrap').appendChild(subList);
+    var wrap = repCard.querySelector('.reply-content-wrap');
+    if (wrap) wrap.appendChild(subList);
   }
   subList.style.display = 'flex';
 
   var toggleBtn = document.querySelector('[data-target="subreplies-' + repId + '"]');
   if (!toggleBtn) {
-    var actionsDiv = repCard.querySelector('[data-target]');
     var wrapDiv = repCard.querySelector('.reply-content-wrap');
     if (wrapDiv) {
       toggleBtn = document.createElement('button');
@@ -873,7 +950,18 @@ function _appendSubReplyToRep(msgId, repId, content, authorName, authorAvatar, q
       toggleBtn.className = 'toggle-replies-btn';
       toggleBtn.setAttribute('data-target', 'subreplies-' + repId);
       toggleBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg><span></span>';
-      wrapDiv.appendChild(toggleBtn);
+      wrapDiv.insertBefore(toggleBtn, subList);
+      toggleBtn.addEventListener('click', function() {
+        var list = document.getElementById('subreplies-' + repId);
+        if (!list) return;
+        var isOpen = list.style.display !== 'none' && list.style.display !== '';
+        list.style.display = isOpen ? 'none' : 'flex';
+        var svg = toggleBtn.querySelector('svg');
+        if (svg) svg.style.transform = isOpen ? '' : 'rotate(180deg)';
+        var sp = toggleBtn.querySelector('span');
+        var cnt = list.querySelectorAll('.subreply-card').length;
+        if (sp) sp.textContent = isOpen ? (cnt === 1 ? '1 reply' : cnt + ' replies') : 'Hide ' + (cnt === 1 ? '1 reply' : cnt + ' replies');
+      });
     }
   }
   if (toggleBtn) {
@@ -884,23 +972,29 @@ function _appendSubReplyToRep(msgId, repId, content, authorName, authorAvatar, q
     if (svg) svg.style.transform = 'rotate(180deg)';
   }
 
-  var now = new Date();
-  var ts = now.toISOString().replace('T',' ').slice(0,16) + ' UTC';
+  var ts = srep.created_at ? srep.created_at.replace('T',' ').slice(0,16) + ' UTC' : new Date().toISOString().replace('T',' ').slice(0,16) + ' UTC';
   var card = document.createElement('div');
   card.className = 'subreply-card';
+  card.id = 'srep-' + srep.id;
   card.style.cssText = 'display:flex;gap:8px;align-items:flex-start;animation:_fadeInMsg 0.3s ease;';
-  var sqHtml = quotedText
-    ? '<div class="msg-quote-block"><div class="msg-quote-author">↩ ' + _escHtml(quotedAuthor || 'User') + '</div><div class="msg-quote-text">' + _escHtml(quotedText) + '</div></div>'
+  var sqHtml = srep.reply_to_content
+    ? '<div class="msg-quote-block"><div class="msg-quote-author">↩ ' + _escHtml(srep.reply_to_author || 'User') + '</div><div class="msg-quote-text">' + _escHtml(srep.reply_to_content) + '</div></div>'
+    : '';
+  var reactBtnHtml = _IS_LOGGED_IN
+    ? '<button title="Add emoji reaction" class="react-add-btn" style="font-size:11px;padding:2px 6px;" type="button" onclick="toggleForumReactPicker(event,\'srep\',\'' + _escHtml(_POST_ID) + '\',\'' + _escHtml(msgId) + '\',\'' + _escHtml(repId) + '\',\'' + _escHtml(srep.id) + '\')">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>' +
+      '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>'
     : '';
   card.innerHTML =
-    '<img class="reply-avatar" style="width:22px;height:22px;min-width:22px;" src="' + (authorAvatar || 'https://i.imgur.com/BCzwCla.png') + '" alt="" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' +
+    '<img class="reply-avatar" style="width:22px;height:22px;min-width:22px;" src="' + _escHtml(srep.author_avatar || 'https://i.imgur.com/BCzwCla.png') + '" alt="" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' +
     '<div style="flex:1;min-width:0;">' +
       '<div class="reply-author-row">' +
-        '<span class="reply-author-name">' + _escHtml(authorName) + '</span>' +
+        '<span class="reply-author-name">' + _escHtml(srep.author_name || 'Anonymous') + '</span>' +
         '<span class="reply-date">' + ts + '</span>' +
       '</div>' +
       sqHtml +
-      '<div class="reply-body">' + _escHtml(content) + '</div>' +
+      (srep.content ? '<div class="reply-body">' + _escHtml(srep.content) + '</div>' : '') +
+      '<div class="msg-reactions" id="srep-reactions-' + _escHtml(srep.id) + '" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;align-items:center;">' + reactBtnHtml + '</div>' +
     '</div>';
   subList.appendChild(card);
 }
@@ -937,23 +1031,16 @@ async function sendChatMessage() {
     var data = await resp.json();
     if (btn) { btn.disabled = false; btn.style.opacity = ''; }
     if (data.success) {
-      var sentContent = ta.value.trim();
       ta.value = '';
       ta.style.height = '';
       if (typeof clearChatFiles === 'function') clearChatFiles();
-      if (parentRepId && sentContent) {
-        _appendSubReplyToRep(parentMsgId, parentRepId, sentContent,
-          '{{ (user.display_name if user else "Anonymous") | replace("'", "\\'") }}',
-          '{{ (user.avatar if user and user.avatar else "") }}',
-          quotedText, quotedAuthor);
-      } else if (parentMsgId && sentContent) {
-        _appendReplyToMsg(parentMsgId, sentContent,
-          '{{ (user.display_name if user else "Anonymous") | replace("'", "\\'") }}',
-          '{{ (user.avatar if user and user.avatar else "") }}',
-          quotedText, quotedAuthor);
+      if (data.subreply) {
+        _injectSubReplyCard(data.subreply.msg_id, data.subreply.rep_id, data.subreply);
+      } else if (data.reply) {
+        _injectReplyCard(data.reply.msg_id, data.reply);
       }
       cancelReply();
-      if (!parentMsgId && !parentRepId) {
+      if (!data.reply && !data.subreply) {
         setTimeout(function() { _pollMessages(true); }, 400);
       }
     } else {
@@ -1070,11 +1157,64 @@ function _pollMessages(immediate) {
     }).catch(function() {});
 }
 
-// Start polling every 3 seconds
+function _updateReactionChips(containerId, reactions, makeOnclick) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  var seen = {};
+  container.querySelectorAll('.react-chip').forEach(function(chip) { seen[chip.dataset.emoji] = chip; });
+  Object.keys(reactions).forEach(function(emoji) {
+    var info = reactions[emoji];
+    if (info.count <= 0) { if (seen[emoji]) { seen[emoji].remove(); } return; }
+    if (seen[emoji]) {
+      seen[emoji].querySelector('span').textContent = info.count;
+      seen[emoji].classList.toggle('active', !!info.active);
+      delete seen[emoji];
+    } else {
+      var chip = document.createElement('button');
+      chip.className = 'react-chip' + (info.active ? ' active' : '');
+      chip.style.cssText = 'font-size:12px;padding:2px 8px;';
+      chip.dataset.emoji = emoji;
+      chip.type = 'button';
+      chip.setAttribute('onclick', makeOnclick(emoji));
+      chip.innerHTML = emoji + '<span>' + info.count + '</span>';
+      var addBtn = container.querySelector('.react-add-btn');
+      if (addBtn) container.insertBefore(chip, addBtn);
+      else container.appendChild(chip);
+    }
+  });
+  Object.keys(seen).forEach(function(emoji) { seen[emoji].remove(); });
+}
+
+function _pollFullState() {
+  var pid = '{{ post.id }}';
+  fetch('/api/forum/post/' + pid + '/state')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.success) return;
+      data.messages.forEach(function(msg) {
+        _updateReactionChips('msg-reactions-' + msg.id, msg.reactions, function(em) {
+          return 'toggleMsgReact(\'' + pid + '\',\'' + msg.id + '\',this.dataset.emoji)';
+        });
+        (msg.replies || []).forEach(function(rep) {
+          if (!document.getElementById('rep-' + rep.id)) _injectReplyCard(msg.id, rep);
+          _updateReactionChips('rep-reactions-' + rep.id, rep.reactions, function(em) {
+            return 'toggleReplyReact(\'' + pid + '\',\'' + msg.id + '\',\'' + rep.id + '\',this.dataset.emoji)';
+          });
+          (rep.subreplies || []).forEach(function(srep) {
+            if (!document.getElementById('srep-' + srep.id)) _injectSubReplyCard(msg.id, rep.id, srep);
+            _updateReactionChips('srep-reactions-' + srep.id, srep.reactions, function(em) {
+              return 'toggleSubReplyReact(\'' + pid + '\',\'' + msg.id + '\',\'' + rep.id + '\',\'' + srep.id + '\',this.dataset.emoji)';
+            });
+          });
+        });
+      });
+    }).catch(function() {});
+}
+
 (function() {
   var msgSection = document.getElementById('messages');
   if (msgSection) {
-    setInterval(function() { _pollMessages(false); }, 3000);
+    setInterval(function() { _pollMessages(false); _pollFullState(); }, 3000);
   }
 })();
 
@@ -1110,8 +1250,11 @@ function _getOrBuildForumReactPicker() {
   function showReactCat(catName) {
     _reactCurCat = catName;
     tabs.querySelectorAll('.fp-react-cat-btn').forEach(function(b) {
-      b.style.opacity = b.dataset.cat === catName ? '1' : '0.5';
-      b.style.background = b.dataset.cat === catName ? 'rgba(255,255,255,0.08)' : '';
+      var active = b.dataset.cat === catName;
+      b.style.opacity = active ? '1' : '0.42';
+      b.style.background = active ? 'rgba(250,80,80,0.13)' : '';
+      b.style.borderBottom = active ? '2px solid var(--primary,#e03a3a)' : '2px solid transparent';
+      b.style.borderRadius = active ? '6px 6px 0 0' : '6px';
     });
     _renderForumReactGrid(_EMOJI_CATS[catName] || []);
   }
@@ -1128,7 +1271,11 @@ function _getOrBuildForumReactPicker() {
     if (!q) { showReactCat(_reactCurCat); return; }
     var results = [], seen = new Set();
     Object.values(_EMOJI_CATS).forEach(function(emojis) {
-      emojis.forEach(function(em) { if (!seen.has(em)) { seen.add(em); if (em.includes(q)) results.push(em); } });
+      emojis.forEach(function(em) {
+        if (!seen.has(em)) { seen.add(em);
+          if (em.includes(q) || (_FORUM_EMOJI_NAMES[em] || '').toLowerCase().includes(q)) results.push(em);
+        }
+      });
     });
     _renderForumReactGrid(results);
   });
@@ -1160,6 +1307,7 @@ function _applyForumReact(em) {
   _closeForumReactPicker();
   if (t.level === 'msg') toggleMsgReact(t.postId, t.msgId, em);
   else if (t.level === 'rep') toggleReplyReact(t.postId, t.msgId, t.repId, em);
+  else if (t.level === 'srep') toggleSubReplyReact(t.postId, t.msgId, t.repId, t.srepId, em);
 }
 
 function _closeForumReactPicker() {
@@ -1170,13 +1318,13 @@ function _closeForumReactPicker() {
   _fReactTarget = null;
 }
 
-function toggleForumReactPicker(e, level, postId, msgId, repId) {
+function toggleForumReactPicker(e, level, postId, msgId, repId, srepId) {
   e.stopPropagation();
   var p = _getOrBuildForumReactPicker();
   var ov = document.getElementById('forum-react-overlay');
-  var same = _fReactTarget && _fReactTarget.level === level && _fReactTarget.msgId === msgId && (!repId || _fReactTarget.repId === repId);
+  var same = _fReactTarget && _fReactTarget.level === level && _fReactTarget.msgId === msgId && _fReactTarget.repId === (repId || null) && _fReactTarget.srepId === (srepId || null);
   if (p.style.display === 'block' && same) { _closeForumReactPicker(); return; }
-  _fReactTarget = { level: level, postId: postId, msgId: msgId, repId: repId || null };
+  _fReactTarget = { level: level, postId: postId, msgId: msgId, repId: repId || null, srepId: srepId || null };
   var si = document.getElementById('forum-react-search');
   if (si) si.value = '';
   if (p._showReactCat) p._showReactCat('Smileys');

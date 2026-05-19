@@ -1970,6 +1970,8 @@ def add_comment(mod_id):
         text = request.form.get("text", "").strip()
         reply_to_id = request.form.get("reply_to_id", "")
         reply_to_name = request.form.get("reply_to_name", "")
+        reply_to_content = request.form.get("reply_to_content", "").strip()[:200]
+        reply_to_author = request.form.get("reply_to_author", "").strip()[:80]
         image_url = ""
         if "image" in request.files:
             file = request.files["image"]
@@ -1983,6 +1985,8 @@ def add_comment(mod_id):
         text = data.get("text", "").strip()
         reply_to_id = data.get("reply_to_id", "")
         reply_to_name = data.get("reply_to_name", "")
+        reply_to_content = data.get("reply_to_content", "").strip()[:200]
+        reply_to_author = data.get("reply_to_author", "").strip()[:80]
         image_url = ""
     if not text or len(text) > 1000:
         return jsonify({"success": False, "error": "Comment must be 1-1000 characters"}), 400
@@ -2000,6 +2004,8 @@ def add_comment(mod_id):
         "image": image_url,
         "reply_to_id": reply_to_id,
         "reply_to_name": reply_to_name,
+        "reply_to_content": reply_to_content or None,
+        "reply_to_author": reply_to_author or None,
         "reactions": {},
         "created_at": datetime.now().isoformat()
     }
@@ -2498,8 +2504,23 @@ def forum_add_reply(post_id, msg_id):
             "attachments": attachments,
         })
         save_forum(forum)
+    new_rep = msg["replies"][-1]
     redir = url_for("forum_post", post_id=post_id) + "#msg-" + msg_id
-    return jsonify({"success": True, "redirect": redir})
+    return jsonify({
+        "success": True,
+        "redirect": redir,
+        "reply": {
+            "id": new_rep["id"],
+            "msg_id": msg_id,
+            "author_name": user.get("display_name", user.get("username", "Anonymous")),
+            "author_avatar": user.get("avatar", ""),
+            "author_id": user["id"],
+            "content": new_rep.get("content", ""),
+            "created_at": new_rep.get("created_at", ""),
+            "reply_to_content": new_rep.get("reply_to_content"),
+            "reply_to_author": new_rep.get("reply_to_author"),
+        }
+    })
 
 
 @app.route("/forum/message/<post_id>/<msg_id>/reply/<rep_id>/subreply", methods=["POST"])
@@ -2538,7 +2559,23 @@ def forum_add_subreply(post_id, msg_id, rep_id):
         "attachments": attachments,
     })
     save_forum(forum)
-    return jsonify({"success": True, "redirect": url_for("forum_post", post_id=post_id) + "#rep-" + rep_id})
+    new_srep = rep["replies"][-1]
+    return jsonify({
+        "success": True,
+        "redirect": url_for("forum_post", post_id=post_id) + "#rep-" + rep_id,
+        "subreply": {
+            "id": new_srep["id"],
+            "msg_id": msg_id,
+            "rep_id": rep_id,
+            "author_name": user.get("display_name", user.get("username", "Anonymous")),
+            "author_avatar": user.get("avatar", ""),
+            "author_id": user["id"],
+            "content": new_srep.get("content", ""),
+            "created_at": new_srep.get("created_at", ""),
+            "reply_to_content": new_srep.get("reply_to_content"),
+            "reply_to_author": new_srep.get("reply_to_author"),
+        }
+    })
 
 
 @app.route("/forum/download/<file_id>")
@@ -2946,6 +2983,89 @@ def api_forum_messages(post_id):
     return jsonify({"success": True, "messages": [msg_to_dict(m) for m in msgs], "total": len(post.get("messages", []))})
 
 
+@app.route("/api/forum/post/<post_id>/state", methods=["GET"])
+def api_forum_post_state(post_id):
+    forum = load_forum()
+    post = next((p for p in forum["posts"] if p["id"] == post_id), None)
+    if not post:
+        return jsonify({"success": False, "error": "Not found"}), 404
+    enrich_post(post)
+    user = get_session_user(request)
+    uid = user["id"] if user else None
+    def rto(reactions, uid):
+        out = {}
+        for em, ulist in (reactions or {}).items():
+            if ulist:
+                out[em] = {"count": len(ulist), "active": bool(uid and uid in ulist)}
+        return out
+    msgs_out = []
+    for msg in post.get("messages", []):
+        reps_out = []
+        for rep in msg.get("replies", []):
+            sreps_out = []
+            for srep in rep.get("replies", []):
+                sreps_out.append({
+                    "id": srep["id"],
+                    "msg_id": msg["id"],
+                    "rep_id": rep["id"],
+                    "author_name": (srep.get("author") or {}).get("display_name", "Anonymous"),
+                    "author_avatar": (srep.get("author") or {}).get("avatar", ""),
+                    "author_id": srep.get("author_id"),
+                    "content": srep.get("content", ""),
+                    "created_at": srep.get("created_at", ""),
+                    "reply_to_content": srep.get("reply_to_content"),
+                    "reply_to_author": srep.get("reply_to_author"),
+                    "reactions": rto(srep.get("reactions"), uid),
+                })
+            reps_out.append({
+                "id": rep["id"],
+                "msg_id": msg["id"],
+                "author_name": (rep.get("author") or {}).get("display_name", "Anonymous"),
+                "author_avatar": (rep.get("author") or {}).get("avatar", ""),
+                "author_id": rep.get("author_id"),
+                "content": rep.get("content", ""),
+                "created_at": rep.get("created_at", ""),
+                "reply_to_content": rep.get("reply_to_content"),
+                "reply_to_author": rep.get("reply_to_author"),
+                "reactions": rto(rep.get("reactions"), uid),
+                "subreplies": sreps_out,
+            })
+        msgs_out.append({
+            "id": msg["id"],
+            "reactions": rto(msg.get("reactions"), uid),
+            "replies": reps_out,
+        })
+    return jsonify({"success": True, "messages": msgs_out})
+
+
+@app.route("/api/mods/<int:mod_id>/comments-state", methods=["GET"])
+def api_mod_comments_state(mod_id):
+    user = get_session_user(request)
+    uid = user["id"] if user else None
+    mods_data = load_json("mods-data.json")
+    mod = next((m for m in mods_data["mods"] if m["id"] == mod_id), None)
+    if not mod:
+        return jsonify({"success": False, "error": "Not found"}), 404
+    comments_out = []
+    for c in mod.get("comments", []):
+        reactions = {}
+        for em, ulist in (c.get("reactions") or {}).items():
+            if ulist:
+                reactions[em] = {"count": len(ulist), "active": bool(uid and uid in ulist)}
+        comments_out.append({
+            "id": c["id"],
+            "user_id": c.get("user_id"),
+            "display_name": c.get("display_name", "Anonymous"),
+            "avatar": c.get("avatar", ""),
+            "username": c.get("username", ""),
+            "text": c.get("text", ""),
+            "created_at": c.get("created_at", ""),
+            "reply_to_id": c.get("reply_to_id", ""),
+            "reply_to_name": c.get("reply_to_name", ""),
+            "reply_to_content": c.get("reply_to_content", ""),
+            "reactions": reactions,
+        })
+    return jsonify({"success": True, "comments": comments_out})
 
 
 def get_api_rate_limit():

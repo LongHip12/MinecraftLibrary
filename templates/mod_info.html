@@ -486,7 +486,7 @@
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     </button>
                     <button title="Reply to this comment" class="cmt-reply-action-btn"
-                      data-comment="{{ c.id }}"
+                      data-comment="{{ r.id }}"
                       data-author="{{ r.display_name | replace('"','') | replace("'","") }}"
                       data-preview="{{ (r.text or '')[:60] | replace('"','') | replace("'","") }}"
                       onclick="triggerCmtReply(this)" type="button">
@@ -495,6 +495,49 @@
                     </button>
                     {% endif %}
                   </div>
+                  {% set ns2 = namespace(subreplies=[]) %}
+                  {% for sr in mod.comments %}{% if sr.reply_to_id and sr.reply_to_id | string == r.id | string %}{% set ns2.subreplies = ns2.subreplies + [sr] %}{% endif %}{% endfor %}
+                  {% if ns2.subreplies %}
+                  <button title="Show or hide replies" class="cmt-toggle-btn" type="button" onclick="toggleCmtReplies('sub-rep-{{ r.id }}', this)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    <span>{{ ns2.subreplies|length }} {{ 'reply' if ns2.subreplies|length == 1 else 'replies' }}</span>
+                  </button>
+                  <div class="cmt-replies-list" id="sub-rep-{{ r.id }}" style="display:none;">
+                    {% for sr in ns2.subreplies %}
+                    <div class="comment-item cmt-reply-item" id="comment-{{ sr.id }}">
+                      <img src="{{ sr.avatar if sr.avatar else 'https://i.imgur.com/BCzwCla.png' }}" class="comment-avatar" alt="{{ sr.display_name }}" onerror="this.onerror=null;this.src='https://i.imgur.com/BCzwCla.png'">
+                      <div class="comment-body">
+                        <div class="comment-header">
+                          <a href="/users/{{ sr.username }}" class="comment-name">{{ sr.display_name }}</a>
+                          <span class="comment-time">{{ sr.created_at[:10] }}</span>
+                          {% if user and (user.id == sr.user_id or user.tag == 'admin') %}
+                          <button class="comment-delete-btn" onclick="deleteComment('{{ sr.id }}')" title="Delete">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
+                          </button>
+                          {% endif %}
+                        </div>
+                        {% if sr.reply_to_name %}<div class="cmt-quote-block"><div class="cmt-quote-author">↩ {{ sr.reply_to_name }}</div>{% if sr.reply_to_content %}<div class="cmt-quote-text">{{ sr.reply_to_content }}</div>{% endif %}</div>{% endif %}
+                        <div class="comment-text">{{ sr.text }}</div>
+                        {% if sr.image %}<img src="{{ sr.image }}" class="comment-image" alt="Attached image" onclick="window.open('{{ sr.image }}','_blank')">{% endif %}
+                        <div class="cmt-actions-row" id="reactions-{{ sr.id }}">
+                          {% set srreacts = sr.reactions | default({}) %}
+                          {% for emoji, users_reacted in srreacts.items() %}{% if users_reacted|length > 0 %}
+                          <button class="react-chip {% if user and user.id in users_reacted %}active{% endif %}"
+                            onclick="toggleReact('{{ sr.id }}', this.dataset.emoji)"
+                            data-emoji="{{ emoji }}" data-comment="{{ sr.id }}" type="button">{{ emoji }}<span>{{ users_reacted|length }}</span></button>
+                          {% endif %}{% endfor %}
+                          {% if user %}
+                          <button class="react-add-btn" onclick="toggleEmojiPicker(event,'{{ sr.id }}')" title="Add reaction" type="button">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                          </button>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
                 </div>
               </div>
               {% endfor %}
@@ -854,6 +897,80 @@ document.addEventListener('click', function(e) {
     picker.style.display = 'none'; _activePicker = null;
   }
 });
+
+var _MOD_IS_LOGGED_IN = {{ 'true' if user else 'false' }};
+
+function _updateModReactionChips(containerId, reactions) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  var seen = {};
+  container.querySelectorAll('.react-chip').forEach(function(chip) { seen[chip.dataset.emoji] = chip; });
+  var cid = containerId.replace('reactions-', '');
+  Object.keys(reactions).forEach(function(emoji) {
+    var info = reactions[emoji];
+    if (info.count <= 0) { if (seen[emoji]) { seen[emoji].remove(); } return; }
+    if (seen[emoji]) {
+      seen[emoji].querySelector('span').textContent = info.count;
+      seen[emoji].classList.toggle('active', !!info.active);
+      delete seen[emoji];
+    } else {
+      var chip = document.createElement('button');
+      chip.className = 'react-chip' + (info.active ? ' active' : '');
+      chip.type = 'button';
+      chip.dataset.emoji = emoji;
+      chip.setAttribute('onclick', 'toggleReact(\'' + cid + '\', this.dataset.emoji)');
+      chip.innerHTML = emoji + '<span>' + info.count + '</span>';
+      var addBtn = container.querySelector('.react-add-btn');
+      if (addBtn) container.insertBefore(chip, addBtn);
+      else container.appendChild(chip);
+    }
+  });
+  Object.keys(seen).forEach(function(emoji) { seen[emoji].remove(); });
+}
+
+function _pollModState() {
+  fetch('/api/mods/{{ mod.id }}/comments-state')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.success) return;
+      var byId = {};
+      data.comments.forEach(function(c) { byId[c.id] = c; });
+      data.comments.forEach(function(c) {
+        _updateModReactionChips('reactions-' + c.id, c.reactions);
+        if (c.reply_to_id && !document.getElementById('comment-' + c.id)) {
+          var parentList = document.getElementById('cmt-rep-' + c.reply_to_id) || document.getElementById('sub-rep-' + c.reply_to_id);
+          if (parentList) {
+            var item = document.createElement('div');
+            item.className = 'comment-item cmt-reply-item';
+            item.id = 'comment-' + c.id;
+            var ts = (c.created_at || '').slice(0, 10);
+            var avatar = c.avatar || 'https://i.imgur.com/BCzwCla.png';
+            var quoteHtml = c.reply_to_content
+              ? '<div class="cmt-quote-block"><div class="cmt-quote-author">↩ ' + (c.reply_to_name || 'User') + '</div><div class="cmt-quote-text">' + c.reply_to_content + '</div></div>'
+              : '';
+            var reactBtnHtml = _MOD_IS_LOGGED_IN
+              ? '<button class="react-add-btn" onclick="toggleEmojiPicker(event,\'' + c.id + '\')" title="Add reaction" type="button"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>'
+              : '';
+            item.innerHTML = '<img src="' + avatar + '" class="comment-avatar" alt="" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' +
+              '<div class="comment-body"><div class="comment-header"><a href="/users/' + (c.username || '') + '" class="comment-name">' + c.display_name + '</a><span class="comment-time">' + ts + '</span></div>' +
+              quoteHtml +
+              '<div class="comment-text">' + c.text + '</div>' +
+              '<div class="cmt-actions-row" id="reactions-' + c.id + '">' + reactBtnHtml + '</div></div>';
+            parentList.appendChild(item);
+            var toggleBtn = parentList.previousElementSibling;
+            if (toggleBtn && toggleBtn.classList.contains('cmt-toggle-btn')) {
+              var sp = toggleBtn.querySelector('span');
+              var cnt = parentList.querySelectorAll('.comment-item').length;
+              if (sp) sp.textContent = cnt + (cnt === 1 ? ' reply' : ' replies');
+              parentList.style.display = 'block';
+            }
+          }
+        }
+      });
+    }).catch(function() {});
+}
+
+setInterval(_pollModState, 5000);
 </script>
 
 <!-- Floating Emoji Picker -->
