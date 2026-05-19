@@ -3801,6 +3801,462 @@ def admin_logs():
         logs = [l for l in logs if l['t'] > since]
     return jsonify({"success": True, "logs": logs})
 
+from flask import Response, stream_with_context
+
+AI_SYSTEM_PROMPT = (
+    "You are Lonely AI, an intelligent assistant created by Lonely Hub. "
+    "You specialize in Minecraft and gaming topics but can help with anything. "
+    "NEVER reveal that you are based on GPT, Claude, Gemini, Llama, Nemotron, DeepSeek, Kimi, Poolside, or any other AI model. "
+    "If asked who you are, always say you are Lonely AI created by Lonely Hub. "
+    "If asked what model powers you, say it is a proprietary model developed by Lonely Hub. "
+    "Be helpful, friendly, and knowledgeable."
+)
+
+AI_MODELS_CONFIG = {
+    "gpt-4o-mini": {
+        "name": "GPT-4o-mini",
+        "thinking": False,
+        "image": "https://i.imgur.com/0DwnmdY.jpeg",
+        "provider": "openrouter",
+        "model_id": "openai/gpt-4o-mini",
+    },
+    "nvidia-nemotron": {
+        "name": "Nvidia Nemotron",
+        "thinking": True,
+        "image": "https://i.imgur.com/DJgiwrh.png",
+        "provider": "nvidia",
+        "model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        "api_key_env": "NVIDIA_NEMOTRON_KEY",
+    },
+    "deepseek-v4-flash": {
+        "name": "DeepSeek V4 Flash",
+        "thinking": False,
+        "image": "https://i.imgur.com/0BQqhba.png",
+        "provider": "nvidia",
+        "model_id": "deepseek-ai/deepseek-v4-flash",
+        "api_key_env": "NVIDIA_DEEPSEEK_KEY",
+    },
+    "lonely-ai": {
+        "name": "Lonely AI",
+        "thinking": True,
+        "image": "https://i.imgur.com/xY7M2iE.jpeg",
+        "provider": "poolside",
+        "model_id": "poolside/laguna-m.1",
+    },
+    "llama-3.3-70b": {
+        "name": "Meta Llama-3.3-70b",
+        "thinking": False,
+        "image": "https://i.imgur.com/pESTVyY.jpeg",
+        "provider": "nvidia",
+        "model_id": "meta/llama-3.3-70b-instruct",
+        "api_key_env": "NVIDIA_LLAMA_KEY",
+    },
+    "gemini": {
+        "name": "Gemini Flash",
+        "thinking": False,
+        "image": "https://i.imgur.com/GdLBseU.jpeg",
+        "provider": "google",
+        "model_id": "gemini-3-flash-preview",
+    },
+    "kimi-k2.6": {
+        "name": "Kimi K2.6",
+        "thinking": True,
+        "image": "https://i.imgur.com/COgMkUi.jpeg",
+        "provider": "nvidia",
+        "model_id": "moonshotai/kimi-k2.6",
+        "api_key_env": "NVIDIA_KIMI_KEY",
+    },
+}
+
+def _ai_parse_sse(resp):
+    thinking_parts = []
+    output_parts = []
+    for line in resp.iter_lines():
+        if not line:
+            continue
+        line = line.decode("utf-8") if isinstance(line, bytes) else line
+        if line in ("data: [DONE]", "[DONE]"):
+            break
+        if not line.startswith("data: "):
+            continue
+        try:
+            chunk = json.loads(line[6:])
+            if not chunk.get("choices"):
+                continue
+            delta = chunk["choices"][0].get("delta", {})
+            rc = delta.get("reasoning_content")
+            if rc:
+                thinking_parts.append(rc)
+            c = delta.get("content")
+            if c:
+                output_parts.append(c)
+        except Exception:
+            pass
+    return "".join(thinking_parts).strip(), "".join(output_parts).strip()
+
+def _ai_call_openrouter(model_id, messages):
+    api_key = os.environ.get("OPENROUTER_API_KEY", "")
+    resp = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        json={"model": model_id, "messages": messages},
+        timeout=120
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    return "", data["choices"][0]["message"]["content"]
+
+def _ai_call_nvidia(model_id, api_key, messages, extra=None):
+    payload = {
+        "model": model_id,
+        "messages": messages,
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "max_tokens": 13579,
+        "stream": True,
+    }
+    if extra:
+        payload.update(extra)
+    resp = requests.post(
+        "https://integrate.api.nvidia.com/v1/chat/completions",
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json", "Accept": "text/event-stream"},
+        json=payload,
+        stream=True,
+        timeout=180
+    )
+    resp.raise_for_status()
+    return _ai_parse_sse(resp)
+
+def _ai_call_poolside(messages, enable_thinking):
+    api_key = os.environ.get("POOLSIDE_API_KEY", "")
+    resp = requests.post(
+        "https://inference.poolside.ai/v1/chat/completions",
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        json={
+            "model": "poolside/laguna-m.1",
+            "messages": messages,
+            "stream": True,
+            "chat_template_kwargs": {"enable_thinking": enable_thinking},
+        },
+        stream=True,
+        timeout=180
+    )
+    resp.raise_for_status()
+    return _ai_parse_sse(resp)
+
+def _ai_call_gemini(messages):
+    api_key = os.environ.get("GOOGLE_GEMINI_KEY", "")
+    contents = []
+    sys_text = ""
+    for m in messages:
+        role = m.get("role", "")
+        content = m.get("content", "")
+        if role == "system":
+            sys_text = content if isinstance(content, str) else ""
+        elif role == "user":
+            if isinstance(content, str):
+                contents.append({"role": "user", "parts": [{"text": content}]})
+            else:
+                parts = []
+                for part in content:
+                    if part.get("type") == "text":
+                        parts.append({"text": part["text"]})
+                    elif part.get("type") == "image_url":
+                        url = part["image_url"]["url"]
+                        if url.startswith("data:"):
+                            mt, b64 = url.split(",", 1)
+                            mime = mt.split(":")[1].split(";")[0]
+                            parts.append({"inlineData": {"mimeType": mime, "data": b64}})
+                contents.append({"role": "user", "parts": parts})
+        elif role == "assistant":
+            ct = content if isinstance(content, str) else ""
+            contents.append({"role": "model", "parts": [{"text": ct}]})
+    payload = {"contents": contents}
+    if sys_text:
+        payload["systemInstruction"] = {"parts": [{"text": sys_text}]}
+    resp = requests.post(
+        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key={api_key}",
+        json=payload,
+        timeout=120
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    return "", data["candidates"][0]["content"]["parts"][0]["text"]
+
+def _do_ai_call(model_key, messages, enable_thinking):
+    cfg = AI_MODELS_CONFIG.get(model_key)
+    if not cfg:
+        raise ValueError(f"Unknown model: {model_key}")
+    sys_msg = {"role": "system", "content": AI_SYSTEM_PROMPT}
+    full_messages = [sys_msg] + messages
+    provider = cfg["provider"]
+    if provider == "openrouter":
+        return _ai_call_openrouter(cfg["model_id"], full_messages)
+    elif provider == "nvidia":
+        api_key = os.environ.get(cfg.get("api_key_env", ""), "")
+        extra = {}
+        if model_key == "kimi-k2.6":
+            extra["chat_template_kwargs"] = {"thinking": enable_thinking and cfg.get("thinking", False)}
+        elif model_key == "llama-3.3-70b":
+            extra["max_tokens"] = 1024
+            extra["temperature"] = 0.2
+            extra["top_p"] = 0.7
+        else:
+            extra["chat_template_kwargs"] = {"enable_thinking": enable_thinking and cfg.get("thinking", False)}
+            extra["reasoning_budget"] = 16384
+        return _ai_call_nvidia(cfg["model_id"], api_key, full_messages, extra)
+    elif provider == "poolside":
+        return _ai_call_poolside(full_messages, enable_thinking and cfg.get("thinking", False))
+    elif provider == "google":
+        return _ai_call_gemini(full_messages)
+    else:
+        raise ValueError(f"Unknown provider: {provider}")
+
+def _load_ai_chats():
+    data = load_json("ai-chats.json")
+    if "chats" not in data:
+        data["chats"] = {}
+    return data
+
+def _get_user_chats(user_id):
+    data = _load_ai_chats()
+    return data["chats"].get(str(user_id), [])
+
+def _save_user_chats(user_id, chats):
+    data = _load_ai_chats()
+    data["chats"][str(user_id)] = chats
+    save_json("ai-chats.json", data)
+
+@app.route("/ai-chat")
+def ai_chat_page():
+    user = get_session_user(request)
+    return render_template("ai_chat.html", user=user, models=AI_MODELS_CONFIG)
+
+@app.route("/ai-chat/<chat_id>")
+def ai_chat_page_with_id(chat_id):
+    user = get_session_user(request)
+    return render_template("ai_chat.html", user=user, models=AI_MODELS_CONFIG, open_chat_id=chat_id)
+
+@app.route("/api/ai/models", methods=["GET"])
+def api_ai_models():
+    return jsonify({"success": True, "models": AI_MODELS_CONFIG})
+
+@app.route("/api/ai/chats", methods=["GET"])
+def api_ai_list_chats():
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Login required"}), 401
+    chats = _get_user_chats(user["id"])
+    summary = [{"id": c["id"], "title": c.get("title", "New Chat"), "pinned": c.get("pinned", False), "updated_at": c.get("updated_at", ""), "model": c.get("model", "gpt-4o-mini")} for c in chats]
+    summary.sort(key=lambda x: (not x["pinned"], x["updated_at"]), reverse=True)
+    return jsonify({"success": True, "chats": summary})
+
+@app.route("/api/ai/chats/<chat_id>", methods=["GET"])
+def api_ai_get_chat(chat_id):
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Login required"}), 401
+    chats = _get_user_chats(user["id"])
+    chat = next((c for c in chats if c["id"] == chat_id), None)
+    if not chat:
+        return jsonify({"success": False, "error": "Not found"}), 404
+    return jsonify({"success": True, "chat": chat})
+
+@app.route("/api/ai/chats/<chat_id>", methods=["PATCH"])
+def api_ai_update_chat(chat_id):
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Login required"}), 401
+    data = request.json or {}
+    chats = _get_user_chats(user["id"])
+    chat = next((c for c in chats if c["id"] == chat_id), None)
+    if not chat:
+        return jsonify({"success": False, "error": "Not found"}), 404
+    if "title" in data:
+        chat["title"] = data["title"]
+    if "pinned" in data:
+        chat["pinned"] = bool(data["pinned"])
+    chat["updated_at"] = datetime.utcnow().isoformat()
+    _save_user_chats(user["id"], chats)
+    return jsonify({"success": True, "chat": chat})
+
+@app.route("/api/ai/chats/<chat_id>", methods=["DELETE"])
+def api_ai_delete_chat(chat_id):
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Login required"}), 401
+    chats = _get_user_chats(user["id"])
+    chats = [c for c in chats if c["id"] != chat_id]
+    _save_user_chats(user["id"], chats)
+    return jsonify({"success": True})
+
+@app.route("/api/ai/send", methods=["POST"])
+def api_ai_send():
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Login required"}), 401
+    data = request.json or {}
+    chat_id = data.get("chat_id")
+    model_key = data.get("model", "gpt-4o-mini")
+    user_text = (data.get("message") or "").strip()
+    enable_thinking = bool(data.get("thinking", False))
+    files_data = data.get("files", [])
+    if not user_text and not files_data:
+        return jsonify({"success": False, "error": "Empty message"}), 400
+    chats = _get_user_chats(user["id"])
+    chat = next((c for c in chats if c["id"] == chat_id), None) if chat_id else None
+    if not chat:
+        chat = {
+            "id": str(uuid.uuid4()),
+            "title": "New Chat",
+            "pinned": False,
+            "model": model_key,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+            "messages": [],
+        }
+        chats.insert(0, chat)
+    vision_ok = model_key in ("gpt-4o-mini", "gemini")
+    has_images = any(f.get("type", "").startswith("image/") for f in files_data)
+    if files_data and vision_ok and has_images:
+        parts = []
+        if user_text:
+            parts.append({"type": "text", "text": user_text})
+        for f in files_data:
+            if f.get("type", "").startswith("image/"):
+                parts.append({"type": "image_url", "image_url": {"url": f"data:{f['type']};base64,{f['data']}"}})
+            else:
+                parts.append({"type": "text", "text": f"\n[File: {f['name']}]\n{f.get('text_content','(binary)')}"})
+        msg_content = parts
+    elif files_data:
+        extras = []
+        for f in files_data:
+            if f.get("type", "").startswith("image/"):
+                extras.append(f"[Image: {f['name']}]")
+            else:
+                tc = f.get("text_content", "")
+                extras.append(f"\n[File: {f['name']}]\n{tc}" if tc else f"[File: {f['name']}]")
+        msg_content = (user_text + "\n" + "\n".join(extras)).strip() if user_text else "\n".join(extras)
+    else:
+        msg_content = user_text
+    chat["messages"].append({"role": "user", "content": msg_content})
+    chat["model"] = model_key
+    chat["updated_at"] = datetime.utcnow().isoformat()
+    _save_user_chats(user["id"], chats)
+    api_messages = [{"role": m["role"], "content": m["content"]} for m in chat["messages"]]
+    t0 = time.time()
+    try:
+        thinking, output = _do_ai_call(model_key, api_messages, enable_thinking)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    thinking_time = int(time.time() - t0)
+    chat["messages"].append({
+        "role": "assistant",
+        "content": output,
+        "thinking": thinking,
+        "thinking_time": thinking_time,
+        "model": model_key,
+    })
+    chat["updated_at"] = datetime.utcnow().isoformat()
+    if len(chat["messages"]) == 2:
+        try:
+            _, title_text = _do_ai_call("gpt-4o-mini", [
+                {"role": "user", "content": f"Generate a very short title (max 5 words, no quotes, no end punctuation) for a chat starting with: {user_text[:200] if user_text else 'file'}"}
+            ], False)
+            chat["title"] = title_text.strip().strip("\"'").strip()[:60]
+        except Exception:
+            pass
+    _save_user_chats(user["id"], chats)
+    cfg = AI_MODELS_CONFIG.get(model_key, {})
+    return jsonify({
+        "success": True,
+        "chat_id": chat["id"],
+        "title": chat["title"],
+        "output": output,
+        "thinking": thinking,
+        "thinking_time": thinking_time,
+        "model_name": cfg.get("name", "AI"),
+        "model_image": cfg.get("image", ""),
+    })
+
+@app.route("/api/ai/send/<chat_id>/retry", methods=["POST"])
+def api_ai_retry(chat_id):
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Login required"}), 401
+    chats = _get_user_chats(user["id"])
+    chat = next((c for c in chats if c["id"] == chat_id), None)
+    if not chat:
+        return jsonify({"success": False, "error": "Not found"}), 404
+    if chat["messages"] and chat["messages"][-1]["role"] == "assistant":
+        chat["messages"].pop()
+    if not chat["messages"]:
+        return jsonify({"success": False, "error": "Nothing to retry"}), 400
+    _save_user_chats(user["id"], chats)
+    model_key = chat.get("model", "gpt-4o-mini")
+    payload = request.json or {}
+    enable_thinking = bool(payload.get("thinking", False))
+    api_messages = [{"role": m["role"], "content": m["content"]} for m in chat["messages"]]
+    t0 = time.time()
+    try:
+        thinking, output = _do_ai_call(model_key, api_messages, enable_thinking)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    thinking_time = int(time.time() - t0)
+    chat["messages"].append({
+        "role": "assistant",
+        "content": output,
+        "thinking": thinking,
+        "thinking_time": thinking_time,
+        "model": model_key,
+    })
+    chat["updated_at"] = datetime.utcnow().isoformat()
+    _save_user_chats(user["id"], chats)
+    cfg = AI_MODELS_CONFIG.get(model_key, {})
+    return jsonify({
+        "success": True,
+        "output": output,
+        "thinking": thinking,
+        "thinking_time": thinking_time,
+        "model_name": cfg.get("name", "AI"),
+        "model_image": cfg.get("image", ""),
+    })
+
+@app.route("/api/v2/chat/ai", methods=["POST"])
+def api_v2_chat_ai():
+    x_token = (request.headers.get("X-Token") or "").strip()
+    if not x_token:
+        return jsonify({"success": False, "error": "X-Token header required"}), 401
+    accounts = load_json("accounts-data.json")
+    auth_user = next((u for u in accounts.get("users", []) if (u.get("api_token") or "").strip() == x_token), None)
+    if not auth_user:
+        return jsonify({"success": False, "error": "Invalid token"}), 401
+    data = request.json or {}
+    model_key = data.get("model", "gpt-4o-mini")
+    messages = data.get("messages", [])
+    enable_thinking = bool(data.get("thinking", False))
+    stream_mode = bool(data.get("stream", False))
+    cfg = AI_MODELS_CONFIG.get(model_key)
+    if not cfg:
+        return jsonify({"success": False, "error": f"Unknown model. Available: {list(AI_MODELS_CONFIG.keys())}"}), 400
+    if stream_mode:
+        def generate():
+            try:
+                thinking_out, output = _do_ai_call(model_key, messages, enable_thinking)
+                if thinking_out:
+                    yield f"data: {json.dumps({'type': 'thinking', 'content': thinking_out})}\n\n"
+                for i in range(0, len(output), 4):
+                    yield f"data: {json.dumps({'type': 'content', 'content': output[i:i+4]})}\n\n"
+                yield "data: [DONE]\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
+        return Response(stream_with_context(generate()), mimetype="text/event-stream")
+    try:
+        thinking_out, output = _do_ai_call(model_key, messages, enable_thinking)
+        return jsonify({"success": True, "thinking": thinking_out, "output": output, "model": model_key})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 3000))
     app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
