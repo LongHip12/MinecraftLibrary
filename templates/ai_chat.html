@@ -403,7 +403,8 @@ textarea,input{font-family:inherit;color:inherit}
 
   <aside class="ai-sb" id="ai-sb">
     <div class="ai-sb-head">
-      <button class="ai-sb-new-btn" onclick="startNewChat()">
+      <button class="ai-sb-backup-btn" onclick="downloadBackup()" title="Download chat backup" style="background:rgba(250,80,80,.08);border:1px solid rgba(250,80,80,.18);color:var(--text2);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;margin-bottom:4px;width:100%;text-align:left;display:flex;align-items:center;gap:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Backup chats</button>
+        <button class="ai-sb-new-btn" onclick="startNewChat()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Create a new chat
       </button>
@@ -688,7 +689,16 @@ function _sugCard(icon, label, prompt) {
 }
 function useSuggestion(text) { document.getElementById('ai-ta').value = text; autoGrowTA(); sendMsg(); }
 
-function loadChats() {
+function downloadBackup() {
+    if (!USER) { window.location.href = '/login'; return; }
+    var a = document.createElement('a');
+    a.href = '/api/ai/backup';
+    a.download = '';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+  function loadChats() {
   if (!USER) return;
   fetch('/api/ai/chats').then(function(r) { return r.json(); }).then(function(d) {
     if (d.success) renderChatList(d.chats);
@@ -1034,7 +1044,7 @@ function sendMsg() {
       return readSSEStream(resp, function(ev) {
         if (ev.type === 'start') {
           startCfg = { name: ev.model_name, image: ev.model_image };
-          if (!S.chatId && ev.chat_id) { S.chatId = ev.chat_id; history.replaceState(null, '', '/ai-chat/' + ev.chat_id); }
+          if (!S.chatId && ev.chat_id) { S.chatId = ev.chat_id; history.replaceState(null, '', '/ai-chat/' + ev.chat_id); loadChats(); }
         } else if (ev.type === 'thinking' && S.thinking) {
           thinkBuf += ev.chunk;
         } else if (ev.type === 'content') {
@@ -1050,7 +1060,7 @@ function sendMsg() {
               ref.bubble.classList.remove('ai-cursor');
               scrollBottom();
               S.sending = false; S.abortCtrl = null; setSendingUI(false);
-              if (_dEv2.title) loadChats();
+              loadChats();
             });
           };
           if (thinkBuf) {
@@ -1103,14 +1113,17 @@ function closeRenameModal() { document.getElementById('ai-rename-bg').classList.
 function saveRename() {
   var title = document.getElementById('ai-rename-input').value.trim();
   if (!title || !S.ctxId) { closeRenameModal(); return; }
+  var _ri = document.getElementById('ci-' + S.ctxId);
+  if (_ri) { var _rt = _ri.querySelector('.ai-chat-title'); if (_rt) _rt.textContent = title; }
+  closeRenameModal();
   fetch('/api/ai/chats/' + S.ctxId, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: title }) })
-    .then(function() { loadChats(); closeRenameModal(); });
+    .then(function(r) { return r.json(); }).then(function() { loadChats(); }).catch(function() { loadChats(); });
 }
 
 function ctxPin() {
   closeCtxMenu(); if (!S.ctxId) return;
   fetch('/api/ai/chats/' + S.ctxId, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pinned: !S.ctxPinned }) })
-    .then(function() { loadChats(); });
+    .then(function(r) { return r.json(); }).then(function() { loadChats(); }).catch(function() { loadChats(); });
 }
 
 function ctxDelete() {
