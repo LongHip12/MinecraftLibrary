@@ -3907,13 +3907,13 @@ AI_MODELS_CONFIG = {
         "model_id": "meta/llama-3.3-70b-instruct",
         "api_key_env": "NVIDIA_LLAMA_KEY",
     },
-    "gemini": {
-        "name": "Gemini Flash",
+    "owl-alpha": {
+        "name": "Owl Alpha",
         "thinking": False,
-        "image": "https://i.imgur.com/GdLBseU.jpeg",
-        "provider": "google",
-        "model_id": "gemini-3-flash-preview",
-        "api_key_env": "GOOGLE_GEMINI_KEY",
+        "image": "https://i.imgur.com/yXIRBUZ.png",
+        "provider": "openrouter",
+        "model_id": "openrouter/owl-alpha",
+        "api_key_env": "OPENROUTER_GPT4O_MINI_KEY",
     },
     "kimi-k2.6": {
         "name": "Kimi K2.6",
@@ -3971,97 +3971,67 @@ def _stream_provider(model_key, messages, enable_thinking):
         else:
             extra["chat_template_kwargs"] = {"enable_thinking": enable_thinking and cfg.get("thinking", False)}
             extra["reasoning_budget"] = 16384
-        payload = {"model": cfg["model_id"], "messages": full_messages, "temperature": 0.6, "top_p": 0.95, "max_tokens": 13579, "stream": True}
+        payload = {"model": cfg["model_id"], "messages": full_messages, "temperature": 0.6, "top_p": 0.95, "max_tokens": 13579, "stream": False}
         payload.update(extra)
         resp = requests.post(
             "https://integrate.api.nvidia.com/v1/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json", "Accept": "text/event-stream"},
-            json=payload, stream=True, timeout=180
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json=payload, timeout=180
         )
         resp.raise_for_status()
-        for line in resp.iter_lines():
-            if not line:
-                continue
-            line = line.decode("utf-8") if isinstance(line, bytes) else line
-            if line in ("data: [DONE]", "[DONE]"):
-                break
-            if not line.startswith("data: "):
-                continue
-            try:
-                chunk = json.loads(line[6:])
-                if not chunk.get("choices"):
-                    continue
-                delta = chunk["choices"][0].get("delta", {})
-                rc = delta.get("reasoning_content") or delta.get("reasoning")
-                if rc:
-                    yield ("thinking", rc)
-                c = delta.get("content")
-                if c:
-                    yield ("content", c)
-            except Exception:
-                pass
+        try:
+            _d = resp.json()
+            _msg = _d["choices"][0].get("message", {})
+            _rc = _msg.get("reasoning_content") or _msg.get("reasoning") or ""
+            _c = _msg.get("content") or ""
+            if _rc:
+                yield ("thinking", _rc)
+            if _c:
+                yield ("content", _c)
+        except Exception:
+            pass
 
     elif provider == "poolside":
         api_key = os.environ.get(cfg.get("api_key_env", ""), "")
         resp = requests.post(
             "https://inference.poolside.ai/v1/chat/completions",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={"model": "poolside/laguna-m.1", "messages": full_messages, "stream": True, "chat_template_kwargs": {"enable_thinking": enable_thinking}},
-            stream=True, timeout=180
+            json={"model": "poolside/laguna-m.1", "messages": full_messages, "stream": False, "chat_template_kwargs": {"enable_thinking": enable_thinking}},
+            timeout=180
         )
         resp.raise_for_status()
-        for line in resp.iter_lines():
-            if not line:
-                continue
-            line = line.decode("utf-8") if isinstance(line, bytes) else line
-            if line in ("data: [DONE]", "[DONE]"):
-                break
-            if not line.startswith("data: "):
-                continue
-            try:
-                chunk = json.loads(line[6:])
-                if not chunk.get("choices"):
-                    continue
-                delta = chunk["choices"][0].get("delta", {})
-                rc = delta.get("reasoning_content") or delta.get("reasoning")
-                if rc:
-                    yield ("thinking", rc)
-                c = delta.get("content")
-                if c:
-                    yield ("content", c)
-            except Exception:
-                pass
+        try:
+            _d = resp.json()
+            _msg = _d["choices"][0].get("message", {})
+            _rc = _msg.get("reasoning_content") or _msg.get("reasoning") or ""
+            _c = _msg.get("content") or ""
+            if _rc:
+                yield ("thinking", _rc)
+            if _c:
+                yield ("content", _c)
+        except Exception:
+            pass
 
     elif provider == "openrouter":
         api_key = os.environ.get(cfg.get("api_key_env", ""), "") or os.environ.get("OPENROUTER_API_KEY", "")
         resp = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={"model": cfg["model_id"], "messages": full_messages, "stream": True},
-            stream=True, timeout=120
+            json={"model": cfg["model_id"], "messages": full_messages, "stream": False},
+            timeout=120
         )
         resp.raise_for_status()
-        for line in resp.iter_lines():
-            if not line:
-                continue
-            line = line.decode("utf-8") if isinstance(line, bytes) else line
-            if line in ("data: [DONE]", "[DONE]"):
-                break
-            if not line.startswith("data: "):
-                continue
-            try:
-                chunk = json.loads(line[6:])
-                if not chunk.get("choices"):
-                    continue
-                delta = chunk["choices"][0].get("delta", {})
-                rc = delta.get("reasoning_content") or delta.get("reasoning")
-                if rc:
-                    yield ("thinking", rc)
-                c = delta.get("content")
-                if c:
-                    yield ("content", c)
-            except Exception:
-                pass
+        try:
+            _d = resp.json()
+            _msg = _d["choices"][0].get("message", {})
+            _rc = _msg.get("reasoning_content") or _msg.get("reasoning") or ""
+            _c = _msg.get("content") or ""
+            if _rc:
+                yield ("thinking", _rc)
+            if _c:
+                yield ("content", _c)
+        except Exception:
+            pass
 
     elif provider == "google":
         api_key = os.environ.get(cfg.get("api_key_env", ""), "")
@@ -4095,26 +4065,18 @@ def _stream_provider(model_key, messages, enable_thinking):
             g_payload["systemInstruction"] = {"parts": [{"text": sys_text}]}
         g_resp = requests.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/{cfg['model_id']}:streamGenerateContent?key={api_key}&alt=sse",
-            json=g_payload, stream=True, timeout=120
+            json=g_payload, timeout=120
         )
         g_resp.raise_for_status()
-        for line in g_resp.iter_lines():
-            if not line:
-                continue
-            line = line.decode("utf-8") if isinstance(line, bytes) else line
-            if line == "data: [DONE]":
-                break
-            if not line.startswith("data: "):
-                continue
-            try:
-                gchunk = json.loads(line[6:])
-                for cand in gchunk.get("candidates", []):
-                    for gpart in cand.get("content", {}).get("parts", []):
-                        gt = gpart.get("text", "")
-                        if gt:
-                            yield ("content", gt)
-            except Exception:
-                pass
+        try:
+            _gd = g_resp.json()
+            for cand in _gd.get("candidates", []):
+                for gpart in cand.get("content", {}).get("parts", []):
+                    gt = gpart.get("text", "")
+                    if gt:
+                        yield ("content", gt)
+        except Exception:
+            pass
 
 def _ai_call_openrouter(model_id, messages, api_key=None):
     api_key = api_key or os.environ.get("OPENROUTER_API_KEY", "")
@@ -4135,15 +4097,14 @@ def _ai_call_nvidia(model_id, api_key, messages, extra=None):
         "temperature": 0.6,
         "top_p": 0.95,
         "max_tokens": 13579,
-        "stream": True,
+        "stream": False,
     }
     if extra:
         payload.update(extra)
     resp = requests.post(
         "https://integrate.api.nvidia.com/v1/chat/completions",
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json", "Accept": "text/event-stream"},
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
         json=payload,
-        stream=True,
         timeout=180
     )
     resp.raise_for_status()
@@ -4157,14 +4118,15 @@ def _ai_call_poolside(messages, enable_thinking, api_key=None):
         json={
             "model": "poolside/laguna-m.1",
             "messages": messages,
-            "stream": True,
+            "stream": False,
             "chat_template_kwargs": {"enable_thinking": enable_thinking},
         },
-        stream=True,
         timeout=180
     )
     resp.raise_for_status()
-    return _ai_parse_sse(resp)
+    _d = resp.json()
+    _msg = _d["choices"][0].get("message", {})
+    return (_msg.get("reasoning_content") or _msg.get("reasoning") or ""), (_msg.get("content") or "")
 
 def _ai_call_gemini(messages, api_key=None):
     api_key = api_key or os.environ.get("GOOGLE_GEMINI_KEY", "")
@@ -4339,7 +4301,7 @@ def api_ai_send():
             "messages": [],
         }
         chats.insert(0, chat)
-    vision_ok = model_key in ("gpt-4o-mini", "gemini")
+    vision_ok = model_key in ("gpt-4o-mini",)
     has_images = any(f.get("type", "").startswith("image/") for f in files_data)
     if files_data and vision_ok and has_images:
         parts = []
