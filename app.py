@@ -3910,7 +3910,7 @@ AI_MODELS_CONFIG = {
     "owl-alpha": {
         "name": "Owl Alpha",
         "thinking": False,
-        "image": "https://i.imgur.com/yXIRBUZ.png",
+        "image": "https://raw.githubusercontent.com/LongHip12/LonelyHub/refs/heads/main/1775396168046-019d5dda-a645-745b-84a8-830794cde06a-removebg-preview.png",
         "provider": "openrouter",
         "model_id": "openrouter/owl-alpha",
         "api_key_env": "OPENROUTER_GPT4O_MINI_KEY",
@@ -4265,7 +4265,27 @@ def api_ai_update_chat(chat_id):
     _save_user_chats(user["id"], chats)
     return jsonify({"success": True, "chat": chat})
 
-@app.route("/api/ai/chats/<chat_id>", methods=["DELETE"])
+
+  @app.route("/api/ai/backup", methods=["GET"])
+  def api_ai_backup():
+      user = get_session_user(request)
+      if not user:
+          return jsonify({"success": False, "error": "Login required"}), 401
+      chats = _get_user_chats(user["id"])
+      import io
+      backup_data = json.dumps({
+          "user": user["username"],
+          "exported_at": datetime.now().isoformat(),
+          "chats": chats,
+      }, ensure_ascii=False, indent=2)
+      buf = io.BytesIO(backup_data.encode("utf-8"))
+      buf.seek(0)
+      from flask import send_file
+      return send_file(buf, mimetype="application/json",
+                       as_attachment=True,
+                       download_name=f"lonely_ai_backup_{user['username']}.json")
+
+  @app.route("/api/ai/chats/<chat_id>", methods=["DELETE"])
 def api_ai_delete_chat(chat_id):
     user = get_session_user(request)
     if not user:
