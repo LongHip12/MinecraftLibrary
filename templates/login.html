@@ -100,39 +100,6 @@ function togglePw(inputId, btn) {
   btn.innerHTML = showing ? _EYE_OPEN : _EYE_OFF;
 }
 
-);
-    navigator.credentials.store(cred);
-  } catch(e) {}
-}
-
-var fd = new FormData();
-  fd.append('username', cred.id);
-  fd.append('password', cred.password);
-  fd.append('remember', 'on');
-  fetch('/login' + window.location.search, { method: 'POST', body: fd })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.success) {
-        saveCredentials(cred.id, cred.password);
-        document.getElementById('success-overlay').classList.add('show');
-        setTimeout(function() { window.location.href = data.redirect || '/'; }, 2000);
-      } else {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg> <span>Sign In</span>'; }
-        var errEl = document.getElementById('auth-error');
-        errEl.querySelector('span').textContent = data.error || 'Saved login failed — please sign in manually.';
-        errEl.style.display = 'flex';
-      }
-    })
-    .catch(function() {
-      if (btn) { btn.disabled = false; btn.innerHTML = '<span>Sign In</span>'; }
-    });
-}
-
-)
-    .then(function(cred) { if (cred) autoFillAndSubmitWithCredential(cred); })
-    .catch(function() {});
-}
-
 document.getElementById('login-form').addEventListener('submit', async function(e) {
   e.preventDefault();
   var btn = e.target.querySelector('.auth-submit-btn');
@@ -140,13 +107,11 @@ document.getElementById('login-form').addEventListener('submit', async function(
   btn.disabled = true;
   btn.innerHTML = '<div class="spinner"></div> Signing in...';
   var fd = new FormData(e.target);
-  var username = document.getElementById('login-username').value;
-  var password = document.getElementById('login-pw').value;
   try {
     var resp = await fetch('/login' + window.location.search, { method: 'POST', body: fd });
     var data = await resp.json();
     if (data.success) {
-document.getElementById('success-overlay').classList.add('show');
+      document.getElementById('success-overlay').classList.add('show');
       setTimeout(function() { window.location.href = data.redirect || '/'; }, 2000);
     } else {
       errEl.querySelector('span').textContent = data.error || 'Invalid credentials';
@@ -162,6 +127,5 @@ document.getElementById('success-overlay').classList.add('show');
     btn.innerHTML = '<span>Sign In</span>';
   }
 });
-
 </script>
 {% endblock %}
