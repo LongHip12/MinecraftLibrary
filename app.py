@@ -1239,7 +1239,7 @@ def google_callback():
         }
         accounts["users"].append(found_user)
         save_json("accounts-data.json", accounts)
-    session_token, expires = create_session(found_user["id"], True)
+    session_token, expires = create_session(found_user["id"])
     device_token = issue_device_token()
     resp = make_response(redirect(url_for("index")))
     resp.set_cookie("session_token", session_token, expires=expires, httponly=True, secure=True, samesite="Lax")
@@ -1476,7 +1476,7 @@ def discord_callback():
         }
         accounts["users"].append(found_user)
         save_json("accounts-data.json", accounts)
-    session_token, expires = create_session(found_user["id"], True)
+    session_token, expires = create_session(found_user["id"])
     device_token = issue_device_token()
     resp = make_response(redirect(url_for("index")))
     resp.set_cookie("session_token", session_token, expires=expires, httponly=True, secure=True, samesite="Lax")
