@@ -662,7 +662,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); background:
   .container { padding: 0 16px; }
 }
 
-/* ── Page Loader ── */
+
 .page-loader {
   position: fixed;
   top: 0;
@@ -690,7 +690,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); background:
   100% { background-position: -200% 0; }
 }
 
-/* ── Tag pills (upload form) ── */
+
 .tag-pill {
   display: inline-flex;
   align-items: center;
@@ -745,7 +745,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); background:
 .tags-input-field:focus { outline: none; }
 .tags-input-field::placeholder { color: var(--text3); }
 
-/* ── Chat file remove button ── */
+
 .chat-file-remove {
   background: none;
   border: none;
@@ -761,7 +761,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); background:
 }
 .chat-file-remove:hover { color: var(--primary); background: rgba(250,80,80,0.1); }
 
-/* ── Rating row (ratings list in mod info) ── */
+
 .rating-user-row {
   display: flex;
   align-items: center;
@@ -806,7 +806,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); background:
   transition: width 0.5s ease;
 }
 
-/* ── Version filter input ── */
+
 .version-filter-wrap {
   display: flex;
   align-items: center;
@@ -832,7 +832,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); background:
 .version-filter-input::placeholder { color: var(--text3); }
 .version-filter-input:focus { outline: none; }
 
-/* ── Forum emoji picker (insert mode) ── */
+
 .forum-emoji-picker-float {
   position: fixed;
   background: var(--bg2);
@@ -1090,14 +1090,14 @@ input:checked + .toggle-slider:before { transform: translateX(20px); background:
   }
 }
 
-/* ── Custom scrollbar ────────────────────────────────── */
+
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
 * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
 
-/* ── PC Sidebar ──────────────────────────────────────── */
+
 .page-sidebar {
   display: none;
 }
@@ -1197,7 +1197,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); background:
   .sb-content-wrap { margin-left: 0; }
 }
 
-/* ── Comment reply action button (mod_info.html) ──────── */
+
 .cmt-msg-actions {
   display: flex;
   align-items: center;
@@ -1224,7 +1224,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); background:
   background: rgba(250,80,80,0.08);
 }
 
-/* ── Forum category mobile dropdown ──────────────────── */
+
 .mobile-cat-dropdown-wrap {
   position: relative;
 }
@@ -1271,7 +1271,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); background:
 .mobile-cat-dropdown-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
 .mobile-cat-dropdown-item.active { color: var(--primary); background: rgba(250,80,80,0.07); font-weight: 600; }
 
-/* ── Forum new-messages pill ─────────────────────────── */
+
 .forum-new-msgs-pill {
   position: fixed;
   bottom: 90px;
@@ -1298,7 +1298,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); background:
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ── Chat attach + indicator ─────────────────────────── */
+
 .chat-attach-count {
   position: absolute;
   top: -4px;

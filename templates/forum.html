@@ -89,7 +89,7 @@
 <div class="page-content">
 <div class="container">
 
-  <!-- Hero -->
+
   <div class="forum-hero">
     <h1 class="forum-hero-title">Community Forum</h1>
     <p class="forum-hero-sub">Discuss mods, share screenshots, get help from the community.</p>
@@ -97,7 +97,7 @@
 
   <div class="forum-layout">
 
-    <!-- Sidebar -->
+
     <aside class="forum-sidebar">
       <div class="forum-sidebar-card" style="margin-bottom:16px;">
         <div class="forum-sidebar-title">Categories</div>
@@ -140,9 +140,9 @@
       </div>
     </aside>
 
-    <!-- Main -->
+
     <main class="forum-main">
-      <!-- Toolbar -->
+
       <div class="forum-toolbar">
         <form method="get" action="/forum" class="forum-search-wrap" style="display:flex;align-items:center;gap:8px;flex:1;">
           {% if category %}<input type="hidden" name="category" value="{{ category }}">{% endif %}
@@ -182,7 +182,7 @@
       </div>
       {% endif %}
 
-      <!-- Mobile category dropdown (hidden on desktop) -->
+
       <div class="mobile-cat-bar mobile-cat-dropdown-wrap">
         <button title="Select category" class="mobile-cat-dropdown-btn" type="button" onclick="_toggleMobileCatDd()" id="mobile-cat-dd-btn">
           <span>
@@ -219,7 +219,7 @@
       });
       </script>
 
-      <!-- Post list -->
+
       {% if posts %}
         {% for post in posts %}
         <a class="forum-post-card {% if post.pinned %}pinned{% endif %}" href="/forum/post/{{ post.id }}" style="display:flex;align-items:center;padding-right:{% if user and (user.tag == 'admin' or (post.author and post.author.id and user.id == post.author.id)) %}44px{% else %}16px{% endif %};">
@@ -306,7 +306,7 @@
       </div>
       {% endif %}
 
-      <!-- Pagination -->
+
       {% if total_pages > 1 %}
       <div class="pagination">
         {% if page > 1 %}

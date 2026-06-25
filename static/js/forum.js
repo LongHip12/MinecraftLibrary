@@ -1,5 +1,5 @@
 (function () {
-  // ── Reply toggle ──────────────────────────────────────────────
+
   document.querySelectorAll('.reply-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var msgId = btn.getAttribute('data-msg');
@@ -12,7 +12,7 @@
     });
   });
 
-  // ── Accumulated file list for chat ───────────────────────────
+
   var _chatFiles = [];
 
   function formatBytes(b) {
@@ -91,7 +91,7 @@
   window.getChatFiles = function () { return _chatFiles; };
   window.clearChatFiles = function () { _chatFiles = []; renderChatFilePreviews(); _updateChatAttachBtn(); };
 
-  // ── File attachment preview (reply forms / old msg-files) ─────
+
   function initFileInput(input, previewArea) {
     if (!input) return;
     input.addEventListener('change', function () {
@@ -132,7 +132,7 @@
     if (previewArea) initFileInput(inp, previewArea);
   });
 
-  // ── Accumulated file list for new thread (post-files) ────────
+
   var _postFiles = [];
 
   function renderPostFilePreviews() {
@@ -199,7 +199,7 @@
 
   window.getPostFiles = function() { return _postFiles; };
 
-  // ── Download warning modal ────────────────────────────────────
+
   var modal = document.getElementById('dl-warning-modal');
   var okBtn = document.getElementById('dl-ok-btn');
   var cancelBtn = document.getElementById('dl-cancel-btn');
@@ -213,7 +213,7 @@
     setTimeout(function () { modal.classList.add('visible'); }, 80);
   }
 
-  // ── Toggle replies ────────────────────────────────────────────
+
   document.querySelectorAll('.toggle-replies-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var targetId = btn.getAttribute('data-target');
@@ -231,13 +231,13 @@
     });
   });
 
-  // ── Category active highlight ─────────────────────────────────
+
   var currentCat = new URLSearchParams(window.location.search).get('category') || '';
   document.querySelectorAll('.forum-cat-item').forEach(function (el) {
     if (el.getAttribute('data-cat') === currentCat) el.classList.add('active');
   });
 
-  // ── Forum nav active ──────────────────────────────────────────
+
   var nlForum = document.getElementById('nl-forum');
   var ndForum = document.getElementById('nd-forum');
   if (window.location.pathname.startsWith('/forum')) {

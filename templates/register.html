@@ -85,6 +85,12 @@
             <span>Remember me for 30 days</span>
           </label>
         </div>
+                <div class="form-group" style="margin-top:4px;">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:var(--text2);line-height:1.5;">
+            <input type="checkbox" name="tos_accepted" id="tos-accepted" required style="margin-top:2px;flex-shrink:0;accent-color:var(--primary);width:15px;height:15px;">
+            <span>I agree to the <a href="/terms-of-service" target="_blank" style="color:var(--primary);">Terms of Service</a>, <a href="/privacy-policy" target="_blank" style="color:var(--primary);">Privacy Policy</a>, <a href="/cookie-policy" target="_blank" style="color:var(--primary);">Cookie Policy</a>, and <a href="/community-guidelines" target="_blank" style="color:var(--primary);">Community Guidelines</a>.</span>
+          </label>
+        </div>
         <div class="h-captcha-wrap">
           <div class="h-captcha" data-sitekey="{{ hcaptcha_site_key }}" data-theme="dark"></div>
         </div>
@@ -213,7 +219,8 @@ document.getElementById('register-step1-form').addEventListener('submit', async 
     try { captchaToken = hcaptcha.getResponse(); } catch(e) {}
   }
 
-  _regData = { username: username, email: email, password: password, remember: remember, captchaToken: captchaToken };
+  var tosAccepted = document.getElementById('tos-accepted').checked;
+  _regData = { username: username, email: email, password: password, remember: remember, captchaToken: captchaToken, tosAccepted: tosAccepted };
 
   try {
     var resp = await fetch('/api/send-otp', {
@@ -279,6 +286,7 @@ async function submitRegister() {
   fd.append('remember', _regData.remember ? 'on' : '');
   fd.append('otp_code', otp);
   fd.append('h-captcha-response', _regData.captchaToken || '');
+  fd.append('tos_accepted', _regData.tosAccepted ? 'on' : '');
   try {
     var resp = await fetch('/register' + window.location.search, { method: 'POST', body: fd });
     var data = await resp.json();

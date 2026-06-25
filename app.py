@@ -93,6 +93,16 @@ STATUS_HISTORY = []
 LOG_BUFFER.append({'t': APP_START_TIME.isoformat(timespec='milliseconds'), 'level': 'startup', 'msg': f'[STARTUP] App started — Python {sys.version.split()[0]}'})
 CORS(app)
 
+@app.after_request
+def _rotate_remember_cookie(response):
+    series = getattr(g, "_new_remember_series", None)
+    token = getattr(g, "_new_remember_token", None)
+    if series and token:
+        expires = datetime.now() + timedelta(days=30)
+        response.set_cookie("remember_me", f"{series}:{token}",
+            expires=expires, httponly=True, secure=True, samesite="Lax", max_age=30*24*3600)
+    return response
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 UPLOAD_DIR = os.path.join(BASE_DIR, "static", "uploads")
@@ -119,6 +129,8 @@ os.makedirs(os.path.join(UPLOAD_DIR, "modbanner"), exist_ok=True)
 os.makedirs(os.path.join(UPLOAD_DIR, "avatars"), exist_ok=True)
 os.makedirs(os.path.join(UPLOAD_DIR, "banners"), exist_ok=True)
 os.makedirs(FORUM_UPLOAD_DIR, exist_ok=True)
+REPORT_UPLOAD_DIR = os.path.join(BASE_DIR, "static", "report_uploads")
+os.makedirs(REPORT_UPLOAD_DIR, exist_ok=True)
 
 DEFAULT_DATA = {
     "accounts-data.json": {"users": []},
@@ -126,6 +138,7 @@ DEFAULT_DATA = {
     "sessions-data.json": {"sessions": {}},
     "forum-data.json": {"posts": []},
     "settings-data.json": {"api_rate_limit": 60},
+    "reports-data.json": {"reports": []},
 }
 
 _rate_limit_store = {}
@@ -164,27 +177,31 @@ def allowed_file(filename):
 
 def get_session_user(request):
     token = request.cookies.get("session_token")
-    if not token:
-        return None
-    sessions = load_json("sessions-data.json")
-    session = sessions.get("sessions", {}).get(token)
-    if not session:
-        return None
-    try:
-        expires = datetime.fromisoformat(session["expires"])
-    except (KeyError, ValueError):
-        return None
-    if datetime.now() > expires:
-        sessions["sessions"].pop(token, None)
-        save_json("sessions-data.json", sessions)
-        return None
-    accounts = load_json("accounts-data.json")
-    return next((u for u in accounts.get("users", []) if u["id"] == session["user_id"]), None)
+    if token:
+        sessions = load_json("sessions-data.json")
+        session = sessions.get("sessions", {}).get(token)
+        if session:
+            try:
+                expires = datetime.fromisoformat(session["expires"])
+            except (KeyError, ValueError):
+                expires = None
+            if expires and datetime.now() <= expires:
+                accounts = load_json("accounts-data.json")
+                user = next((u for u in accounts.get("users", []) if u["id"] == session["user_id"]), None)
+                if user:
+                    return user
+            sessions["sessions"].pop(token, None)
+            save_json("sessions-data.json", sessions)
+    user, series, new_token = validate_remember_token(request)
+    if user and series:
+        g._new_remember_series = series
+        g._new_remember_token = new_token
+    return user
 
 
-def create_session(user_id, remember=False):
+def create_session(user_id):
     token = secrets.token_hex(32)
-    expires = datetime.now() + (timedelta(days=30) if remember else timedelta(hours=2))
+    expires = datetime.now() + timedelta(hours=2)
     sessions = load_json("sessions-data.json")
     sessions.setdefault("sessions", {})[token] = {
         "user_id": user_id,
@@ -194,26 +211,57 @@ def create_session(user_id, remember=False):
     return token, expires
 
 
-def issue_device_token():
+def create_remember_token(user_id):
+    series = secrets.token_hex(32)
     token = secrets.token_hex(32)
+    expires = datetime.now() + timedelta(days=30)
     sessions = load_json("sessions-data.json")
-    tokens = sessions.setdefault("device_tokens", [])
-    tokens.append(token)
-    sessions["device_tokens"] = tokens[-2000:]
+    sessions.setdefault("remember_tokens", []).append({
+        "user_id": user_id,
+        "series": series,
+        "token": token,
+        "expires": expires.isoformat()
+    })
     save_json("sessions-data.json", sessions)
-    return token
+    return series, token, expires
 
 
-def is_valid_device_token(request):
-    token = request.cookies.get("device_token")
-    if not token:
-        return False
+def validate_remember_token(request_obj):
+    cookie = request_obj.cookies.get("remember_me")
+    if not cookie or ":" not in cookie:
+        return None, None, None
+    series, token = cookie.split(":", 1)
     sessions = load_json("sessions-data.json")
-    return token in sessions.get("device_tokens", [])
+    tokens = sessions.get("remember_tokens", [])
+    match = next((t for t in tokens if t["series"] == series), None)
+    if not match:
+        return None, "not_found", None
+    try:
+        expires = datetime.fromisoformat(match["expires"])
+    except (KeyError, ValueError):
+        return None, "expired", None
+    if datetime.now() > expires:
+        sessions["remember_tokens"] = [t for t in tokens if t["series"] != series]
+        save_json("sessions-data.json", sessions)
+        return None, "expired", None
+    if match["token"] != token:
+        sessions["remember_tokens"] = [t for t in tokens if t["user_id"] != match["user_id"]]
+        save_json("sessions-data.json", sessions)
+        return None, "stolen", None
+    new_token = secrets.token_hex(32)
+    new_expires = datetime.now() + timedelta(days=30)
+    for t in sessions["remember_tokens"]:
+        if t["series"] == series:
+            t["token"] = new_token
+            t["expires"] = new_expires.isoformat()
+    save_json("sessions-data.json", sessions)
+    accounts = load_json("accounts-data.json")
+    user = next((u for u in accounts.get("users", []) if u["id"] == match["user_id"]), None)
+    return user, series, new_token
 
 
 def send_email_html(to, subject, html_body):
-    # Primary: Brevo REST API (fast, reliable, no SMTP blocking issues)
+
     if BREVO_API_KEY:
         try:
             resp = requests.post(
@@ -230,7 +278,7 @@ def send_email_html(to, subject, html_body):
             return resp.status_code in (200, 201, 202)
         except Exception:
             pass
-    # Fallback: Gmail SMTP (if BREVO_API_KEY not set)
+
     if not APP_PASSWORD:
         return False
     from email.mime.multipart import MIMEMultipart as _MM
@@ -807,20 +855,20 @@ def login():
         password = request.form.get("password", "")
         remember = request.form.get("remember") == "on"
         captcha_token = request.form.get("h-captcha-response", "")
-        auto_login = request.form.get("auto_login") == "1"
-        trusted_device = auto_login or is_valid_device_token(request)
-        if not trusted_device and not verify_hcaptcha(captcha_token):
+        if not verify_hcaptcha(captcha_token):
             error = "Please complete the captcha"
         else:
             accounts = load_json("accounts-data.json")
             found = next((u for u in accounts["users"] if u["username"].lower() == username.lower() or (u.get("email") or "").lower() == username.lower()), None)
             if found and found.get("password") and check_password_hash(found["password"], password):
-                token, expires = create_session(found["id"], remember)
-                device_token = issue_device_token()
+                token, expires = create_session(found["id"])
                 next_url = request.args.get("next", url_for("index"))
                 resp = make_response(jsonify({"success": True, "redirect": next_url}))
                 resp.set_cookie("session_token", token, expires=expires, httponly=True, secure=True, samesite="Lax")
-                resp.set_cookie("device_token", device_token, max_age=365 * 24 * 3600, httponly=True, secure=True, samesite="Lax")
+                if remember:
+                    r_series, r_token, r_exp = create_remember_token(found["id"])
+                    resp.set_cookie("remember_me", f"{r_series}:{r_token}",
+                        expires=r_exp, httponly=True, secure=True, samesite="Lax", max_age=30*24*3600)
                 return resp
             else:
                 error = "Invalid username or password"
@@ -952,7 +1000,10 @@ def register():
         password = request.form.get("password", "")
         remember = request.form.get("remember") == "on"
         otp_code = request.form.get("otp_code", "").strip()
-        if len(username) < 3 or len(username) > 20:
+        tos_accepted = request.form.get("tos_accepted") == "on"
+        if not tos_accepted:
+            error = "You must accept the Terms of Service to register"
+        elif len(username) < 3 or len(username) > 20:
             error = "Username must be 3-20 characters"
         elif not username.replace("_", "").replace("-", "").isalnum():
             error = "Username can only contain letters, numbers, - and _"
@@ -993,12 +1044,14 @@ def register():
                 })
                 save_json("accounts-data.json", accounts)
                 threading.Thread(target=send_email_html, args=(email, "Welcome to Lonely Hub!", welcome_email_html(username)), daemon=True).start()
-                token, expires = create_session(new_id, remember)
-                device_token = issue_device_token()
+                token, expires = create_session(new_id)
                 next_url = request.args.get("next", url_for("index"))
                 resp = make_response(jsonify({"success": True, "redirect": next_url}))
-                resp.set_cookie("session_token", token, expires=expires, httponly=True, samesite="Lax")
-                resp.set_cookie("device_token", device_token, max_age=365 * 24 * 3600, httponly=True, secure=True, samesite="Lax")
+                resp.set_cookie("session_token", token, expires=expires, httponly=True, secure=True, samesite="Lax")
+                if remember:
+                    r_series, r_token, r_exp = create_remember_token(new_id)
+                    resp.set_cookie("remember_me", f"{r_series}:{r_token}",
+                        expires=r_exp, httponly=True, secure=True, samesite="Lax", max_age=30*24*3600)
                 return resp
         return jsonify({"success": False, "error": error})
     next_url = request.args.get("next", "")
@@ -1012,10 +1065,44 @@ def logout():
         sessions = load_json("sessions-data.json")
         sessions.get("sessions", {}).pop(token, None)
         save_json("sessions-data.json", sessions)
+    rm_cookie = request.cookies.get("remember_me")
+    if rm_cookie and ":" in rm_cookie:
+        series = rm_cookie.split(":", 1)[0]
+        sessions = load_json("sessions-data.json")
+        sessions["remember_tokens"] = [t for t in sessions.get("remember_tokens", []) if t["series"] != series]
+        save_json("sessions-data.json", sessions)
     resp = make_response(redirect(url_for("index")))
     resp.delete_cookie("session_token")
+    resp.delete_cookie("remember_me")
     return resp
 
+
+
+
+@app.route("/terms-of-service")
+def terms_of_service():
+    user = get_session_user(request)
+    return render_template("legal/terms.html", user=user)
+
+@app.route("/privacy-policy")
+def privacy_policy():
+    user = get_session_user(request)
+    return render_template("legal/privacy.html", user=user)
+
+@app.route("/cookie-policy")
+def cookie_policy():
+    user = get_session_user(request)
+    return render_template("legal/cookie_policy.html", user=user)
+
+@app.route("/community-guidelines")
+def community_guidelines():
+    user = get_session_user(request)
+    return render_template("legal/community_guidelines.html", user=user)
+
+@app.route("/disclaimer")
+def disclaimer():
+    user = get_session_user(request)
+    return render_template("legal/disclaimer.html", user=user)
 
 @app.route("/forgot-password")
 def forgot_password():
@@ -1941,6 +2028,82 @@ def admin_delete_mod(mod_id):
                         mod_type=mod_type))
     return redirect(url_for("admin_pages"))
 
+
+
+
+@app.route("/api/report", methods=["POST"])
+def api_submit_report():
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Login required"}), 401
+    report_type = request.form.get("type", "").strip()
+    target_id = request.form.get("target_id", "").strip()
+    target_url = request.form.get("target_url", "").strip()
+    reason = request.form.get("reason", "").strip()
+    description = request.form.get("description", "").strip()
+    if not report_type or not target_id or not reason:
+        return jsonify({"success": False, "error": "Missing required fields"}), 400
+    files = request.files.getlist("images")
+    saved_images = []
+    for f in files[:5]:
+        if f and allowed_file(f.filename):
+            fname = secrets.token_hex(16) + "." + f.filename.rsplit(".", 1)[1].lower()
+            fpath = os.path.join(REPORT_UPLOAD_DIR, fname)
+            f.save(fpath)
+            saved_images.append("/static/report_uploads/" + fname)
+    reports = load_json("reports-data.json")
+    reports.setdefault("reports", []).append({
+        "id": str(uuid.uuid4()),
+        "type": report_type,
+        "target_id": target_id,
+        "target_url": target_url,
+        "reporter_id": user["id"],
+        "reporter_username": user["username"],
+        "reason": reason,
+        "description": description,
+        "images": saved_images,
+        "created_at": datetime.now().isoformat(),
+        "status": "pending"
+    })
+    save_json("reports-data.json", reports)
+    return jsonify({"success": True})
+
+
+@app.route("/admin/reports")
+def admin_reports():
+    current_user = get_session_user(request)
+    if not current_user or not is_admin(current_user):
+        return redirect(f"/error?code=403&msg=Access+forbidden")
+    reports_data = load_json("reports-data.json")
+    accounts = load_json("accounts-data.json")
+    users_map = {u["id"]: u for u in accounts.get("users", [])}
+    reports = reports_data.get("reports", [])
+    for r in reports:
+        r["reporter"] = users_map.get(r.get("reporter_id"), {})
+        if r.get("type") == "user":
+            r["target_user"] = users_map.get(r.get("target_id"), {})
+    status_filter = request.args.get("status", "all")
+    if status_filter != "all":
+        reports = [r for r in reports if r.get("status") == status_filter]
+    reports = sorted(reports, key=lambda r: r.get("created_at", ""), reverse=True)
+    return render_template("admin_reports.html", user=current_user, reports=reports, status_filter=status_filter)
+
+
+@app.route("/api/admin/report/<report_id>/status", methods=["POST"])
+def api_admin_report_status(report_id):
+    current_user = get_session_user(request)
+    if not current_user or not is_admin(current_user):
+        return jsonify({"success": False, "error": "Forbidden"}), 403
+    new_status = (request.get_json(silent=True) or {}).get("status", "")
+    if new_status not in ("pending", "resolved", "dismissed"):
+        return jsonify({"success": False, "error": "Invalid status"}), 400
+    reports = load_json("reports-data.json")
+    for r in reports.get("reports", []):
+        if r["id"] == report_id:
+            r["status"] = new_status
+            save_json("reports-data.json", reports)
+            return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Report not found"}), 404
 
 @app.route("/api/stats")
 def api_stats():
@@ -3588,7 +3751,7 @@ def admin_save_data():
                 zf.write(fpath, fname)
     buf.seek(0)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    # Also save to Supabase (non-blocking, best-effort)
+
     try:
         supabase_backup.save_backup(DATA_DIR, DEFAULT_DATA, label="Manual")
     except Exception:
@@ -3834,13 +3997,13 @@ def api_docs():
     return render_template("api_docs.html", user=user, is_admin_user=is_admin_user, user_has_token=bool(acc and acc.get("api_token")) if acc else False)
 
 
-# Startup: restore from Supabase if local data is empty
+
 supabase_backup.startup_restore(DATA_DIR)
 
-# Start Supabase auto-backup every 5 minutes
+
 supabase_backup.start_auto_backup(DATA_DIR, DEFAULT_DATA)
 
-# Start Supabase auto-restore every 15 minutes
+
 supabase_backup.start_auto_restore(DATA_DIR)
 
 @app.route("/api/admin/logs", methods=["GET"])
@@ -4266,26 +4429,26 @@ def api_ai_update_chat(chat_id):
     return jsonify({"success": True, "chat": chat})
 
 
-  @app.route("/api/ai/backup", methods=["GET"])
-  def api_ai_backup():
-      user = get_session_user(request)
-      if not user:
-          return jsonify({"success": False, "error": "Login required"}), 401
-      chats = _get_user_chats(user["id"])
-      import io
-      backup_data = json.dumps({
-          "user": user["username"],
-          "exported_at": datetime.now().isoformat(),
-          "chats": chats,
-      }, ensure_ascii=False, indent=2)
-      buf = io.BytesIO(backup_data.encode("utf-8"))
-      buf.seek(0)
-      from flask import send_file
-      return send_file(buf, mimetype="application/json",
-                       as_attachment=True,
-                       download_name=f"lonely_ai_backup_{user['username']}.json")
+@app.route("/api/ai/backup", methods=["GET"])
+def api_ai_backup():
+    user = get_session_user(request)
+    if not user:
+        return jsonify({"success": False, "error": "Login required"}), 401
+    chats = _get_user_chats(user["id"])
+    import io
+    backup_data = json.dumps({
+        "user": user["username"],
+        "exported_at": datetime.now().isoformat(),
+        "chats": chats,
+    }, ensure_ascii=False, indent=2)
+    buf = io.BytesIO(backup_data.encode("utf-8"))
+    buf.seek(0)
+    from flask import send_file
+    return send_file(buf, mimetype="application/json",
+                     as_attachment=True,
+                     download_name=f"lonely_ai_backup_{user['username']}.json")
 
-  @app.route("/api/ai/chats/<chat_id>", methods=["DELETE"])
+@app.route("/api/ai/chats/<chat_id>", methods=["DELETE"])
 def api_ai_delete_chat(chat_id):
     user = get_session_user(request)
     if not user:

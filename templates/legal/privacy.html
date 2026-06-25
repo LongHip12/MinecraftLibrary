@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy — Lonely Hub{% endblock %}
+{% block content %}
+<div class="page-content" style="max-width:800px;margin:0 auto;padding:64px 24px 80px;">
+<h1 style="font-size:2rem;font-weight:800;margin-bottom:8px;">Privacy Policy</h1>
+<p style="color:var(--text3);margin-bottom:36px;">Last updated: June 25, 2026</p>
+<div style="display:flex;flex-direction:column;gap:28px;line-height:1.75;color:var(--text2);">
+<section><h2 style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px;">1. Data We Collect</h2><p>We collect your username, email address, and password hash when you register. We also log session tokens, IP addresses for security purposes, and content you upload or post.</p></section>
+<section><h2 style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px;">2. How We Use Your Data</h2><p>Your data is used to provide and improve the service, send transactional emails (e.g. verification codes), and detect abuse or fraud. We do not sell your personal data to third parties.</p></section>
+<section><h2 style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px;">3. Cookies</h2><p>We use secure, HttpOnly cookies to maintain your login session. See our <a href="/cookie-policy" style="color:var(--primary);">Cookie Policy</a> for details.</p></section>
+<section><h2 style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px;">4. Third-Party Services</h2><p>We use Google OAuth and Discord OAuth for social login. These services have their own privacy policies. We use hCaptcha for bot protection.</p></section>
+<section><h2 style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px;">5. Data Retention</h2><p>Account data is retained until you delete your account. Session data expires automatically. We may retain logs for up to 90 days for security purposes.</p></section>
+<section><h2 style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px;">6. Your Rights</h2><p>You may request deletion of your account and associated data by contacting us on Discord.</p></section>
+</div>
+<div style="margin-top:48px;display:flex;gap:12px;flex-wrap:wrap;">
+<a href="/terms-of-service" class="btn btn-ghost btn-sm">Terms of Service</a>
+<a href="/cookie-policy" class="btn btn-ghost btn-sm">Cookie Policy</a>
+<a href="/community-guidelines" class="btn btn-ghost btn-sm">Community Guidelines</a>
+<a href="/disclaimer" class="btn btn-ghost btn-sm">Disclaimer</a>
+</div>
+</div>
+{% endblock %}

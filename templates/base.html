@@ -57,6 +57,11 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
       <span>Admin</span>
     </a>
+        {% if user.tag == 'admin' %}
+    <a href="/admin/reports" class="nav-link" id="nl-reports" style="color:#f59e0b;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+      <span>Reports</span>
+    </a>
     {% endif %}
     {% endif %}
     <a href="/api/docs" class="nav-link" id="nl-api">
@@ -87,7 +92,7 @@
 
 <div class="nav-mobile-overlay" id="nav-mobile-overlay"></div>
 
-<!-- PC Sidebar (desktop only) -->
+
 <aside class="page-sidebar" id="page-sidebar" aria-label="Navigation">
   <nav class="page-sidebar-nav">
     <a href="/" class="sb-link" id="sb-home">
@@ -123,6 +128,11 @@
     <a href="/admin/dashboard" class="sb-link sb-admin" id="sb-admin">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
       <span>Admin</span>
+    </a>
+        {% if user.tag == 'admin' %}
+    <a href="/admin/reports" class="sb-link" id="sb-reports" style="color:#f59e0b;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+      <span>Reports</span>
     </a>
     {% endif %}
     {% endif %}
@@ -185,6 +195,11 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
       <span>Admin</span>
     </a>
+        {% if user.tag == 'admin' %}
+    <a href="/admin/reports" class="nav-link" id="nd-reports" style="color:#f59e0b;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+      <span>Reports</span>
+    </a>
     {% endif %}
     {% endif %}
     <a href="/api/docs" class="nav-link" id="nd-api">
@@ -215,6 +230,17 @@
 
 <div class="sb-content-wrap">
 {% block content %}{% endblock %}
+
+<footer style="text-align:center;padding:32px 24px;border-top:1px solid var(--border2);margin-top:40px;">
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:16px;font-size:12px;color:var(--text3);">
+    <a href="/terms-of-service" style="color:var(--text3);text-decoration:none;transition:color .15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">Terms of Service</a>
+    <a href="/privacy-policy" style="color:var(--text3);text-decoration:none;transition:color .15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">Privacy Policy</a>
+    <a href="/cookie-policy" style="color:var(--text3);text-decoration:none;transition:color .15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">Cookie Policy</a>
+    <a href="/community-guidelines" style="color:var(--text3);text-decoration:none;transition:color .15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">Community Guidelines</a>
+    <a href="/disclaimer" style="color:var(--text3);text-decoration:none;transition:color .15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">Disclaimer</a>
+  </div>
+  <div style="margin-top:10px;font-size:11px;color:var(--text3);opacity:.6;">© 2026 Lonely Hub. All rights reserved.</div>
+</footer>
 </div>
 
 <div id="cconfirm-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:10001;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
@@ -276,7 +302,8 @@ document.addEventListener('submit', function(e) {
     ['nl-upload','nd-upload','sb-upload','/upload'],
     ['nl-api','nd-api','sb-api','/api/docs'],
     ['nl-dashboard','nd-dashboard','sb-dashboard','/dashboard'],
-    ['nl-admin','nd-admin','sb-admin','/admin']
+    ['nl-admin','nd-admin','sb-admin','/admin/dashboard'],
+    ['nl-reports','nd-reports','sb-reports','/admin/reports']
   ];
   ids.forEach(function(item){
     var p2 = item[3];

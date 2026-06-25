@@ -17,13 +17,13 @@ function handleAuthSubmit(formId, endpoint, successMsg) {
     const btn = form.querySelector('.auth-submit-btn');
     const errEl = form.querySelector('.auth-error');
     const captchaToken = document.querySelector('[name="h-captcha-response"]')?.value || '';
-    
+
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner"></div> Processing...';
-    
+
     const fd = new FormData(form);
     const nextUrl = new URLSearchParams(window.location.search).get('next') || '/';
-    
+
     try {
       const resp = await fetch(endpoint + (window.location.search ? window.location.search : ''), {
         method: 'POST',

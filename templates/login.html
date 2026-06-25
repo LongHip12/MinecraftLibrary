@@ -37,19 +37,19 @@
 
     <div class="google-divider"><span>or sign in with email</span></div>
 
-    <form class="auth-form" id="login-form">
+    <form class="auth-form" id="login-form" autocomplete="off">
       <div class="auth-error" id="auth-error" style="display:none;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
         <span></span>
       </div>
       <div class="form-group">
         <label class="form-label">Username or Email</label>
-        <input type="text" name="username" id="login-username" class="input-field" placeholder="Enter your username or email" required autocomplete="username">
+        <input type="text" name="username" id="login-username" class="input-field" placeholder="Enter your username or email" required autocomplete="off">
       </div>
       <div class="form-group">
         <label class="form-label">Password</label>
         <div class="pw-wrap">
-          <input type="password" name="password" id="login-pw" class="input-field" placeholder="Enter your password" required autocomplete="current-password">
+          <input type="password" name="password" id="login-pw" class="input-field" placeholder="Enter your password" required autocomplete="new-password">
           <button type="button" class="pw-toggle" onclick="togglePw('login-pw', this)" tabindex="-1">
             <svg id="login-pw-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
           </button>
@@ -100,26 +100,15 @@ function togglePw(inputId, btn) {
   btn.innerHTML = showing ? _EYE_OPEN : _EYE_OFF;
 }
 
-function saveCredentials(username, password) {
-  if (!window.PasswordCredential || !navigator.credentials) return;
-  try {
-    var cred = new PasswordCredential({ id: username, password: password, name: username });
+);
     navigator.credentials.store(cred);
   } catch(e) {}
 }
 
-function autoFillAndSubmitWithCredential(cred) {
-  var unField = document.getElementById('login-username');
-  var pwField = document.getElementById('login-pw');
-  if (unField) unField.value = cred.id;
-  if (pwField) pwField.value = cred.password;
-  var btn = document.querySelector('.auth-submit-btn');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Signing in...'; }
-  var fd = new FormData();
+var fd = new FormData();
   fd.append('username', cred.id);
   fd.append('password', cred.password);
   fd.append('remember', 'on');
-  fd.append('auto_login', '1');
   fetch('/login' + window.location.search, { method: 'POST', body: fd })
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -139,9 +128,7 @@ function autoFillAndSubmitWithCredential(cred) {
     });
 }
 
-function tryAutoLogin() {
-  if (!window.PasswordCredential || !navigator.credentials) return;
-  navigator.credentials.get({ password: true, mediation: 'optional' })
+)
     .then(function(cred) { if (cred) autoFillAndSubmitWithCredential(cred); })
     .catch(function() {});
 }
@@ -159,8 +146,7 @@ document.getElementById('login-form').addEventListener('submit', async function(
     var resp = await fetch('/login' + window.location.search, { method: 'POST', body: fd });
     var data = await resp.json();
     if (data.success) {
-      saveCredentials(username, password);
-      document.getElementById('success-overlay').classList.add('show');
+document.getElementById('success-overlay').classList.add('show');
       setTimeout(function() { window.location.href = data.redirect || '/'; }, 2000);
     } else {
       errEl.querySelector('span').textContent = data.error || 'Invalid credentials';
@@ -177,6 +163,5 @@ document.getElementById('login-form').addEventListener('submit', async function(
   }
 });
 
-tryAutoLogin();
 </script>
 {% endblock %}

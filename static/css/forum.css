@@ -1,9 +1,6 @@
-/* ═══════════════════════════════════════
-   FORUM — Lonely Hub
-   Extends main.css; no overrides needed
-═══════════════════════════════════════ */
 
-/* ── Layout ── */
+
+
 .forum-layout {
   display: grid;
   grid-template-columns: 240px 1fr;
@@ -16,7 +13,7 @@
   .forum-sidebar { display: none; }
 }
 
-/* ── Sidebar ── */
+
 .forum-sidebar {
   position: sticky;
   top: calc(var(--nav-h) + 24px);
@@ -87,7 +84,7 @@
   margin-top: 2px;
 }
 
-/* ── Main area ── */
+
 .forum-main {}
 
 .forum-toolbar {
@@ -147,7 +144,7 @@
 
 .forum-sort-select:focus { outline: none; border-color: var(--primary); }
 
-/* ── Post card ── */
+
 .forum-post-card {
   background: var(--card);
   border: 1px solid var(--border2);
@@ -300,7 +297,7 @@
   justify-content: center;
 }
 
-/* ── Post page ── */
+
 .forum-post-header {
   background: var(--card);
   border: 1px solid var(--border2);
@@ -364,7 +361,7 @@
   margin-left: auto;
 }
 
-/* Post body */
+
 .post-body-text {
   font-size: 15px;
   line-height: 1.75;
@@ -381,7 +378,7 @@
   margin-top: 20px;
 }
 
-/* Attachments */
+
 .attachments-section { margin-top: 16px; }
 
 .attachments-title {
@@ -445,7 +442,7 @@
   margin-left: 4px;
 }
 
-/* ── Messages ── */
+
 .messages-section { margin-top: 8px; }
 
 .messages-header {
@@ -568,7 +565,7 @@
   background: rgba(250,80,80,0.06);
 }
 
-/* ── Replies ── */
+
 .replies-list {
   margin-top: 12px;
   border-top: 1px solid var(--border2);
@@ -622,7 +619,7 @@
   word-break: break-word;
 }
 
-/* ── Reply form ── */
+
 .reply-form-box {
   display: none;
   margin-top: 12px;
@@ -648,7 +645,7 @@
 
 .reply-form-box textarea:focus { outline: none; border-color: var(--primary); }
 
-/* ── New message form ── */
+
 .new-message-card {
   background: var(--card);
   border: 1px solid var(--border2);
@@ -686,7 +683,7 @@
   color: var(--text2);
 }
 
-/* ── File upload UI ── */
+
 .file-upload-label {
   display: inline-flex;
   align-items: center;
@@ -753,7 +750,7 @@
 }
 .chat-file-remove:hover { background: rgba(250,80,80,0.15); color: var(--primary); }
 
-/* Forum message emoji picker */
+
 .forum-emoji-picker-float {
   position: fixed;
   z-index: 4500;
@@ -799,7 +796,7 @@
 }
 .forum-emoji-btn:hover { background: rgba(255,255,255,0.09); transform: scale(1.25); }
 
-/* Message reaction chips */
+
 .react-chip {
   display: inline-flex;
   align-items: center;
@@ -837,7 +834,7 @@
 }
 .react-add-btn:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.2); color: var(--text); }
 
-/* ── Download warning page ── */
+
 .dl-warning-overlay {
   position: fixed;
   inset: 0;
@@ -922,7 +919,7 @@
   justify-content: center;
 }
 
-/* ── New post form ── */
+
 .forum-form-card {
   background: var(--card);
   border: 1px solid var(--border2);
@@ -968,7 +965,7 @@
 .forum-form-card select:focus { outline: none; border-color: var(--primary); }
 .forum-form-card select option { background: var(--bg2); }
 
-/* ── Toggle replies btn ── */
+
 .toggle-replies-btn {
   display: inline-flex;
   align-items: center;
@@ -992,7 +989,7 @@
   transition: transform 0.2s;
 }
 
-/* ── Reply-to indicator ── */
+
 .reply-to-indicator {
   display: flex;
   align-items: center;
@@ -1007,7 +1004,7 @@
 }
 .reply-to-indicator strong { color: var(--text2); }
 
-/* ── Image 3-dot menu ── */
+
 .attach-image-wrap {
   position: relative;
 }
@@ -1065,7 +1062,7 @@
 }
 .img-menu-item:hover { background: rgba(255,255,255,0.04); color: var(--primary); }
 
-/* ── Lightbox ── */
+
 .lightbox-overlay {
   position: fixed;
   inset: 0;
@@ -1173,7 +1170,7 @@
 .lightbox-prev { left: 16px; }
 .lightbox-next { right: 16px; }
 
-/* ── Custom sort dropdown ── */
+
 .fsort-dd {
   position: relative;
   flex-shrink: 0;
@@ -1229,7 +1226,7 @@
 .fsort-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
 .fsort-item.sel { color: var(--primary); background: rgba(250,80,80,0.06); font-weight: 600; }
 
-/* ── Mobile category pill bar ── */
+
 .mobile-cat-bar {
   display: none;
   overflow-x: auto;
@@ -1259,7 +1256,7 @@
 .mobile-cat-pill:hover { background: rgba(255,255,255,0.07); color: var(--text); }
 .mobile-cat-pill.active { background: rgba(250,80,80,0.12); border-color: rgba(250,80,80,0.3); color: var(--primary); }
 
-/* ── Responsive ── */
+
 @media (max-width: 860px) {
   .mobile-cat-bar { display: flex; }
 }
@@ -1277,7 +1274,7 @@
   .reply-form-box textarea { font-size: 16px; }
 }
 
-/* ── Page hero ── */
+
 .forum-hero {
   padding: 36px 0 28px;
 }
@@ -1371,7 +1368,7 @@
 }
 .forum-emoji-btn:hover { background: rgba(255,255,255,0.08); }
 
-/* ── Mobile category dropdown ── */
+
 .mobile-cat-dropdown-wrap {
   position: relative;
   overflow: visible;

@@ -157,6 +157,60 @@
 .typing-dots span:nth-child(2) { animation-delay:.2s; }
 .typing-dots span:nth-child(3) { animation-delay:.4s; }
 
+
+/* ── Chat Bubble Messages ───────────────── */
+.message-card {
+  position: relative;
+  margin-bottom: 4px;
+  padding: 6px 12px 6px 56px;
+  transition: background .15s;
+  border-radius: 10px;
+}
+.message-card:hover { background: rgba(255,255,255,0.028); }
+.message-card.own-msg {
+  padding-left: 12px;
+  padding-right: 56px;
+}
+.message-author-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.msg-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.06);
+  position: absolute;
+  left: 12px;
+  top: 8px;
+}
+.message-card.own-msg .msg-avatar {
+  left: auto;
+  right: 12px;
+}
+.msg-bubble {
+  display: inline-block;
+  max-width: 75%;
+  padding: 8px 13px;
+  border-radius: 16px 16px 16px 3px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.06);
+  word-break: break-word;
+}
+.message-card.own-msg .msg-bubble {
+  border-radius: 16px 16px 3px 16px;
+  background: rgba(250,80,80,0.11);
+  border-color: rgba(250,80,80,0.18);
+  margin-left: auto;
+}
+.msg-body {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+  white-space: pre-wrap;
+}
 /* ── New messages pill ─────────────── */
 .new-msgs-pill {
   position: sticky;
@@ -361,7 +415,7 @@
 
     {% if post.messages %}
     {% for msg in post.messages %}
-    <div class="message-card" id="msg-{{ msg.id }}">
+    <div class="message-card {% if user and msg.author_id == user.id %}own-msg{% endif %}" id="msg-{{ msg.id }}">
       <div class="message-author-row">
         {% if msg.author and msg.author.id %}
         <a href="/users/{{ msg.author.username }}">
@@ -382,7 +436,7 @@
       </div>
 
       {% if msg.content %}
-      <div class="msg-body">{{ msg.content }}</div>
+      <div class="msg-bubble"><div class="msg-body">{{ msg.content }}</div></div>
       {% endif %}
 
       {% if msg.attachments %}
@@ -429,6 +483,13 @@
         <button title="Delete this message" class="delete-msg-btn" onclick="deleteMsg('{{ post.id }}','{{ msg.id }}')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
           <span>Delete</span>
+        </button>
+        {% endif %}
+        {% if user and msg.author and msg.author.id and user.id != msg.author.id %}
+        <button title="Report this message" class="reply-btn" style="color:rgba(250,80,80,.7);"
+          onclick="openReportModal('post','{{ msg.id }}',window.location.pathname+'#msg-{{ msg.id }}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+          <span>Report</span>
         </button>
         {% endif %}
         <div class="msg-reactions" id="msg-reactions-{{ msg.id }}" style="display:flex;flex-wrap:wrap;gap:5px;margin-left:4px;">
@@ -1601,5 +1662,81 @@ function _updateAttachBtn() {
     window.previewChatFiles = function(i) { orig(i); _updateAttachBtn(); };
   }
 })();
+</script>
+
+<div id="report-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(8px);">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:28px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h3 style="font-size:1.1rem;font-weight:700;">Submit Report</h3>
+      <button onclick="closeReportModal()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;">×</button>
+    </div>
+    <div id="report-msg" style="display:none;padding:10px 14px;border-radius:8px;margin-bottom:16px;font-size:13px;"></div>
+    <form id="report-form" onsubmit="submitReport(event)">
+      <input type="hidden" name="type" id="report-type">
+      <input type="hidden" name="target_id" id="report-target-id">
+      <input type="hidden" name="target_url" id="report-target-url">
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Reason *</label>
+        <select name="reason" id="report-reason" required style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;outline:none;">
+          <option value="">Select a reason...</option>
+          <option value="Spam">Spam or self-promotion abuse</option>
+          <option value="Harassment">Harassment or bullying</option>
+          <option value="Hate speech">Hate speech or discrimination</option>
+          <option value="Misinformation">Misinformation</option>
+          <option value="Malware">Malware or harmful content</option>
+          <option value="Copyright">Copyright infringement</option>
+          <option value="Inappropriate content">Inappropriate content</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Details (optional)</label>
+        <textarea name="description" placeholder="Describe the issue in more detail..." style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;resize:vertical;min-height:80px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border2)'"></textarea>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="font-size:13px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Attach screenshots (up to 5)</label>
+        <div id="report-img-editor" style="display:none;margin-bottom:10px;">
+          <canvas id="report-canvas" style="max-width:100%;border-radius:8px;border:1px solid var(--border2);cursor:crosshair;display:block;"></canvas>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center;">
+            <button type="button" onclick="setEditorMode('draw')" id="btn-draw" class="btn btn-ghost btn-sm" style="font-size:12px;">✏️ Draw</button>
+            <button type="button" onclick="setEditorMode('text')" id="btn-text" class="btn btn-ghost btn-sm" style="font-size:12px;">T Text</button>
+            <input type="color" id="draw-color" value="#ff4444" style="width:28px;height:28px;border:none;padding:0;cursor:pointer;border-radius:4px;background:none;">
+            <input type="range" id="draw-size" min="1" max="20" value="3" style="width:70px;accent-color:var(--primary);">
+            <button type="button" onclick="undoEdit()" class="btn btn-ghost btn-sm" style="font-size:12px;">Undo</button>
+            <button type="button" onclick="confirmEditedImage()" class="btn btn-primary btn-sm" style="font-size:12px;">Done</button>
+            <button type="button" onclick="cancelImageEdit()" class="btn btn-ghost btn-sm" style="font-size:12px;">Cancel</button>
+          </div>
+          <div id="text-input-wrap" style="display:none;margin-top:8px;">
+            <input type="text" id="text-input" placeholder="Type text, then click on canvas" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:7px 10px;color:var(--text);font-size:13px;box-sizing:border-box;outline:none;">
+          </div>
+        </div>
+        <div id="report-preview-imgs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
+        <label id="report-file-label" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);">
+          📷 Add Image
+          <input type="file" name="images" id="report-file-input" accept="image/*" multiple style="display:none;" onchange="handleReportImages(this)">
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" onclick="closeReportModal()" class="btn btn-ghost">Cancel</button>
+        <button type="submit" id="report-submit-btn" class="btn btn-primary">Submit Report</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+var _reportImages=[];var _editingIndex=null;var _canvas=null,_ctx=null;var _history=[];var _editorMode='draw';var _drawing=false;var _lastX=0,_lastY=0;
+function openReportModal(type,targetId,targetUrl){document.getElementById('report-type').value=type;document.getElementById('report-target-id').value=targetId;document.getElementById('report-target-url').value=targetUrl||'';document.getElementById('report-modal').style.display='flex';document.body.style.overflow='hidden';}
+function closeReportModal(){document.getElementById('report-modal').style.display='none';document.body.style.overflow='';_reportImages=[];renderPreviews();document.getElementById('report-form').reset();document.getElementById('report-msg').style.display='none';document.getElementById('report-img-editor').style.display='none';}
+function handleReportImages(input){Array.from(input.files).slice(0,5-_reportImages.length).forEach(function(f){var reader=new FileReader();reader.onload=function(e){_reportImages.push(e.target.result);renderPreviews();};reader.readAsDataURL(f);});input.value='';}
+function renderPreviews(){var wrap=document.getElementById('report-preview-imgs');wrap.innerHTML='';_reportImages.forEach(function(src,i){var div=document.createElement('div');div.style.cssText='position:relative;display:inline-block;';var img=document.createElement('img');img.src=src;img.style.cssText='width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--border2);cursor:pointer;';img.onclick=function(){startImageEdit(i);};var rm=document.createElement('button');rm.type='button';rm.innerHTML='×';rm.style.cssText='position:absolute;top:-4px;right:-4px;width:18px;height:18px;background:var(--primary);border:none;border-radius:50%;color:#fff;cursor:pointer;font-size:13px;line-height:1;padding:0;';rm.onclick=function(e){e.stopPropagation();_reportImages.splice(i,1);renderPreviews();};div.appendChild(img);div.appendChild(rm);wrap.appendChild(div);});}
+function startImageEdit(idx){_editingIndex=idx;_canvas=document.getElementById('report-canvas');_ctx=_canvas.getContext('2d');var img=new Image();img.onload=function(){var maxW=Math.min(440,window.innerWidth-80);var scale=Math.min(maxW/img.width,300/img.height,1);_canvas.width=img.width*scale;_canvas.height=img.height*scale;_ctx.drawImage(img,0,0,_canvas.width,_canvas.height);_history=[_ctx.getImageData(0,0,_canvas.width,_canvas.height)];document.getElementById('report-img-editor').style.display='block';setEditorMode('draw');};img.src=_reportImages[idx];}
+function setEditorMode(mode){_editorMode=mode;_canvas.style.cursor=mode==='draw'?'crosshair':'text';document.getElementById('text-input-wrap').style.display=mode==='text'?'block':'none';setupCanvasEvents(mode);}
+function setupCanvasEvents(mode){_canvas.onmousedown=_canvas.onmousemove=_canvas.onmouseup=_canvas.onclick=null;if(mode==='draw'){_canvas.onmousedown=function(e){_drawing=true;var r=_canvas.getBoundingClientRect();_lastX=(e.clientX-r.left)*(_canvas.width/r.width);_lastY=(e.clientY-r.top)*(_canvas.height/r.height);};_canvas.onmousemove=function(e){if(!_drawing)return;var r=_canvas.getBoundingClientRect();var x=(e.clientX-r.left)*(_canvas.width/r.width);var y=(e.clientY-r.top)*(_canvas.height/r.height);_ctx.strokeStyle=document.getElementById('draw-color').value;_ctx.lineWidth=parseInt(document.getElementById('draw-size').value);_ctx.lineCap='round';_ctx.lineJoin='round';_ctx.beginPath();_ctx.moveTo(_lastX,_lastY);_ctx.lineTo(x,y);_ctx.stroke();_lastX=x;_lastY=y;};_canvas.onmouseup=function(){if(_drawing){_drawing=false;_history.push(_ctx.getImageData(0,0,_canvas.width,_canvas.height));}};}else if(mode==='text'){_canvas.onclick=function(e){var txt=document.getElementById('text-input').value.trim();if(!txt)return;var r=_canvas.getBoundingClientRect();var x=(e.clientX-r.left)*(_canvas.width/r.width);var y=(e.clientY-r.top)*(_canvas.height/r.height);_ctx.font='bold '+(parseInt(document.getElementById('draw-size').value)*4+10)+'px Inter,sans-serif';_ctx.fillStyle=document.getElementById('draw-color').value;_ctx.fillText(txt,x,y);_history.push(_ctx.getImageData(0,0,_canvas.width,_canvas.height));};}}
+function undoEdit(){if(_history.length>1){_history.pop();_ctx.putImageData(_history[_history.length-1],0,0);}}
+function confirmEditedImage(){if(_editingIndex!==null&&_canvas){_reportImages[_editingIndex]=_canvas.toDataURL('image/png');renderPreviews();}document.getElementById('report-img-editor').style.display='none';_editingIndex=null;}
+function cancelImageEdit(){document.getElementById('report-img-editor').style.display='none';_editingIndex=null;if(_history.length>0&&_ctx)_ctx.putImageData(_history[0],0,0);}
+async function submitReport(e){e.preventDefault();var btn=document.getElementById('report-submit-btn');var msg=document.getElementById('report-msg');var reason=document.getElementById('report-reason').value;if(!reason){msg.style.cssText='display:block;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.25);border-radius:8px;color:var(--primary);';msg.textContent='Please select a reason.';return;}btn.disabled=true;btn.textContent='Submitting...';var fd=new FormData(e.target);fd.delete('images');for(var i=0;i<_reportImages.length;i++){var blob=await fetch(_reportImages[i]).then(function(r){return r.blob();});fd.append('images',blob,'image'+i+'.png');}try{var r=await fetch('/api/report',{method:'POST',body:fd});var data=await r.json();if(data.success){msg.style.cssText='display:block;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);border-radius:8px;color:#4ade80;';msg.textContent='Report submitted. Thank you!';setTimeout(closeReportModal,2000);}else{msg.style.cssText='display:block;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.25);border-radius:8px;color:var(--primary);';msg.textContent=data.error||'Failed.';btn.disabled=false;btn.textContent='Submit Report';}}catch(err){msg.style.cssText='display:block;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.25);border-radius:8px;color:var(--primary);';msg.textContent='Network error.';btn.disabled=false;btn.textContent='Submit Report';}}
 </script>
 {% endblock %}

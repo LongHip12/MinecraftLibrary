@@ -657,7 +657,7 @@
 
 .comments-empty svg { stroke: var(--border); opacity: 0.6; }
 
-/* ── Comment react chips ── */
+
 .react-chip {
   background: rgba(255,255,255,0.05);
   border: 1px solid var(--border2);
@@ -693,7 +693,7 @@
 }
 .react-add-btn:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); color: var(--text2); }
 
-/* ── Unified single-row comment actions ── */
+
 .cmt-actions-row {
   display: flex;
   align-items: center;
@@ -751,7 +751,7 @@
 .cmt-toggle-btn svg { transition: transform 0.2s; flex-shrink: 0; }
 .cmt-toggle-btn.open svg { transform: rotate(180deg); }
 
-/* ── Comment reply banner ── */
+
 .comment-reply-bar {
   display: none;
   align-items: center;
@@ -790,7 +790,7 @@
 }
 .comment-reply-x:hover { color: var(--text); }
 
-/* ── Quote block inside comment ── */
+
 .cmt-quote-block {
   background: rgba(255,255,255,0.04);
   border-left: 2px solid rgba(250,80,80,0.4);
@@ -812,7 +812,7 @@
   text-overflow: ellipsis;
 }
 
-/* ── Nested comment replies ── */
+
 .cmt-replies-list {
   display: none;
   margin-top: 10px;

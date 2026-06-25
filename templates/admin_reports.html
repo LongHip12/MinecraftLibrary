@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Reports — Admin — Lonely Hub{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin.css">
+<style>
+.report-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:20px 24px;display:flex;flex-direction:column;gap:12px;}
+.report-card.status-resolved{opacity:.6;}
+.report-card.status-dismissed{opacity:.45;}
+.report-header{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;}
+.report-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.report-badge.type-user{background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.25);}
+.report-badge.type-post{background:rgba(250,80,80,0.1);color:var(--primary);border:1px solid rgba(250,80,80,0.2);}
+.report-badge.type-mod{background:rgba(74,222,128,0.1);color:#4ade80;border:1px solid rgba(74,222,128,0.2);}
+.report-badge.type-client{background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2);}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;}
+.status-badge.pending{background:rgba(251,191,36,0.12);color:#fbbf24;border:1px solid rgba(251,191,36,0.2);}
+.status-badge.resolved{background:rgba(74,222,128,0.1);color:#4ade80;border:1px solid rgba(74,222,128,0.2);}
+.status-badge.dismissed{background:rgba(255,255,255,0.05);color:var(--text3);border:1px solid var(--border2);}
+.report-reason{font-weight:700;color:var(--text);font-size:15px;}
+.report-desc{color:var(--text2);font-size:13.5px;line-height:1.6;}
+.report-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text3);}
+.report-meta a{color:var(--primary);text-decoration:none;}
+.report-meta a:hover{text-decoration:underline;}
+.report-images{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+.report-img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--border2);cursor:pointer;transition:opacity .15s;}
+.report-img:hover{opacity:.8;}
+.report-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.filter-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;cursor:pointer;text-decoration:none;transition:all .15s;}
+.filter-btn.active,.filter-btn:hover{background:var(--primary);border-color:var(--primary);color:#fff;}
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;}
+.lightbox.show{display:flex;}
+.lightbox img{max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 8px 64px rgba(0,0,0,.8);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-content" style="padding-top:64px;max-width:1000px;margin:0 auto;padding-bottom:80px;">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+<div>
+<h1 style="font-size:1.5rem;font-weight:800;">Reports</h1>
+<p style="color:var(--text3);font-size:14px;margin-top:2px;">Review user-submitted reports</p>
+</div>
+<a href="/admin/dashboard" class="btn btn-ghost btn-sm">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+Back to Dashboard
+</a>
+</div>
+<div class="filter-bar">
+<a href="?status=all" class="filter-btn {% if status_filter=='all' %}active{% endif %}">All</a>
+<a href="?status=pending" class="filter-btn {% if status_filter=='pending' %}active{% endif %}">Pending</a>
+<a href="?status=resolved" class="filter-btn {% if status_filter=='resolved' %}active{% endif %}">Resolved</a>
+<a href="?status=dismissed" class="filter-btn {% if status_filter=='dismissed' %}active{% endif %}">Dismissed</a>
+</div>
+{% if reports %}
+<div style="display:flex;flex-direction:column;gap:14px;">
+{% for r in reports %}
+<div class="report-card status-{{ r.status }}" id="report-{{ r.id }}">
+<div class="report-header">
+<span class="report-badge type-{{ r.type }}">{{ r.type }}</span>
+<span class="status-badge {{ r.status }}">{{ r.status }}</span>
+<div class="report-reason" style="flex:1;">{{ r.reason }}</div>
+</div>
+{% if r.description %}
+<div class="report-desc">{{ r.description }}</div>
+{% endif %}
+<div class="report-meta">
+<span>
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+Reporter: <a href="/users/{{ r.reporter.username }}">{{ r.reporter.username or r.reporter_username }}</a>
+</span>
+{% if r.type == 'user' and r.target_user %}
+<span>
+Reported user: <a href="/users/{{ r.target_user.username }}">{{ r.target_user.username }}</a>
+</span>
+{% elif r.target_url %}
+<span>
+Target: <a href="{{ r.target_url }}" target="_blank">{{ r.target_url[:60] }}{% if r.target_url|length > 60 %}…{% endif %}</a>
+</span>
+{% endif %}
+<span>
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+{{ r.created_at[:10] if r.created_at else '' }}
+</span>
+</div>
+{% if r.images %}
+<div class="report-images">
+{% for img in r.images %}
+<img src="{{ img }}" alt="Report attachment" class="report-img" onclick="openLightbox(this.src)">
+{% endfor %}
+</div>
+{% endif %}
+<div class="report-actions">
+{% if r.target_url %}
+<a href="{{ r.target_url }}" target="_blank" class="btn btn-ghost btn-sm">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+View
+</a>
+{% elif r.type == 'user' and r.target_user %}
+<a href="/users/{{ r.target_user.username }}" target="_blank" class="btn btn-ghost btn-sm">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+View Profile
+</a>
+{% endif %}
+{% if r.status != 'resolved' %}
+<button class="btn btn-sm" style="background:rgba(74,222,128,0.12);color:#4ade80;border:1px solid rgba(74,222,128,0.25);" onclick="setStatus('{{ r.id }}','resolved')">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+Resolve
+</button>
+{% endif %}
+{% if r.status != 'dismissed' %}
+<button class="btn btn-ghost btn-sm" onclick="setStatus('{{ r.id }}','dismissed')">Dismiss</button>
+{% endif %}
+{% if r.status != 'pending' %}
+<button class="btn btn-ghost btn-sm" onclick="setStatus('{{ r.id }}','pending')">Reopen</button>
+{% endif %}
+</div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div style="text-align:center;padding:80px 24px;color:var(--text3);">
+<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 16px;display:block;opacity:.35;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+<p style="font-size:15px;font-weight:600;">No reports{% if status_filter != 'all' %} with status "{{ status_filter }}"{% endif %}</p>
+</div>
+{% endif %}
+</div>
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+<img id="lightbox-img" src="" alt="">
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function openLightbox(src){var lb=document.getElementById('lightbox');document.getElementById('lightbox-img').src=src;lb.classList.add('show');}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('show');}
+async function setStatus(id,status){
+var r=await fetch('/api/admin/report/'+id+'/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status})});
+var data=await r.json();
+if(data.success){
+var card=document.getElementById('report-'+id);
+if(card){card.className='report-card status-'+status;}
+var badges=card?card.querySelectorAll('.status-badge'):[];
+badges.forEach(function(b){b.className='status-badge '+status;b.textContent=status;});
+window._showToast&&window._showToast(status.charAt(0).toUpperCase()+status.slice(1));
+}
+}
+</script>
+{% endblock %}
