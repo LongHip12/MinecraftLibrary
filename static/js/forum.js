@@ -483,23 +483,28 @@
 
   /* ===== FULL-SCREEN IMAGE EDITOR ===== */
   (function() {
-    var _fse = null;
-    var _fseCanvas = null;
-    var _fseCtx = null;
+    var _fse = null, _fseCanvas = null, _fseCtx = null;
     var _fseMode = 'draw';
     var _fseColor = '#fa5050';
-    var _fseBrushSize = 4;
-    var _fseFontSize = 24;
-    var _fseText = 'Text';
+    var _fseBrushSize = 6;
+    var _fseMosaicSize = 16;
+    var _fseShape = 'rect';
     var _fseDrawing = false;
-    var _fseLX = 0, _fseLY = 0;
+    var _fseSX = 0, _fseSY = 0;
     var _fseUndoStack = [];
     var _fseScale = 1;
     var _fseOnSave = null;
+    var _fseSnap = null;
+    var _fseArea = null;
+    var _fseBot = null;
+    var _fseTb = null;
+
+    var PRESET_COLORS = ['#ffffff','#fa5050','#ff9900','#ffee00','#4cff6e','#00d4ff','#a855f7','#ff69b4','#000000'];
+    var STICKERS = ['😀','😂','😍','🥰','😎','🤣','❤️','🔥','💯','👍','👏','🎉','✨','💪','😭','🤔','😅','🙏','💀','👀','🌈','⭐','💥','🎯','🍀','🦋','🎸','🏆','💎','🚀','🐱','🐶','🌸','🍕','🎮','🤡','👑','🫶','🤩','😈'];
 
     function _saveUndo() {
       _fseUndoStack.push(_fseCanvas.toDataURL());
-      if (_fseUndoStack.length > 30) _fseUndoStack.shift();
+      if (_fseUndoStack.length > 40) _fseUndoStack.shift();
     }
 
     window.openFSEditor = function(imgSrc, onSave) {
@@ -507,207 +512,595 @@
       if (!_fse) _buildFSE();
       _fseUndoStack = [];
       _fseScale = 1;
+      _clearFloatingObjs();
       var img = new Image();
       img.onload = function() {
-        var maxW = window.innerWidth - 32, maxH = window.innerHeight - 120;
-        var scale = Math.min(1, maxW / img.width, maxH / img.height);
-        _fseCanvas.width = Math.round(img.width * scale);
-        _fseCanvas.height = Math.round(img.height * scale);
+        var maxW = window.innerWidth - 32, maxH = window.innerHeight - 170;
+        var sc = Math.min(1, maxW / img.width, maxH / img.height);
+        _fseCanvas.width  = Math.round(img.width  * sc);
+        _fseCanvas.height = Math.round(img.height * sc);
         _fseCtx.drawImage(img, 0, 0, _fseCanvas.width, _fseCanvas.height);
-        _updateZoomLabel();
+        _applyZoom();
       };
       img.src = imgSrc;
       _fse.classList.add('open');
     };
 
+    function _clearFloatingObjs() {
+      if (_fseArea) _fseArea.querySelectorAll('.fse-float-obj').forEach(function(e) { e.remove(); });
+    }
+
     function _buildFSE() {
       _fse = document.createElement('div');
       _fse.id = 'fs-img-editor';
 
-      var tb = document.createElement('div');
-      tb.className = 'fse-toolbar';
+      /* ── TOOLBAR ── */
+      _fseTb = document.createElement('div');
+      _fseTb.className = 'fse-toolbar';
 
-      function _toolBtn(label, svg, mode) {
+      function _toolBtn(svg, label, mode) {
         var b = document.createElement('button');
         b.className = 'fse-tool-btn' + (_fseMode === mode ? ' active' : '');
-        b.innerHTML = (svg || '') + label;
+        b.innerHTML = svg + '<span>' + label + '</span>';
         b.dataset.mode = mode;
-        b.onclick = function() {
-          _fseMode = mode;
-          tb.querySelectorAll('.fse-tool-btn[data-mode]').forEach(function(x) { x.classList.toggle('active', x.dataset.mode === mode); });
-          _fseCanvas.style.cursor = mode === 'text' ? 'text' : mode === 'eraser' ? 'cell' : 'crosshair';
-        };
+        b.title = label;
+        b.onclick = function() { _setMode(mode); };
         return b;
       }
+      var SVG_DRAW    = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
+      var SVG_MOSAIC  = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>';
+      var SVG_ERASER  = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16 13 6l7 7-1.5 1.5"/><path d="M6.5 17.5l5-5"/></svg>';
+      var SVG_TEXT    = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>';
+      var SVG_STICKER = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>';
+      var SVG_SHAPE   = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>';
+      var SVG_UNDO    = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>';
 
-      tb.appendChild(_toolBtn('Draw', '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>', 'draw'));
-      tb.appendChild(_toolBtn('Eraser', '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16l10-10 7 7-1.5 1.5"/><path d="M6.5 17.5l5-5"/></svg>', 'eraser'));
-      tb.appendChild(_toolBtn('Text', '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>', 'text'));
+      _fseTb.appendChild(_toolBtn(SVG_DRAW,   'Vẽ',    'draw'));
+      _fseTb.appendChild(_toolBtn(SVG_MOSAIC, 'Khảm',  'mosaic'));
+      _fseTb.appendChild(_toolBtn(SVG_ERASER, 'Xoá',   'eraser'));
+      _fseTb.appendChild(_toolBtn(SVG_TEXT,   'Chữ',   'text'));
+      _fseTb.appendChild(_toolBtn(SVG_STICKER,'Sticker','sticker'));
+      _fseTb.appendChild(_toolBtn(SVG_SHAPE,  'Hình',  'shape'));
 
-      var sep1 = document.createElement('div'); sep1.className = 'fse-sep'; tb.appendChild(sep1);
+      function _sep() { var s=document.createElement('div'); s.className='fse-sep'; return s; }
+      _fseTb.appendChild(_sep());
 
       var undoBtn = document.createElement('button');
       undoBtn.className = 'fse-tool-btn';
-      undoBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>Undo';
+      undoBtn.innerHTML = SVG_UNDO + '<span>Hoàn tác</span>';
       undoBtn.onclick = function() {
         if (!_fseUndoStack.length) return;
-        var prev = _fseUndoStack.pop();
         var img2 = new Image();
-        img2.onload = function() { _fseCtx.clearRect(0, 0, _fseCanvas.width, _fseCanvas.height); _fseCtx.drawImage(img2, 0, 0); };
-        img2.src = prev;
+        img2.onload = function() { _fseCtx.clearRect(0,0,_fseCanvas.width,_fseCanvas.height); _fseCtx.drawImage(img2,0,0); };
+        img2.src = _fseUndoStack.pop();
       };
-      tb.appendChild(undoBtn);
+      _fseTb.appendChild(undoBtn);
+      _fseTb.appendChild(_sep());
 
-      var sep2 = document.createElement('div'); sep2.className = 'fse-sep'; tb.appendChild(sep2);
+      var zoomOutBtn = document.createElement('button');
+      zoomOutBtn.className = 'fse-tool-btn fse-icon-btn';
+      zoomOutBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>';
+      zoomOutBtn.onclick = function() { _fseScale = Math.max(0.25, _fseScale - 0.25); _applyZoom(); };
+      _fseTb.appendChild(zoomOutBtn);
 
-      var zoomIn = document.createElement('button');
-      zoomIn.className = 'fse-tool-btn';
-      zoomIn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>';
-      zoomIn.onclick = function() { _fseScale = Math.min(4, _fseScale + 0.25); _applyZoom(); };
-      tb.appendChild(zoomIn);
+      var zoomLbl = document.createElement('span'); zoomLbl.className = 'fse-zoom-val'; zoomLbl.textContent = '100%';
+      _fseTb.appendChild(zoomLbl);
 
-      var zoomLabel = document.createElement('span');
-      zoomLabel.className = 'fse-zoom-val';
-      zoomLabel.id = 'fse-zoom-lbl';
-      zoomLabel.textContent = '100%';
-      tb.appendChild(zoomLabel);
-
-      var zoomOut = document.createElement('button');
-      zoomOut.className = 'fse-tool-btn';
-      zoomOut.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>';
-      zoomOut.onclick = function() { _fseScale = Math.max(0.25, _fseScale - 0.25); _applyZoom(); };
-      tb.appendChild(zoomOut);
-
-      var sep3 = document.createElement('div'); sep3.className = 'fse-sep'; tb.appendChild(sep3);
+      var zoomInBtn = document.createElement('button');
+      zoomInBtn.className = 'fse-tool-btn fse-icon-btn';
+      zoomInBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>';
+      zoomInBtn.onclick = function() { _fseScale = Math.min(4, _fseScale + 0.25); _applyZoom(); };
+      _fseTb.appendChild(zoomInBtn);
+      _fseTb.appendChild(_sep());
 
       var saveBtn = document.createElement('button');
-      saveBtn.className = 'fse-tool-btn';
-      saveBtn.style.cssText = 'background:rgba(250,80,80,.18);border-color:var(--primary);color:var(--primary);margin-left:auto;';
-      saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Save';
+      saveBtn.className = 'fse-tool-btn fse-save-btn';
+      saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Lưu</span>';
       saveBtn.onclick = function() {
-        var dataUrl = _fseCanvas.toDataURL('image/png');
+        _commitAllFloating();
+        var url = _fseCanvas.toDataURL('image/png');
         _fse.classList.remove('open');
-        if (_fseOnSave) _fseOnSave(dataUrl);
+        if (_fseOnSave) _fseOnSave(url);
       };
-      tb.appendChild(saveBtn);
+      _fseTb.appendChild(saveBtn);
 
       var cancelBtn = document.createElement('button');
       cancelBtn.className = 'fse-tool-btn';
-      cancelBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Cancel';
+      cancelBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span>Huỷ</span>';
       cancelBtn.onclick = function() { _fse.classList.remove('open'); };
-      tb.appendChild(cancelBtn);
+      _fseTb.appendChild(cancelBtn);
 
-      _fse.appendChild(tb);
+      _fse.appendChild(_fseTb);
 
-      var area = document.createElement('div');
-      area.className = 'fse-canvas-area';
+      /* ── CANVAS AREA ── */
+      _fseArea = document.createElement('div');
+      _fseArea.className = 'fse-canvas-area';
       _fseCanvas = document.createElement('canvas');
       _fseCanvas.id = 'fse-canvas';
-      area.appendChild(_fseCanvas);
-      _fse.appendChild(area);
+      _fseArea.appendChild(_fseCanvas);
       _fseCtx = _fseCanvas.getContext('2d');
 
-      var bot = document.createElement('div');
-      bot.className = 'fse-bottom';
+      /* ── TEXT MODAL (center overlay) ── */
+      var textModal = document.createElement('div');
+      textModal.className = 'fse-text-modal';
+      textModal.innerHTML =
+        '<div class="fse-tm-title">Thêm chữ</div>' +
+        '<textarea class="fse-tm-txt" placeholder="Nhập nội dung..." rows="3"></textarea>' +
+        '<div class="fse-tm-row">' +
+          '<label class="fse-tm-lbl">Màu</label>' +
+          '<input type="color" class="fse-tm-color" value="#ffffff">' +
+          '<label class="fse-tm-lbl">Cỡ</label>' +
+          '<input type="number" class="fse-tm-size" value="36" min="8" max="300">' +
+          '<label class="fse-tm-lbl">Font</label>' +
+          '<select class="fse-tm-font">' +
+            '<option value="sans-serif">Sans</option>' +
+            '<option value="serif">Serif</option>' +
+            '<option value="monospace">Mono</option>' +
+            '<option value="cursive">Cursive</option>' +
+            '<option value="fantasy">Fantasy</option>' +
+          '</select>' +
+          '<label class="fse-tm-lbl">Bold</label>' +
+          '<input type="checkbox" class="fse-tm-bold" checked>' +
+        '</div>' +
+        '<div class="fse-tm-btns">' +
+          '<button class="fse-btn-ok">OK</button>' +
+          '<button class="fse-btn-cancel">Huỷ</button>' +
+        '</div>';
+      textModal.querySelector('.fse-btn-cancel').onclick = function() { textModal.classList.remove('open'); };
+      textModal.querySelector('.fse-btn-ok').onclick = function() {
+        var txt   = textModal.querySelector('.fse-tm-txt').value;
+        var color = textModal.querySelector('.fse-tm-color').value;
+        var size  = parseInt(textModal.querySelector('.fse-tm-size').value) || 36;
+        var font  = textModal.querySelector('.fse-tm-font').value;
+        var bold  = textModal.querySelector('.fse-tm-bold').checked;
+        var cx    = parseFloat(textModal.dataset.cx) || _fseCanvas.width/2;
+        var cy    = parseFloat(textModal.dataset.cy) || _fseCanvas.height/2;
+        textModal.classList.remove('open');
+        if (!txt.trim()) return;
+        _spawnTextObj(txt, color, size, font, bold, cx, cy);
+      };
+      _fseArea.appendChild(textModal);
 
-      var colLabel = document.createElement('span'); colLabel.className = 'fse-label'; colLabel.textContent = 'Color:'; bot.appendChild(colLabel);
-      var colInput = document.createElement('input'); colInput.type = 'color'; colInput.value = _fseColor; colInput.className = 'fse-color-input';
-      colInput.oninput = function() { _fseColor = colInput.value; };
-      bot.appendChild(colInput);
+      /* ── STICKER PANEL (slides up from bottom) ── */
+      var stickerPanel = document.createElement('div');
+      stickerPanel.className = 'fse-sticker-panel';
+      STICKERS.forEach(function(em) {
+        var sb = document.createElement('button');
+        sb.className = 'fse-sticker-btn';
+        sb.textContent = em;
+        sb.title = em;
+        sb.onclick = function() { stickerPanel.classList.remove('open'); _spawnEmojiObj(em); };
+        stickerPanel.appendChild(sb);
+      });
+      // Custom image upload
+      var imgLabel = document.createElement('label');
+      imgLabel.className = 'fse-sticker-upload-label';
+      imgLabel.title = 'Chèn ảnh làm sticker';
+      imgLabel.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Ảnh</span>';
+      var imgInput = document.createElement('input');
+      imgInput.type = 'file'; imgInput.accept = 'image/*'; imgInput.style.display = 'none';
+      imgInput.onchange = function() {
+        var f = imgInput.files[0]; if (!f) return;
+        var r = new FileReader();
+        r.onload = function(ev) { stickerPanel.classList.remove('open'); _spawnImgObj(ev.target.result); };
+        r.readAsDataURL(f);
+        imgInput.value = '';
+      };
+      imgLabel.appendChild(imgInput);
+      stickerPanel.appendChild(imgLabel);
+      _fseArea.appendChild(stickerPanel);
 
-      var szLabel = document.createElement('span'); szLabel.className = 'fse-label'; szLabel.textContent = 'Brush:'; bot.appendChild(szLabel);
-      var szInput = document.createElement('input'); szInput.type = 'number'; szInput.min = 1; szInput.max = 80; szInput.value = _fseBrushSize; szInput.className = 'fse-size-input';
-      szInput.oninput = function() { _fseBrushSize = parseInt(szInput.value) || 4; };
-      bot.appendChild(szInput);
+      _fse.appendChild(_fseArea);
 
-      var fsLabel = document.createElement('span'); fsLabel.className = 'fse-label'; fsLabel.textContent = 'Font:'; bot.appendChild(fsLabel);
-      var fsInput = document.createElement('input'); fsInput.type = 'number'; fsInput.min = 8; fsInput.max = 200; fsInput.value = _fseFontSize; fsInput.className = 'fse-size-input fse-font-input';
-      fsInput.oninput = function() { _fseFontSize = parseInt(fsInput.value) || 24; };
-      bot.appendChild(fsInput);
+      /* ── BOTTOM CONTEXTUAL BAR ── */
+      _fseBot = document.createElement('div');
+      _fseBot.className = 'fse-bottom';
+      _fse.appendChild(_fseBot);
 
-      var txLabel = document.createElement('span'); txLabel.className = 'fse-label'; txLabel.textContent = 'Text:'; bot.appendChild(txLabel);
-      var txInput = document.createElement('input'); txInput.type = 'text'; txInput.value = _fseText; txInput.className = 'fse-text-input'; txInput.placeholder = 'Text to add…';
-      txInput.oninput = function() { _fseText = txInput.value; };
-      bot.appendChild(txInput);
-
-      _fse.appendChild(bot);
       document.body.appendChild(_fse);
+      _buildBottomBar('draw');
 
-      _fseCtx = _fseCanvas.getContext('2d');
-
+      /* ── CANVAS EVENTS ── */
       function _pos(e) {
         var rect = _fseCanvas.getBoundingClientRect();
-        var src = e.touches ? e.touches[0] : e;
+        var src  = e.touches ? e.touches[0] : e;
         return { x: (src.clientX - rect.left) / _fseScale, y: (src.clientY - rect.top) / _fseScale };
       }
 
-      _fseCanvas.addEventListener('mousedown', function(e) {
+      function _mosaicAt(px, py) {
+        var sz = _fseMosaicSize;
+        var x0 = Math.floor(px / sz) * sz, y0 = Math.floor(py / sz) * sz;
+        var w  = Math.min(sz, _fseCanvas.width - x0), h = Math.min(sz, _fseCanvas.height - y0);
+        if (w <= 0 || h <= 0) return;
+        var d = _fseCtx.getImageData(x0, y0, w, h).data;
+        var r=0,g=0,b=0,a=0,n=d.length/4;
+        for (var i=0;i<d.length;i+=4){r+=d[i];g+=d[i+1];b+=d[i+2];a+=d[i+3];}
+        r=Math.round(r/n);g=Math.round(g/n);b=Math.round(b/n);a=Math.round(a/n);
+        _fseCtx.fillStyle='rgba('+r+','+g+','+b+','+(a/255)+')';
+        _fseCtx.fillRect(x0,y0,w,h);
+      }
+
+      function _drawShapePreview(sx,sy,ex,ey) {
+        _fseCtx.globalCompositeOperation = 'source-over';
+        _fseCtx.strokeStyle = _fseColor;
+        _fseCtx.lineWidth   = _fseBrushSize;
+        _fseCtx.lineCap     = 'round';
+        _fseCtx.lineJoin    = 'round';
+        if (_fseShape === 'rect') {
+          _fseCtx.beginPath(); _fseCtx.strokeRect(sx,sy,ex-sx,ey-sy);
+        } else if (_fseShape === 'circle') {
+          var rx=Math.abs(ex-sx)/2, ry=Math.abs(ey-sy)/2;
+          _fseCtx.beginPath();
+          _fseCtx.ellipse(sx+(ex-sx)/2,sy+(ey-sy)/2,rx,ry,0,0,Math.PI*2);
+          _fseCtx.stroke();
+        } else if (_fseShape === 'line') {
+          _fseCtx.beginPath(); _fseCtx.moveTo(sx,sy); _fseCtx.lineTo(ex,ey); _fseCtx.stroke();
+        } else if (_fseShape === 'arrow') {
+          var ang=Math.atan2(ey-sy,ex-sx), hL=16+_fseBrushSize;
+          _fseCtx.beginPath(); _fseCtx.moveTo(sx,sy); _fseCtx.lineTo(ex,ey); _fseCtx.stroke();
+          _fseCtx.beginPath();
+          _fseCtx.moveTo(ex,ey); _fseCtx.lineTo(ex-hL*Math.cos(ang-0.42), ey-hL*Math.sin(ang-0.42));
+          _fseCtx.moveTo(ex,ey); _fseCtx.lineTo(ex-hL*Math.cos(ang+0.42), ey-hL*Math.sin(ang+0.42));
+          _fseCtx.stroke();
+        }
+      }
+
+      function _startDraw(e) {
+        var p = _pos(e);
+        if (_fseMode === 'text') {
+          textModal.dataset.cx = p.x; textModal.dataset.cy = p.y;
+          textModal.classList.add('open');
+          setTimeout(function(){ textModal.querySelector('.fse-tm-txt').focus(); }, 40);
+          return;
+        }
+        if (_fseMode === 'sticker') return;
         _saveUndo();
         _fseDrawing = true;
-        var p = _pos(e);
-        if (_fseMode === 'text') {
-          _fseCtx.font = 'bold ' + _fseFontSize + 'px sans-serif';
-          _fseCtx.fillStyle = _fseColor;
-          _fseCtx.fillText(_fseText, p.x, p.y);
-          _fseDrawing = false;
-        } else {
-          _fseLX = p.x; _fseLY = p.y;
-          _fseCtx.beginPath();
-          _fseCtx.moveTo(p.x, p.y);
-        }
-      });
-      _fseCanvas.addEventListener('mousemove', function(e) {
-        if (!_fseDrawing) return;
-        var p = _pos(e);
-        _fseCtx.globalCompositeOperation = _fseMode === 'eraser' ? 'destination-out' : 'source-over';
-        _fseCtx.strokeStyle = _fseColor;
-        _fseCtx.lineWidth = _fseBrushSize;
-        _fseCtx.lineCap = 'round';
-        _fseCtx.lineJoin = 'round';
-        _fseCtx.lineTo(p.x, p.y);
-        _fseCtx.stroke();
-        _fseCtx.beginPath();
-        _fseCtx.moveTo(p.x, p.y);
-        _fseLX = p.x; _fseLY = p.y;
-      });
-      document.addEventListener('mouseup', function() {
-        if (_fseDrawing) { _fseCtx.globalCompositeOperation = 'source-over'; _fseDrawing = false; }
-      });
-      _fseCanvas.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        _saveUndo(); _fseDrawing = true;
-        var p = _pos(e);
-        if (_fseMode === 'text') {
-          _fseCtx.font = 'bold ' + _fseFontSize + 'px sans-serif';
-          _fseCtx.fillStyle = _fseColor;
-          _fseCtx.fillText(_fseText, p.x, p.y);
-          _fseDrawing = false;
-        } else {
-          _fseLX = p.x; _fseLY = p.y;
+        _fseSX = p.x; _fseSY = p.y;
+        if (_fseMode === 'shape') {
+          _fseSnap = _fseCtx.getImageData(0, 0, _fseCanvas.width, _fseCanvas.height);
+        } else if (_fseMode === 'draw' || _fseMode === 'eraser') {
           _fseCtx.beginPath(); _fseCtx.moveTo(p.x, p.y);
+        } else if (_fseMode === 'mosaic') {
+          _mosaicAt(p.x, p.y);
         }
-      }, { passive: false });
-      _fseCanvas.addEventListener('touchmove', function(e) {
-        e.preventDefault();
+      }
+
+      function _moveDraw(e) {
         if (!_fseDrawing) return;
         var p = _pos(e);
-        _fseCtx.globalCompositeOperation = _fseMode === 'eraser' ? 'destination-out' : 'source-over';
-        _fseCtx.strokeStyle = _fseColor; _fseCtx.lineWidth = _fseBrushSize; _fseCtx.lineCap = 'round'; _fseCtx.lineJoin = 'round';
-        _fseCtx.lineTo(p.x, p.y); _fseCtx.stroke(); _fseCtx.beginPath(); _fseCtx.moveTo(p.x, p.y);
-      }, { passive: false });
-      _fseCanvas.addEventListener('touchend', function() { _fseCtx.globalCompositeOperation = 'source-over'; _fseDrawing = false; });
+        if (_fseMode === 'draw') {
+          _fseCtx.globalCompositeOperation = 'source-over';
+          _fseCtx.strokeStyle = _fseColor;
+          _fseCtx.lineWidth   = _fseBrushSize;
+          _fseCtx.lineCap     = 'round'; _fseCtx.lineJoin = 'round';
+          _fseCtx.lineTo(p.x, p.y); _fseCtx.stroke();
+          _fseCtx.beginPath(); _fseCtx.moveTo(p.x, p.y);
+        } else if (_fseMode === 'eraser') {
+          _fseCtx.globalCompositeOperation = 'destination-out';
+          _fseCtx.strokeStyle = 'rgba(0,0,0,1)';
+          _fseCtx.lineWidth   = _fseBrushSize;
+          _fseCtx.lineCap     = 'round'; _fseCtx.lineJoin = 'round';
+          _fseCtx.lineTo(p.x, p.y); _fseCtx.stroke();
+          _fseCtx.beginPath(); _fseCtx.moveTo(p.x, p.y);
+        } else if (_fseMode === 'mosaic') {
+          _mosaicAt(p.x, p.y);
+        } else if (_fseMode === 'shape' && _fseSnap) {
+          _fseCtx.putImageData(_fseSnap, 0, 0);
+          _drawShapePreview(_fseSX, _fseSY, p.x, p.y);
+        }
+      }
+
+      function _endDraw() {
+        if (_fseDrawing) {
+          _fseCtx.globalCompositeOperation = 'source-over';
+          _fseDrawing = false; _fseSnap = null;
+        }
+      }
+
+      _fseCanvas.addEventListener('mousedown', function(e){ _startDraw(e); });
+      _fseCanvas.addEventListener('mousemove', function(e){ _moveDraw(e); });
+      document.addEventListener('mouseup', _endDraw);
+      _fseCanvas.addEventListener('touchstart', function(e){ e.preventDefault(); _startDraw(e); }, { passive: false });
+      _fseCanvas.addEventListener('touchmove',  function(e){ e.preventDefault(); _moveDraw(e);  }, { passive: false });
+      _fseCanvas.addEventListener('touchend',   function(){ _endDraw(); });
+    } // end _buildFSE
+
+    /* ── CONTEXTUAL BOTTOM BAR ── */
+    function _buildBottomBar(mode) {
+      _fseBot.innerHTML = '';
+      function _lbl(t){ var s=document.createElement('span');s.className='fse-label';s.textContent=t;return s; }
+      function _sep(){ var s=document.createElement('div');s.className='fse-sep';return s; }
+
+      if (mode === 'draw' || mode === 'shape') {
+        _fseBot.appendChild(_lbl('Màu:'));
+        PRESET_COLORS.forEach(function(c) {
+          var sw = document.createElement('div');
+          sw.className = 'fse-color-swatch' + (c === _fseColor ? ' active' : '');
+          sw.style.background = c;
+          sw.title = c;
+          sw.onclick = function() {
+            _fseColor = c;
+            _fseBot.querySelectorAll('.fse-color-swatch').forEach(function(s){ s.classList.remove('active'); });
+            sw.classList.add('active');
+          };
+          _fseBot.appendChild(sw);
+        });
+        // Custom colour picker
+        var cust = document.createElement('input');
+        cust.type = 'color'; cust.value = _fseColor; cust.className = 'fse-custom-color'; cust.title = 'Màu tùy chỉnh';
+        cust.oninput = function() {
+          _fseColor = cust.value;
+          _fseBot.querySelectorAll('.fse-color-swatch').forEach(function(s){ s.classList.remove('active'); });
+        };
+        _fseBot.appendChild(cust);
+        _fseBot.appendChild(_sep());
+
+        // Brush size
+        _fseBot.appendChild(_lbl('Cỡ:'));
+        var szSlider = document.createElement('input');
+        szSlider.type='range'; szSlider.min=1; szSlider.max=60; szSlider.value=_fseBrushSize; szSlider.className='fse-slider';
+        var szVal = document.createElement('span'); szVal.className='fse-label'; szVal.textContent=_fseBrushSize+'px';
+        szSlider.oninput = function(){ _fseBrushSize=parseInt(szSlider.value); szVal.textContent=szSlider.value+'px'; };
+        _fseBot.appendChild(szSlider); _fseBot.appendChild(szVal);
+
+        if (mode === 'shape') {
+          _fseBot.appendChild(_sep());
+          _fseBot.appendChild(_lbl('Hình:'));
+          [['rect','▭ Chữ nhật'],['circle','○ Tròn'],['line','╱ Thẳng'],['arrow','→ Mũi tên']].forEach(function(sh) {
+            var sb = document.createElement('button');
+            sb.className = 'fse-shape-sub' + (_fseShape===sh[0]?' active':'');
+            sb.textContent = sh[1]; sb.dataset.sh = sh[0];
+            sb.onclick = function() {
+              _fseShape = sh[0];
+              _fseBot.querySelectorAll('.fse-shape-sub').forEach(function(b){ b.classList.remove('active'); });
+              sb.classList.add('active');
+            };
+            _fseBot.appendChild(sb);
+          });
+        }
+      } else if (mode === 'eraser') {
+        _fseBot.appendChild(_lbl('Cỡ xoá:'));
+        var eSlider = document.createElement('input');
+        eSlider.type='range'; eSlider.min=2; eSlider.max=100; eSlider.value=_fseBrushSize; eSlider.className='fse-slider'; eSlider.style.width='150px';
+        var eVal = document.createElement('span'); eVal.className='fse-label'; eVal.textContent=_fseBrushSize+'px';
+        eSlider.oninput = function(){ _fseBrushSize=parseInt(eSlider.value); eVal.textContent=eSlider.value+'px'; };
+        _fseBot.appendChild(eSlider); _fseBot.appendChild(eVal);
+      } else if (mode === 'mosaic') {
+        _fseBot.appendChild(_lbl('Khối:'));
+        var mSlider = document.createElement('input');
+        mSlider.type='range'; mSlider.min=4; mSlider.max=50; mSlider.value=_fseMosaicSize; mSlider.className='fse-slider'; mSlider.style.width='130px';
+        var mVal = document.createElement('span'); mVal.className='fse-label'; mVal.textContent=_fseMosaicSize+'px';
+        mSlider.oninput = function(){ _fseMosaicSize=parseInt(mSlider.value); mVal.textContent=mSlider.value+'px'; };
+        _fseBot.appendChild(mSlider); _fseBot.appendChild(mVal);
+        _fseBot.appendChild(_sep());
+        var mHint = document.createElement('span'); mHint.className='fse-label'; mHint.style.opacity='.5'; mHint.textContent='Kéo lên vùng cần làm mờ';
+        _fseBot.appendChild(mHint);
+      } else if (mode === 'text') {
+        var tHint = document.createElement('span'); tHint.className='fse-label'; tHint.textContent='💡 Nhấp lên ảnh để chèn chữ';
+        _fseBot.appendChild(tHint);
+      } else if (mode === 'sticker') {
+        var stHint = document.createElement('span'); stHint.className='fse-label'; stHint.textContent='💡 Chọn sticker bên dưới hoặc tải ảnh lên';
+        _fseBot.appendChild(stHint);
+      }
+    }
+
+    function _setMode(mode) {
+      _fseMode = mode;
+      _fseTb.querySelectorAll('.fse-tool-btn[data-mode]').forEach(function(b){ b.classList.toggle('active', b.dataset.mode === mode); });
+      _fseCanvas.style.cursor = mode==='text'?'text': mode==='eraser'?'cell':'crosshair';
+      _buildBottomBar(mode);
+      var sp = _fseArea.querySelector('.fse-sticker-panel');
+      if (sp) sp.classList.toggle('open', mode==='sticker');
+    }
+
+    /* ── FLOATING OBJECTS (text / emoji sticker / image sticker) ── */
+    function _makeDraggable(wrap, handle) {
+      var mx,my;
+      function _dm(e){ var s=e.touches?e.touches[0]:e; mx=s.clientX; my=s.clientY; }
+      function _startDrag(e){
+        if(e.target.classList.contains('fse-resize-h')||e.target.classList.contains('fse-obj-btn')) return;
+        e.preventDefault(); _dm(e);
+        function _onMove(ev){
+          ev.preventDefault();
+          var s=ev.touches?ev.touches[0]:ev;
+          wrap.style.left=(wrap.offsetLeft+(s.clientX-mx))+'px';
+          wrap.style.top =(wrap.offsetTop +(s.clientY-my))+'px';
+          _dm(ev);
+        }
+        function _onUp(){ document.removeEventListener('mousemove',_onMove); document.removeEventListener('mouseup',_onUp); document.removeEventListener('touchmove',_onMove); document.removeEventListener('touchend',_onUp); }
+        document.addEventListener('mousemove',_onMove); document.addEventListener('mouseup',_onUp);
+        document.addEventListener('touchmove',_onMove,{passive:false}); document.addEventListener('touchend',_onUp);
+      }
+      handle.addEventListener('mousedown',_startDrag);
+      handle.addEventListener('touchstart',_startDrag,{passive:false});
+    }
+
+    function _makeResizable(handle, onResize) {
+      handle.addEventListener('mousedown', function(e){
+        e.preventDefault(); e.stopPropagation();
+        var sx=e.clientX, sy=e.clientY;
+        function _onMove(ev){
+          ev.preventDefault(); onResize(ev.clientX-sx, ev.clientY-sy);
+        }
+        function _onUp(){ document.removeEventListener('mousemove',_onMove); document.removeEventListener('mouseup',_onUp); }
+        document.addEventListener('mousemove',_onMove); document.addEventListener('mouseup',_onUp);
+      });
+    }
+
+    function _floatContainer(onConfirm, onDelete) {
+      var canvasRect = _fseCanvas.getBoundingClientRect();
+      var areaRect   = _fseArea.getBoundingClientRect();
+      var wrap = document.createElement('div'); wrap.className='fse-float-obj';
+      wrap.style.left = (canvasRect.left - areaRect.left + canvasRect.width/2)  + 'px';
+      wrap.style.top  = (canvasRect.top  - areaRect.top  + canvasRect.height/3) + 'px';
+      var ctrl = document.createElement('div'); ctrl.className='fse-obj-ctrl';
+      var ok = document.createElement('button'); ok.className='fse-obj-btn fse-obj-ok'; ok.textContent='✓'; ok.onclick=onConfirm;
+      var del = document.createElement('button'); del.className='fse-obj-btn fse-obj-del'; del.textContent='✕'; del.onclick=onDelete;
+      ctrl.appendChild(ok); ctrl.appendChild(del);
+      wrap.appendChild(ctrl);
+      _fseArea.appendChild(wrap);
+      return wrap;
+    }
+
+    function _canvasPos(wrap) {
+      var cr = _fseCanvas.getBoundingClientRect();
+      var ar = _fseArea.getBoundingClientRect();
+      var wr = wrap.getBoundingClientRect();
+      return { x: (wr.left - cr.left) / _fseScale, y: (wr.top - cr.top) / _fseScale };
+    }
+
+    /* -- TEXT OBJECT -- */
+    function _spawnTextObj(txt, color, size, font, bold, clickX, clickY) {
+      var curSize = size;
+      var initW = 0;
+
+      var wrap = document.createElement('div'); wrap.className='fse-float-obj';
+      // position near canvas click point
+      var cr = _fseCanvas.getBoundingClientRect();
+      var ar = _fseArea.getBoundingClientRect();
+      wrap.style.left = (cr.left - ar.left + clickX * _fseScale) + 'px';
+      wrap.style.top  = (cr.top  - ar.top  + clickY * _fseScale - size * _fseScale / 2) + 'px';
+
+      var ctrl = document.createElement('div'); ctrl.className='fse-obj-ctrl';
+      var ok  = document.createElement('button'); ok.className='fse-obj-btn fse-obj-ok'; ok.textContent='✓';
+      var del = document.createElement('button'); del.className='fse-obj-btn fse-obj-del'; del.textContent='✕';
+      del.onclick = function(){ wrap.remove(); };
+      ctrl.appendChild(ok); ctrl.appendChild(del);
+
+      var inner = document.createElement('div'); inner.className='fse-obj-inner';
+
+      var textEl = document.createElement('div'); textEl.className='fse-obj-text';
+      textEl.textContent = txt;
+      textEl.style.fontSize   = size + 'px';
+      textEl.style.color      = color;
+      textEl.style.fontFamily = font;
+      textEl.style.fontWeight = bold ? '700' : '400';
+      textEl.style.whiteSpace = 'pre';
+      textEl.style.lineHeight = '1.25';
+      textEl.style.textShadow = '0 1px 6px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.9)';
+      textEl.style.padding    = '2px';
+      textEl.style.userSelect = 'none';
+
+      var rh = document.createElement('div'); rh.className='fse-resize-h'; rh.title='Kéo để scale';
+      inner.appendChild(textEl); inner.appendChild(rh);
+
+      wrap.appendChild(ctrl); wrap.appendChild(inner);
+      _fseArea.appendChild(wrap);
+
+      _makeDraggable(wrap, inner);
+
+      // Resize = scale font
+      _makeResizable(rh, function(dx) {
+        if (!initW) initW = inner.offsetWidth;
+        curSize = Math.max(8, Math.min(300, size + Math.round(dx * size / Math.max(1, initW))));
+        textEl.style.fontSize = curSize + 'px';
+      });
+
+      ok.onclick = function() {
+        var p = _canvasPos(wrap);
+        _saveUndo();
+        _fseCtx.save();
+        _fseCtx.font        = (bold?'bold ':'')+curSize+'px '+font;
+        _fseCtx.fillStyle   = color;
+        _fseCtx.shadowColor = 'rgba(0,0,0,.7)';
+        _fseCtx.shadowBlur  = 4;
+        txt.split('\n').forEach(function(line, i){
+          _fseCtx.fillText(line, p.x, p.y + curSize + i * curSize * 1.3);
+        });
+        _fseCtx.restore();
+        wrap.remove();
+      };
+    }
+
+    /* -- EMOJI STICKER OBJECT -- */
+    function _spawnEmojiObj(emoji) {
+      var sz = 60;
+      var wrap = document.createElement('div'); wrap.className='fse-float-obj';
+      var cr = _fseCanvas.getBoundingClientRect(), ar = _fseArea.getBoundingClientRect();
+      wrap.style.left = (cr.left-ar.left+cr.width/2-sz/2)+'px';
+      wrap.style.top  = (cr.top-ar.top+cr.height/3)+'px';
+
+      var ctrl=document.createElement('div'); ctrl.className='fse-obj-ctrl';
+      var ok=document.createElement('button'); ok.className='fse-obj-btn fse-obj-ok'; ok.textContent='✓';
+      var del=document.createElement('button'); del.className='fse-obj-btn fse-obj-del'; del.textContent='✕';
+      del.onclick=function(){ wrap.remove(); };
+      ctrl.appendChild(ok); ctrl.appendChild(del);
+
+      var inner=document.createElement('div'); inner.className='fse-obj-inner';
+      var el=document.createElement('span'); el.className='fse-obj-emoji'; el.textContent=emoji; el.style.fontSize=sz+'px'; el.style.lineHeight='1'; el.style.display='block'; el.style.userSelect='none';
+      var rh=document.createElement('div'); rh.className='fse-resize-h';
+      inner.appendChild(el); inner.appendChild(rh);
+      wrap.appendChild(ctrl); wrap.appendChild(inner);
+      _fseArea.appendChild(wrap);
+      _makeDraggable(wrap,inner);
+      var initSz=sz;
+      _makeResizable(rh,function(dx){
+        initSz=Math.max(16,Math.min(300,initSz+dx*0.8));
+        sz=initSz; el.style.fontSize=sz+'px';
+      });
+      ok.onclick=function(){
+        var p=_canvasPos(wrap);
+        _saveUndo();
+        _fseCtx.save();
+        _fseCtx.font=sz+'px serif';
+        _fseCtx.fillText(emoji, p.x, p.y+sz);
+        _fseCtx.restore();
+        wrap.remove();
+      };
+    }
+
+    /* -- IMAGE STICKER OBJECT -- */
+    function _spawnImgObj(src) {
+      var wrap=document.createElement('div'); wrap.className='fse-float-obj';
+      var cr=_fseCanvas.getBoundingClientRect(), ar=_fseArea.getBoundingClientRect();
+      wrap.style.left=(cr.left-ar.left+cr.width/2-50)+'px';
+      wrap.style.top=(cr.top-ar.top+cr.height/3)+'px';
+
+      var ctrl=document.createElement('div'); ctrl.className='fse-obj-ctrl';
+      var ok=document.createElement('button'); ok.className='fse-obj-btn fse-obj-ok'; ok.textContent='✓';
+      var del=document.createElement('button'); del.className='fse-obj-btn fse-obj-del'; del.textContent='✕';
+      del.onclick=function(){ wrap.remove(); };
+      ctrl.appendChild(ok); ctrl.appendChild(del);
+
+      var inner=document.createElement('div'); inner.className='fse-obj-inner';
+      var img=document.createElement('img'); img.src=src; img.style.cssText='width:100px;height:100px;object-fit:contain;display:block;user-select:none;pointer-events:none;';
+      var rh=document.createElement('div'); rh.className='fse-resize-h';
+      inner.appendChild(img); inner.appendChild(rh);
+      wrap.appendChild(ctrl); wrap.appendChild(inner);
+      _fseArea.appendChild(wrap);
+      _makeDraggable(wrap,inner);
+      var bw=100,bh=100;
+      _makeResizable(rh,function(dx,dy){
+        bw=Math.max(20,bw+dx); bh=Math.max(20,bh+dy);
+        img.style.width=bw+'px'; img.style.height=bh+'px';
+      });
+      ok.onclick=function(){
+        var p=_canvasPos(wrap);
+        var sw=img.offsetWidth/_fseScale, sh=img.offsetHeight/_fseScale;
+        _saveUndo();
+        var i2=new Image();
+        i2.onload=function(){ _fseCtx.drawImage(i2,p.x,p.y,sw,sh); };
+        i2.src=src;
+        wrap.remove();
+      };
+    }
+
+    function _commitAllFloating() {
+      if (!_fseArea) return;
+      _fseArea.querySelectorAll('.fse-float-obj .fse-obj-ok').forEach(function(b){ b.click(); });
     }
 
     function _applyZoom() {
-      var z = document.getElementById('fse-zoom-lbl');
-      if (z) z.textContent = Math.round(_fseScale * 100) + '%';
+      var lbl = _fseTb && _fseTb.querySelector('.fse-zoom-val');
+      if (lbl) lbl.textContent = Math.round(_fseScale*100)+'%';
       if (_fseCanvas) {
-        _fseCanvas.style.width = (_fseCanvas.width * _fseScale) + 'px';
-        _fseCanvas.style.height = (_fseCanvas.height * _fseScale) + 'px';
+        _fseCanvas.style.width  = (_fseCanvas.width  * _fseScale)+'px';
+        _fseCanvas.style.height = (_fseCanvas.height * _fseScale)+'px';
       }
     }
-    function _updateZoomLabel() { _applyZoom(); }
   })();
+
 
   /* ===== INIT ===== */
   (function _msginit() {
