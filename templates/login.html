@@ -65,7 +65,13 @@
           <span>Remember me for 30 days</span>
         </label>
       </div>
-      <div class="h-captcha-wrap">
+      <div class="form-group" style="margin-top:4px;">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:var(--text2);line-height:1.5;">
+            <input type="checkbox" name="tos_accepted" id="login-tos" required style="margin-top:2px;flex-shrink:0;accent-color:var(--primary);width:15px;height:15px;">
+            <span>I agree to the <a href="/terms-of-service" target="_blank" style="color:var(--primary);">Terms of Service</a>, <a href="/privacy-policy" target="_blank" style="color:var(--primary);">Privacy Policy</a>, <a href="/cookie-policy" target="_blank" style="color:var(--primary);">Cookie Policy</a>, and <a href="/community-guidelines" target="_blank" style="color:var(--primary);">Community Guidelines</a>.</span>
+          </label>
+        </div>
+              <div class="h-captcha-wrap">
         <div class="h-captcha" data-sitekey="{{ hcaptcha_site_key }}" data-theme="dark"></div>
       </div>
       <button type="submit" title="Sign in to your account" class="auth-submit-btn">
