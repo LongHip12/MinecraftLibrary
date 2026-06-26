@@ -4536,7 +4536,7 @@ def api_ai_send():
     if len(chat["messages"]) == 2:
         try:
             _, title_text = _do_ai_call("gpt-4o-mini", [{"role": "user", "content": f"Generate a very short title (max 5 words, no quotes, no end punctuation) for a chat starting with: {user_text[:200] if user_text else 'file'}"}], False)
-            chat["title"] = title_text.strip().strip(""'").strip()[:60]
+            chat["title"] = title_text.strip().strip('"').strip("'").strip()[:60]
         except Exception:
             pass
     _save_user_chats(user["id"], chats)
