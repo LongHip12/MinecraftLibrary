@@ -212,10 +212,10 @@ def create_session(user_id):
 
 
 def issue_device_token():
-      return secrets.token_hex(32)
+    return secrets.token_hex(32)
 
 
-  def create_remember_token(user_id):
+def create_remember_token(user_id):
     series = secrets.token_hex(32)
     token = secrets.token_hex(32)
     expires = datetime.now() + timedelta(days=30)
