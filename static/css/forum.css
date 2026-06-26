@@ -1443,11 +1443,11 @@
   @keyframes toastIn{from{transform:translateY(16px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 
   /* ===== MESSENGER BUBBLES ===== */
-  .message-card{background:none!important;border-radius:0!important;padding:3px 52px 3px 12px!important;position:relative;}
-  .message-card.own-msg{padding-left:52px!important;padding-right:12px!important;}
+  .message-card{background:none!important;border-radius:0!important;padding:3px 12px 3px 56px!important;position:relative;}
+  .message-card.own-msg{padding-left:12px!important;padding-right:56px!important;}
   .message-card:hover{background:none!important;}
-  .msg-bubble{background:rgba(255,255,255,0.09)!important;border-color:transparent!important;border-radius:16px 16px 16px 3px!important;}
-  .own-msg .msg-bubble{background:var(--primary)!important;border-color:transparent!important;border-radius:16px 16px 3px 16px!important;margin-left:auto;color:#fff!important;}
+  .msg-bubble{background:rgba(255,255,255,0.09)!important;border-color:transparent!important;border-radius:16px 16px 16px 3px!important;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  .own-msg .msg-bubble{background:var(--primary)!important;border-color:transparent!important;border-radius:16px 16px 3px 16px!important;margin-left:auto;color:#fff!important;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
   .own-msg .msg-bubble .msg-body{color:#fff!important;}
   .msg-actions{opacity:0!important;height:0!important;overflow:hidden!important;margin:0!important;padding:0!important;pointer-events:none!important;}
   .own-msg .message-author-row{flex-direction:row-reverse;}
