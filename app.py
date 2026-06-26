@@ -201,7 +201,7 @@ def get_session_user(request):
 
 def create_session(user_id):
     token = secrets.token_hex(32)
-    expires = datetime.now() + timedelta(days=7)
+    expires = datetime.now() + timedelta(hours=2)
     sessions = load_json("sessions-data.json")
     sessions.setdefault("sessions", {})[token] = {
         "user_id": user_id,
@@ -538,7 +538,7 @@ def is_admin(user):
             return datetime.now() < datetime.fromisoformat(admin_until)
         except Exception:
             return False
-    return True
+    return False
 
 
 def is_muted(user):
@@ -4517,36 +4517,30 @@ def api_ai_send():
     _save_user_chats(user["id"], chats)
     api_messages = [{"role": m["role"], "content": m["content"]} for m in chat["messages"]]
     cfg_model = AI_MODELS_CONFIG.get(model_key, {})
-    def generate():
-        thinking_parts = []
-        output_parts = []
-        t0 = time.time()
-        yield f"data: {json.dumps({'type': 'start', 'chat_id': chat['id'], 'model_name': cfg_model.get('name', 'AI'), 'model_image': cfg_model.get('image', '')})}\n\n"
+    thinking_parts = []
+    output_parts = []
+    t0 = time.time()
+    try:
+        for kind, chunk in _stream_provider(model_key, api_messages, enable_thinking):
+            if kind == "thinking":
+                thinking_parts.append(chunk)
+            elif kind == "content":
+                output_parts.append(chunk)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    thinking = "".join(thinking_parts).strip()
+    output = "".join(output_parts).strip()
+    thinking_time = int(time.time() - t0)
+    chat["messages"].append({"role": "assistant", "content": output, "thinking": thinking, "thinking_time": thinking_time, "model": model_key})
+    chat["updated_at"] = datetime.now().isoformat()
+    if len(chat["messages"]) == 2:
         try:
-            for kind, chunk in _stream_provider(model_key, api_messages, enable_thinking):
-                if kind == "thinking":
-                    thinking_parts.append(chunk)
-                    yield f"data: {json.dumps({'type': 'thinking', 'chunk': chunk})}\n\n"
-                elif kind == "content":
-                    output_parts.append(chunk)
-                    yield f"data: {json.dumps({'type': 'content', 'chunk': chunk})}\n\n"
-        except Exception as e:
-            yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
-            return
-        thinking = "".join(thinking_parts).strip()
-        output = "".join(output_parts).strip()
-        thinking_time = int(time.time() - t0)
-        chat["messages"].append({"role": "assistant", "content": output, "thinking": thinking, "thinking_time": thinking_time, "model": model_key})
-        chat["updated_at"] = datetime.now().isoformat()
-        if len(chat["messages"]) == 2:
-            try:
-                _, title_text = _do_ai_call("gpt-4o-mini", [{"role": "user", "content": f"Generate a very short title (max 5 words, no quotes, no end punctuation) for a chat starting with: {user_text[:200] if user_text else 'file'}"}], False)
-                chat["title"] = title_text.strip().strip("\"'").strip()[:60]
-            except Exception:
-                pass
-        _save_user_chats(user["id"], chats)
-        yield f"data: {json.dumps({'type': 'done', 'thinking_time': thinking_time, 'title': chat.get('title', 'New Chat')})}\n\n"
-    return Response(stream_with_context(generate()), mimetype="text/event-stream", headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
+            _, title_text = _do_ai_call("gpt-4o-mini", [{"role": "user", "content": f"Generate a very short title (max 5 words, no quotes, no end punctuation) for a chat starting with: {user_text[:200] if user_text else 'file'}"}], False)
+            chat["title"] = title_text.strip().strip(""'").strip()[:60]
+        except Exception:
+            pass
+    _save_user_chats(user["id"], chats)
+    return jsonify({"success": True, "chat_id": chat["id"], "content": output, "thinking": thinking, "thinking_time": thinking_time, "model_name": cfg_model.get("name", "AI"), "model_image": cfg_model.get("image", ""), "title": chat.get("title", "New Chat")})
 @app.route("/api/ai/send/<chat_id>/retry", methods=["POST"])
 def api_ai_retry(chat_id):
     user = get_session_user(request)
@@ -4566,30 +4560,24 @@ def api_ai_retry(chat_id):
     enable_thinking = bool(payload.get("thinking", False))
     api_messages = [{"role": m["role"], "content": m["content"]} for m in chat["messages"]]
     cfg_model = AI_MODELS_CONFIG.get(model_key, {})
-    def generate():
-        thinking_parts = []
-        output_parts = []
-        t0 = time.time()
-        yield f"data: {json.dumps({'type': 'start', 'model_name': cfg_model.get('name', 'AI'), 'model_image': cfg_model.get('image', '')})}\n\n"
-        try:
-            for kind, chunk in _stream_provider(model_key, api_messages, enable_thinking):
-                if kind == "thinking":
-                    thinking_parts.append(chunk)
-                    yield f"data: {json.dumps({'type': 'thinking', 'chunk': chunk})}\n\n"
-                elif kind == "content":
-                    output_parts.append(chunk)
-                    yield f"data: {json.dumps({'type': 'content', 'chunk': chunk})}\n\n"
-        except Exception as e:
-            yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
-            return
-        thinking = "".join(thinking_parts).strip()
-        output = "".join(output_parts).strip()
-        thinking_time = int(time.time() - t0)
-        chat["messages"].append({"role": "assistant", "content": output, "thinking": thinking, "thinking_time": thinking_time, "model": model_key})
-        chat["updated_at"] = datetime.now().isoformat()
-        _save_user_chats(user["id"], chats)
-        yield f"data: {json.dumps({'type': 'done', 'thinking_time': thinking_time})}\n\n"
-    return Response(stream_with_context(generate()), mimetype="text/event-stream", headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
+    thinking_parts = []
+    output_parts = []
+    t0 = time.time()
+    try:
+        for kind, chunk in _stream_provider(model_key, api_messages, enable_thinking):
+            if kind == "thinking":
+                thinking_parts.append(chunk)
+            elif kind == "content":
+                output_parts.append(chunk)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    thinking = "".join(thinking_parts).strip()
+    output = "".join(output_parts).strip()
+    thinking_time = int(time.time() - t0)
+    chat["messages"].append({"role": "assistant", "content": output, "thinking": thinking, "thinking_time": thinking_time, "model": model_key})
+    chat["updated_at"] = datetime.now().isoformat()
+    _save_user_chats(user["id"], chats)
+    return jsonify({"success": True, "content": output, "thinking": thinking, "thinking_time": thinking_time, "model_name": cfg_model.get("name", "AI"), "model_image": cfg_model.get("image", ""), "title": chat.get("title", "New Chat")})
 @app.route("/api/v2/chat/ai", methods=["POST"])
 def api_v2_chat_ai():
     x_token = (request.headers.get("X-Token") or "").strip()
