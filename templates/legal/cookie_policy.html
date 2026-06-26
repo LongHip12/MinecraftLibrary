@@ -18,11 +18,9 @@
 <section><h2 style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px;">Security</h2><p>All cookies are set with <code>HttpOnly</code> and <code>Secure</code> flags to prevent JavaScript access and ensure they are only sent over HTTPS.</p></section>
 <section><h2 style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px;">Managing Cookies</h2><p>You can delete cookies at any time from your browser settings. Note that deleting the session cookie will log you out.</p></section>
 </div>
-<div style="margin-top:48px;display:flex;gap:12px;flex-wrap:wrap;">
-<a href="/terms-of-service" class="btn btn-ghost btn-sm">Terms of Service</a>
-<a href="/privacy-policy" class="btn btn-ghost btn-sm">Privacy Policy</a>
-<a href="/community-guidelines" class="btn btn-ghost btn-sm">Community Guidelines</a>
-<a href="/disclaimer" class="btn btn-ghost btn-sm">Disclaimer</a>
+<div style="margin-top:48px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border2);padding-top:20px;">
+<a href="/privacy-policy" style="display:flex;align-items:center;gap:8px;color:var(--text3);text-decoration:none;font-size:14px;font-weight:500;padding:10px 0;transition:color .15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg><span>Privacy Policy</span></a>
+<a href="/community-guidelines" style="display:flex;align-items:center;gap:8px;color:var(--text3);text-decoration:none;font-size:14px;font-weight:500;padding:10px 0;transition:color .15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'"><span>Community Guidelines</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></a>
 </div>
 </div>
 {% endblock %}
