@@ -492,7 +492,8 @@
           <span>Report</span>
         </button>
         {% endif %}
-        <div class="msg-reactions" id="msg-reactions-{{ msg.id }}" style="display:flex;flex-wrap:wrap;gap:5px;margin-left:4px;">
+      </div>
+      <div class="msg-reactions" id="msg-reactions-{{ msg.id }}" style="display:flex;flex-wrap:wrap;gap:5px;margin-left:4px;">
         {% set mreacts = msg.reactions | default({}) %}
         {% for emoji, urlist in mreacts.items() %}
         {% if urlist|length > 0 %}
@@ -517,8 +518,7 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
           <span>{{ msg.replies|length }} {{ 'reply' if msg.replies|length == 1 else 'replies' }}</span>
         </button>
-        {% endif %}
-      </div>
+      {% endif %}
 
       {% if msg.replies %}
       <div class="replies-list" id="replies-{{ msg.id }}" style="display:none;">
@@ -1168,11 +1168,11 @@ function _renderNewMsgHtml(msg) {
     '<img class="msg-avatar" src="' + _escHtml(avatar) + '" alt="" onerror="this.onerror=null;this.src=\'https://i.imgur.com/BCzwCla.png\'">' +
     '<div><span class="msg-author-name">' + _escHtml(msg.author_name) + '</span>' +
     '<span class="msg-date" style="margin-left:8px;">' + ts + '</span></div></div>' +
-    (msg.content ? '<div class="msg-body">' + _escHtml(msg.content) + '</div>' : '') +
+    (msg.content ? '<div class="msg-bubble"><div class="msg-body">' + _escHtml(msg.content) + '</div></div>' : '') +
     '<div class="msg-actions" id="msg-actions-' + _escHtml(msg.id) + '">' +
       replyBtn +
-      '<div class="msg-reactions" id="msg-reactions-' + _escHtml(msg.id) + '" style="display:flex;flex-wrap:wrap;gap:5px;margin-left:4px;">' + reactBtn + '</div>' +
-    '</div>';
+    '</div>' +
+    '<div class="msg-reactions" id="msg-reactions-' + _escHtml(msg.id) + '" style="display:flex;flex-wrap:wrap;gap:5px;margin-left:4px;">' + reactBtn + '</div>';
 }
 
 var _pendingNewMsgs = 0;
