@@ -415,7 +415,7 @@
 
     {% if post.messages %}
     {% for msg in post.messages %}
-    <div class="message-card {% if user and msg.author_id == user.id %}own-msg{% endif %}" id="msg-{{ msg.id }}">
+    <div class="message-card {% if user and msg.author_id == user.id %}own-msg{% endif %}" id="msg-{{ msg.id }}" data-post-id="{{ post.id }}">
       <div class="message-author-row">
         {% if msg.author and msg.author.id %}
         <a href="/users/{{ msg.author.username }}">
@@ -1677,7 +1677,7 @@ function _updateAttachBtn() {
       <input type="hidden" name="target_url" id="report-target-url">
       <div style="margin-bottom:14px;">
         <label style="font-size:13px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Reason *</label>
-        <select name="reason" id="report-reason" required style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;outline:none;">
+        <select name="reason" id="report-reason" required data-custom style="display:none;">
           <option value="">Select a reason...</option>
           <option value="Spam">Spam or self-promotion abuse</option>
           <option value="Harassment">Harassment or bullying</option>
@@ -1723,7 +1723,8 @@ function _updateAttachBtn() {
     </form>
   </div>
 </div>
-
+{% endblock %}
+{% block extra_js %}
 <script>
 var _reportImages=[];var _editingIndex=null;var _canvas=null,_ctx=null;var _history=[];var _editorMode='draw';var _drawing=false;var _lastX=0,_lastY=0;
 function openReportModal(type,targetId,targetUrl){document.getElementById('report-type').value=type;document.getElementById('report-target-id').value=targetId;document.getElementById('report-target-url').value=targetUrl||'';document.getElementById('report-modal').style.display='flex';document.body.style.overflow='hidden';}
@@ -1736,6 +1737,7 @@ function setupCanvasEvents(mode){_canvas.onmousedown=_canvas.onmousemove=_canvas
 function undoEdit(){if(_history.length>1){_history.pop();_ctx.putImageData(_history[_history.length-1],0,0);}}
 function confirmEditedImage(){if(_editingIndex!==null&&_canvas){_reportImages[_editingIndex]=_canvas.toDataURL('image/png');renderPreviews();}document.getElementById('report-img-editor').style.display='none';_editingIndex=null;}
 function cancelImageEdit(){document.getElementById('report-img-editor').style.display='none';_editingIndex=null;if(_history.length>0&&_ctx)_ctx.putImageData(_history[0],0,0);}
-async function submitReport(e){e.preventDefault();var btn=document.getElementById('report-submit-btn');var msg=document.getElementById('report-msg');var reason=document.getElementById('report-reason').value;if(!reason){msg.style.cssText='display:block;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.25);border-radius:8px;color:var(--primary);';msg.textContent='Please select a reason.';return;}btn.disabled=true;btn.textContent='Submitting...';var fd=new FormData(e.target);fd.delete('images');for(var i=0;i<_reportImages.length;i++){var blob=await fetch(_reportImages[i]).then(function(r){return r.blob();});fd.append('images',blob,'image'+i+'.png');}try{var r=await fetch('/api/report',{method:'POST',body:fd});var data=await r.json();if(data.success){msg.style.cssText='display:block;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);border-radius:8px;color:#4ade80;';msg.textContent='Report submitted. Thank you!';setTimeout(closeReportModal,2000);}else{msg.style.cssText='display:block;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.25);border-radius:8px;color:var(--primary);';msg.textContent=data.error||'Failed.';btn.disabled=false;btn.textContent='Submit Report';}}catch(err){msg.style.cssText='display:block;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.25);border-radius:8px;color:var(--primary);';msg.textContent='Network error.';btn.disabled=false;btn.textContent='Submit Report';}}
+async function submitReport(e){e.preventDefault();var btn=document.getElementById('report-submit-btn');var msg=document.getElementById('report-msg');var reason=document.getElementById('report-reason').value;if(!reason){msg.style.cssText='display:block;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.25);border-radius:8px;color:var(--primary);';msg.textContent='Please select a reason.';return;}btn.disabled=true;btn.textContent='Submitting...';var fd=new FormData(e.target);fd.delete('images');for(var i=0;i<_reportImages.length;i++){var blob=await fetch(_reportImages[i]).then(function(r){return r.blob();});fd.append('images',blob,'image'+i+'.png');}try{var r=await fetch('/api/report',{method:'POST',body:fd});var data=await r.json();if(data.success){window.showToast&&window.showToast('Report submitted. Thank you!','success');closeReportModal();}else{msg.style.cssText='display:block;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.25);border-radius:8px;color:var(--primary);';msg.textContent=data.error||'Failed.';btn.disabled=false;btn.textContent='Submit Report';}}catch(err){msg.style.cssText='display:block;background:rgba(250,80,80,0.1);border:1px solid rgba(250,80,80,0.25);border-radius:8px;color:var(--primary);';msg.textContent='Network error.';btn.disabled=false;btn.textContent='Submit Report';}}
 </script>
+<div id="toast-container"></div>
 {% endblock %}
