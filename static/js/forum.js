@@ -597,10 +597,11 @@
       saveBtn.className = 'fse-tool-btn fse-save-btn';
       saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Lưu</span>';
       saveBtn.onclick = function() {
-        _commitAllFloating();
-        var url = _fseCanvas.toDataURL('image/png');
-        _fse.classList.remove('open');
-        if (_fseOnSave) _fseOnSave(url);
+        _commitAllFloating(function() {
+          var url = _fseCanvas.toDataURL('image/png');
+          _fse.classList.remove('open');
+          if (_fseOnSave) _fseOnSave(url);
+        });
       };
       _fseTb.appendChild(saveBtn);
 
@@ -917,15 +918,23 @@
     }
 
     function _makeResizable(handle, onResize) {
-      handle.addEventListener('mousedown', function(e){
-        e.preventDefault(); e.stopPropagation();
-        var sx=e.clientX, sy=e.clientY;
+      function _start(cx, cy) {
+        var sx=cx, sy=cy;
         function _onMove(ev){
-          ev.preventDefault(); onResize(ev.clientX-sx, ev.clientY-sy);
+          ev.preventDefault();
+          var px=ev.touches?ev.touches[0].clientX:ev.clientX;
+          var py=ev.touches?ev.touches[0].clientY:ev.clientY;
+          onResize(px-sx, py-sy);
+          sx=px; sy=py; // incremental delta so each call gets a small step
         }
-        function _onUp(){ document.removeEventListener('mousemove',_onMove); document.removeEventListener('mouseup',_onUp); }
-        document.addEventListener('mousemove',_onMove); document.addEventListener('mouseup',_onUp);
-      });
+        function _onUp(){ document.removeEventListener('mousemove',_onMove); document.removeEventListener('mouseup',_onUp); document.removeEventListener('touchmove',_onMove); document.removeEventListener('touchend',_onUp); }
+        document.addEventListener('mousemove',_onMove);
+        document.addEventListener('mouseup',_onUp);
+        document.addEventListener('touchmove',_onMove,{passive:false});
+        document.addEventListener('touchend',_onUp);
+      }
+      handle.addEventListener('mousedown', function(e){ e.preventDefault(); e.stopPropagation(); _start(e.clientX, e.clientY); });
+      handle.addEventListener('touchstart', function(e){ e.preventDefault(); e.stopPropagation(); _start(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
     }
 
     function _floatContainer(onConfirm, onDelete) {
@@ -992,8 +1001,7 @@
 
       // Resize = scale font
       _makeResizable(rh, function(dx) {
-        if (!initW) initW = inner.offsetWidth;
-        curSize = Math.max(8, Math.min(300, size + Math.round(dx * size / Math.max(1, initW))));
+        curSize = Math.max(8, Math.min(300, curSize + Math.round(dx * 0.5)));
         textEl.style.fontSize = curSize + 'px';
       });
 
@@ -1005,8 +1013,9 @@
         _fseCtx.fillStyle   = color;
         _fseCtx.shadowColor = 'rgba(0,0,0,.7)';
         _fseCtx.shadowBlur  = 4;
+        var ctrlH = 28 / _fseScale; // height of .fse-obj-ctrl above inner
         txt.split('\n').forEach(function(line, i){
-          _fseCtx.fillText(line, p.x, p.y + curSize + i * curSize * 1.3);
+          _fseCtx.fillText(line, p.x, p.y + ctrlH + curSize + i * curSize * 1.3);
         });
         _fseCtx.restore();
         wrap.remove();
@@ -1034,10 +1043,9 @@
       wrap.appendChild(ctrl); wrap.appendChild(inner);
       _fseArea.appendChild(wrap);
       _makeDraggable(wrap,inner);
-      var initSz=sz;
       _makeResizable(rh,function(dx){
-        initSz=Math.max(16,Math.min(300,initSz+dx*0.8));
-        sz=initSz; el.style.fontSize=sz+'px';
+        sz=Math.max(16,Math.min(300,sz+dx*0.6));
+        el.style.fontSize=sz+'px';
       });
       ok.onclick=function(){
         var p=_canvasPos(wrap);
@@ -1074,7 +1082,7 @@
       _makeResizable(rh,function(dx,dy){
         bw=Math.max(20,bw+dx); bh=Math.max(20,bh+dy);
         img.style.width=bw+'px'; img.style.height=bh+'px';
-      });
+      }); // incremental delta handled inside _makeResizable
       ok.onclick=function(){
         var p=_canvasPos(wrap);
         var sw=img.offsetWidth/_fseScale, sh=img.offsetHeight/_fseScale;
@@ -1086,9 +1094,38 @@
       };
     }
 
-    function _commitAllFloating() {
-      if (!_fseArea) return;
-      _fseArea.querySelectorAll('.fse-float-obj .fse-obj-ok').forEach(function(b){ b.click(); });
+    function _commitAllFloating(done) {
+      if (!_fseArea) { if (done) done(); return; }
+      // Collect image sticker objects that need async load before we can proceed
+      var imgObjs = _fseArea.querySelectorAll('.fse-float-obj');
+      var pending = 0;
+      imgObjs.forEach(function(obj) {
+        var okBtn = obj.querySelector('.fse-obj-ok');
+        if (!okBtn) return;
+        var imgEl = obj.querySelector('img');
+        if (imgEl) {
+          // image sticker — trigger commit which is async
+          pending++;
+          var cr = _fseCanvas.getBoundingClientRect(), ar = _fseArea.getBoundingClientRect();
+          var wr = obj.getBoundingClientRect();
+          var cx = (wr.left - cr.left) / _fseScale, cy = (wr.top - cr.top) / _fseScale;
+          var sw = imgEl.offsetWidth / _fseScale, sh = imgEl.offsetHeight / _fseScale;
+          var src = imgEl.src;
+          obj.remove();
+          var i2 = new Image();
+          i2.onload = function() {
+            _fseCtx.drawImage(i2, cx, cy, sw, sh);
+            pending--;
+            if (pending === 0 && done) done();
+          };
+          i2.onerror = function() { pending--; if (pending === 0 && done) done(); };
+          i2.src = src;
+        } else {
+          // text or emoji — sync
+          okBtn.click();
+        }
+      });
+      if (pending === 0 && done) done();
     }
 
     function _applyZoom() {
