@@ -32,9 +32,25 @@
 
       if (file.type.startsWith('image/')) {
         var img = document.createElement('img');
-        img.style.cssText = 'width:32px;height:32px;object-fit:cover;border-radius:4px;';
+        img.style.cssText = 'width:32px;height:32px;object-fit:cover;border-radius:4px;cursor:pointer;';
+        img.title = 'Click to edit image';
         var reader = new FileReader();
-        reader.onload = function (e) { img.src = e.target.result; };
+        (function(capturedIdx, capturedName) {
+          reader.onload = function (e) {
+            var dataUrl = e.target.result;
+            img.src = dataUrl;
+            img.onclick = function () {
+              if (typeof window.openFSEditor === 'function') {
+                window.openFSEditor(dataUrl, function (editedDataUrl) {
+                  fetch(editedDataUrl).then(function (res) { return res.blob(); }).then(function (blob) {
+                    _chatFiles[capturedIdx] = new File([blob], capturedName, { type: blob.type });
+                    renderChatFilePreviews();
+                  });
+                });
+              }
+            };
+          };
+        })(idx, file.name);
         reader.readAsDataURL(file);
         item.appendChild(img);
       } else {
