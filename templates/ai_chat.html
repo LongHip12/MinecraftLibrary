@@ -868,51 +868,47 @@ function copyAIMsg(btn) {
 }
 
 function retryMsg(btn) {
-  if (S.sending || !S.chatId) return;
-  btn.closest('.ai-msg').remove();
-  S.sending = true; S.abortCtrl = new AbortController(); setSendingUI(true);
-  S.loadingEl = addLoadingMsg();
-  var ref = null; var contentBuf = ''; var thinkBuf = ''; var startCfg = null;
-  fetch('/api/ai/send/' + S.chatId + '/retry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ thinking: S.thinking }), signal: S.abortCtrl.signal })
-    .then(function(resp) {
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      return readSSEStream(resp, function(ev) {
-        if (ev.type === 'start') {
-          startCfg = { name: ev.model_name, image: ev.model_image };
-        } else if (ev.type === 'thinking' && S.thinking) {
-          thinkBuf += ev.chunk;
-        } else if (ev.type === 'content') {
-          contentBuf += ev.chunk;
-        } else if (ev.type === 'done') {
-          var _dEv = ev;
-          if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
-          ref = startStreamMsg(startCfg || {});
-          var _finishOutput = function() {
-            _twAdd(ref.bubble, contentBuf);
-            _twWhenDone(function() {
-              ref.bubble.innerHTML = marked.parse(contentBuf || '');
-              ref.bubble.classList.remove('ai-cursor');
-              scrollBottom();
-              S.sending = false; S.abortCtrl = null; setSendingUI(false);
-            });
-          };
-          if (thinkBuf) {
-            ref.thinkWrap.style.display = '';
-            _twAdd(ref.thinkBd, thinkBuf);
-            _twWhenDone(function() {
-              ref.thinkLbl.textContent = _dEv.thinking_time > 0 ? 'Thought for ' + _dEv.thinking_time + 's' : 'Thought';
-              _finishOutput();
-            });
-          } else {
-            _finishOutput();
-          }
-        } else if (ev.type === 'error') {
-          _twFlush();
-          if (ref) { ref.el.remove(); ref = null; }
-          if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
-          addErrMsg(ev.error || 'Error');
-          S.sending = false; S.abortCtrl = null; setSendingUI(false);
+    if (S.sending || !S.chatId) return;
+    btn.closest('.ai-msg').remove();
+    S.sending = true; S.abortCtrl = new AbortController(); setSendingUI(true);
+    S.loadingEl = addLoadingMsg();
+    var ref = null;
+    fetch('/api/ai/send/' + S.chatId + '/retry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ thinking: S.thinking }), signal: S.abortCtrl.signal })
+      .then(function(resp) {
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        return resp.json();
+      })
+      .then(function(data) {
+        if (!data.success) throw new Error(data.error || 'Error');
+        if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
+        ref = startStreamMsg({ name: data.model_name, image: data.model_image });
+        var _finish = function() {
+          _twAdd(ref.bubble, data.content || '');
+          _twWhenDone(function() {
+            ref.bubble.innerHTML = marked.parse(data.content || '');
+            ref.bubble.classList.remove('ai-cursor');
+            scrollBottom();
+            S.sending = false; S.abortCtrl = null; setSendingUI(false);
+          });
+        };
+        if (data.thinking && S.thinking) {
+          ref.thinkWrap.style.display = '';
+          _twAdd(ref.thinkBd, data.thinking);
+          _twWhenDone(function() {
+            ref.thinkLbl.textContent = data.thinking_time > 0 ? 'Thought for ' + data.thinking_time + 's' : 'Thought';
+            _finish();
+          });
+        } else {
+          _finish();
         }
+      })
+      .catch(function(err) {
+        if (err.name === 'AbortError') { if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; } return; }
+        if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
+        S.sending = false; S.abortCtrl = null; setSendingUI(false); addErrMsg(err.message || 'Network error');
+      });
+  }
+  
       });
     }).catch(function(err) {
       if (err.name === 'AbortError') { if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; } return; }
@@ -1029,65 +1025,54 @@ function stopMsg() {
 }
 
 function sendMsg() {
-  var ta = document.getElementById('ai-ta'); var text = ta.value.trim();
-  if ((!text && S.pendingFiles.length === 0) || S.sending) return;
-  if (!USER) { window.location.href = '/login'; return; }
-  S.sending = true; S.abortCtrl = new AbortController(); setSendingUI(true);
-  var files = S.pendingFiles.slice(); S.pendingFiles = [];
-  document.getElementById('ai-file-prevs').innerHTML = '';
-  ta.value = ''; autoGrowTA();
-  appendUserMsg(text, files); S.loadingEl = addLoadingMsg();
-  var ref = null; var contentBuf = ''; var thinkBuf = ''; var startCfg = null;
-  fetch('/api/ai/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: S.chatId, model: S.model, message: text, thinking: S.thinking, files: files }), signal: S.abortCtrl.signal })
-    .then(function(resp) {
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      return readSSEStream(resp, function(ev) {
-        if (ev.type === 'start') {
-          startCfg = { name: ev.model_name, image: ev.model_image };
-          if (!S.chatId && ev.chat_id) { S.chatId = ev.chat_id; history.replaceState(null, '', '/ai-chat/' + ev.chat_id); loadChats(); }
-        } else if (ev.type === 'thinking' && S.thinking) {
-          thinkBuf += ev.chunk;
-        } else if (ev.type === 'content') {
-          contentBuf += ev.chunk;
-        } else if (ev.type === 'done') {
-          var _dEv2 = ev;
-          if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
-          ref = startStreamMsg(startCfg || {});
-          var _finishOutput2 = function() {
-            _twAdd(ref.bubble, contentBuf);
-            _twWhenDone(function() {
-              ref.bubble.innerHTML = marked.parse(contentBuf || '');
-              ref.bubble.classList.remove('ai-cursor');
-              scrollBottom();
-              S.sending = false; S.abortCtrl = null; setSendingUI(false);
-              loadChats();
-            });
-          };
-          if (thinkBuf) {
-            ref.thinkWrap.style.display = '';
-            _twAdd(ref.thinkBd, thinkBuf);
-            _twWhenDone(function() {
-              ref.thinkLbl.textContent = _dEv2.thinking_time > 0 ? 'Thought for ' + _dEv2.thinking_time + 's' : 'Thought';
-              _finishOutput2();
-            });
-          } else {
-            _finishOutput2();
-          }
-        } else if (ev.type === 'error') {
-          _twFlush();
-          if (ref) { ref.el.remove(); ref = null; }
-          if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
-          addErrMsg(ev.error || 'Error');
-          S.sending = false; S.abortCtrl = null; setSendingUI(false);
+    var ta = document.getElementById('ai-ta'); var text = ta.value.trim();
+    if ((!text && S.pendingFiles.length === 0) || S.sending) return;
+    if (!USER) { window.location.href = '/login'; return; }
+    S.sending = true; S.abortCtrl = new AbortController(); setSendingUI(true);
+    var files = S.pendingFiles.slice(); S.pendingFiles = [];
+    document.getElementById('ai-file-prevs').innerHTML = '';
+    ta.value = ''; autoGrowTA();
+    appendUserMsg(text, files); S.loadingEl = addLoadingMsg();
+    var ref = null;
+    fetch('/api/ai/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: S.chatId, model: S.model, message: text, thinking: S.thinking, files: files }), signal: S.abortCtrl.signal })
+      .then(function(resp) {
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        return resp.json();
+      })
+      .then(function(data) {
+        if (!data.success) throw new Error(data.error || 'Error');
+        if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
+        if (!S.chatId && data.chat_id) { S.chatId = data.chat_id; history.replaceState(null, '', '/ai-chat/' + data.chat_id); loadChats(); }
+        ref = startStreamMsg({ name: data.model_name, image: data.model_image });
+        var _finish = function() {
+          _twAdd(ref.bubble, data.content || '');
+          _twWhenDone(function() {
+            ref.bubble.innerHTML = marked.parse(data.content || '');
+            ref.bubble.classList.remove('ai-cursor');
+            scrollBottom();
+            S.sending = false; S.abortCtrl = null; setSendingUI(false);
+            loadChats();
+          });
+        };
+        if (data.thinking && S.thinking) {
+          ref.thinkWrap.style.display = '';
+          _twAdd(ref.thinkBd, data.thinking);
+          _twWhenDone(function() {
+            ref.thinkLbl.textContent = data.thinking_time > 0 ? 'Thought for ' + data.thinking_time + 's' : 'Thought';
+            _finish();
+          });
+        } else {
+          _finish();
         }
+      })
+      .catch(function(err) {
+        if (err.name === 'AbortError') { if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; } return; }
+        if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
+        S.sending = false; S.abortCtrl = null; setSendingUI(false); addErrMsg(err.message || 'Network error');
       });
-    }).catch(function(err) {
-      if (err.name === 'AbortError') { if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; } return; }
-      if (S.loadingEl) { S.loadingEl.remove(); S.loadingEl = null; }
-      S.sending = false; S.abortCtrl = null; setSendingUI(false); addErrMsg('Network error');
-    });
-}
+  }
 
+  
 function autoGrowTA() { var ta = document.getElementById('ai-ta'); ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 180) + 'px'; }
 function scrollBottom() {}
 function _esc(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
